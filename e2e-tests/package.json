@@ -7,7 +7,7 @@
     "test:headless": "playwright test --config=config/headless.config.ts",
     "test:ui": "playwright test --ui",
     "test:debug": "playwright test --debug",
-    "test:parallel": "playwright test --workers=4",
+    "test:parallel": "playwright test --config=config/parallel.config.ts",
     "test:local": "ENV=local playwright test --config=config/env.config.ts",
     "test:dev": "ENV=dev playwright test --config=config/env.config.ts",
     "test:staging": "ENV=staging playwright test --config=config/env.config.ts",

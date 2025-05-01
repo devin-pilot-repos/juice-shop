@@ -20,6 +20,7 @@ e2e-tests/
 │   ├── base.config.ts       # Base Playwright configuration
 │   ├── environments.ts      # Environment configurations
 │   ├── headless.config.ts   # Headless mode configuration
+│   ├── parallel.config.ts   # Parallel execution configuration
 │   └── env.config.ts        # Environment-specific configuration
 ├── src/
 │   ├── pages/               # Page Object Models
@@ -136,3 +137,24 @@ npm run test:dev
 npm run test:staging
 npm run test:prod
 ```
+
+## Parallel Test Execution
+
+The framework supports running tests in parallel to speed up test execution. Parallel execution is configured in `config/parallel.config.ts`.
+
+To run tests in parallel:
+
+```bash
+npm run test:parallel
+```
+
+You can also specify the number of workers in the `.env` file:
+
+```
+WORKERS=4
+```
+
+The framework includes example tests in `tests/parallel.spec.ts` that demonstrate how to:
+- Run tests in parallel using `test.describe.configure({ mode: 'parallel' })`
+- Run tests in sequence when needed using `test.describe.configure({ mode: 'serial' })`
+- Create multiple test cases that run in parallel
