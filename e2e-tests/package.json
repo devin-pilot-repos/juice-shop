@@ -1,0 +1,27 @@
+{
+  "name": "e2e-tests",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:headless": "playwright test --config=config/headless.config.ts",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:parallel": "playwright test --workers=4",
+    "test:local": "ENV=local playwright test --config=config/env.config.ts",
+    "test:dev": "ENV=dev playwright test --config=config/env.config.ts",
+    "test:staging": "ENV=staging playwright test --config=config/env.config.ts",
+    "test:prod": "ENV=production playwright test --config=config/env.config.ts",
+    "report": "playwright show-report"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "Playwright framework for Juice Shop UI automation",
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "dotenv": "^16.5.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
