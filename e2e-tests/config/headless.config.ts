@@ -1,5 +1,4 @@
 import { defineConfig, devices } from '@playwright/test';
-import { baseConfig } from './base.config';
 
 /**
  * Configuration for headless mode

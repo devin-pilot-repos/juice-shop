@@ -5,7 +5,7 @@ import { HomePage } from '../src/pages/HomePage';
 import { Auth } from '../src/utils/auth';
 
 test.describe('Environment-specific tests', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async () => {
     EnvironmentManager.initialize();
   });
 

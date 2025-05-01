@@ -1,4 +1,4 @@
-import { Page, Locator, expect } from '@playwright/test';
+import { Page, Locator } from '@playwright/test';
 
 /**
  * Helper utilities for tests
@@ -57,7 +57,7 @@ export class Helpers {
    * @param page Playwright page object
    * @returns Promise that resolves with all cookies
    */
-  static async getAllCookies(page: Page): Promise<any[]> {
+  static async getAllCookies(page: Page): Promise<{ name: string; value: string; domain: string; path: string; expires: number; httpOnly: boolean; secure: boolean; sameSite?: string }[]> {
     return await page.context().cookies();
   }
 

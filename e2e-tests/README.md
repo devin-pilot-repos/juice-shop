@@ -11,6 +11,7 @@ This framework provides a structured approach to UI automation testing for the O
 - Headless mode support
 - Parallel test execution
 - Reporting
+- Linting with ESLint
 
 ## Project Structure
 
@@ -109,6 +110,28 @@ View test report:
 
 ```bash
 npm run report
+```
+
+## Linting and Verification
+
+The framework includes ESLint for code quality and style checking. ESLint is configured with TypeScript and Playwright-specific rules.
+
+Run linting:
+
+```bash
+npm run lint
+```
+
+Fix linting issues automatically:
+
+```bash
+npm run lint:fix
+```
+
+Verify the project (lint and test):
+
+```bash
+npm run verify
 ```
 
 ## Headless Mode
