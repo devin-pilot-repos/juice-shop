@@ -2,6 +2,8 @@ import { Page } from '@playwright/test';
 import { HomePage } from '../pages/HomePage';
 import { LoginPage } from '../pages/LoginPage';
 import { BasketPage } from '../pages/BasketPage';
+import { RegistrationPage } from '../pages/RegistrationPage';
+import { ScoreBoardPage } from '../pages/ScoreBoardPage';
 
 /**
  * Navigation utilities for tests
@@ -72,5 +74,27 @@ export class Navigation {
   static async goToPath(page: Page, path: string): Promise<void> {
     await page.goto(path);
     await page.waitForLoadState('networkidle');
+  }
+
+  /**
+   * Navigate to the registration page
+   * @param page Playwright page object
+   * @returns Promise that resolves when navigation is complete
+   */
+  static async goToRegistrationPage(page: Page): Promise<RegistrationPage> {
+    const registrationPage = new RegistrationPage(page);
+    await registrationPage.navigate();
+    return registrationPage;
+  }
+
+  /**
+   * Navigate to the score board page
+   * @param page Playwright page object
+   * @returns Promise that resolves when navigation is complete
+   */
+  static async goToScoreBoard(page: Page): Promise<ScoreBoardPage> {
+    const scoreBoardPage = new ScoreBoardPage(page);
+    await scoreBoardPage.navigate();
+    return scoreBoardPage;
   }
 }
