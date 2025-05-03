@@ -33,23 +33,8 @@ module.exports = function (config) {
     colors: true,
     logLevel: config.LOG_INFO,
     autoWatch: true,
-    browsers: ['CustomChrome'],
-    customLaunchers: {
-      CustomChrome: {
-        base: 'Chrome',
-        flags: [
-          '--headless',
-          '--no-sandbox',
-          '--disable-gpu',
-          '--disable-dev-shm-usage',
-          '--disable-setuid-sandbox',
-          '--remote-debugging-port=9222'
-        ],
-        displayName: 'Chrome Headless',
-        chromeDataDir: '/tmp/chrome-data-dir',
-        binary: '/home/ubuntu/.local/bin/google-chrome'
-      }
-    },
+    browsers: ['jsdom'],
+    
     browserNoActivityTimeout: 60000,
     singleRun: false,
     restartOnFileChange: true
