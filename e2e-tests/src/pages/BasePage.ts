@@ -1,4 +1,5 @@
 import { Page, Locator } from '@playwright/test';
+import { getCurrentEnvironment } from '../../config/environments';
 
 /**
  * Base Page Object class that all page objects should extend
@@ -15,7 +16,9 @@ export class BasePage {
    * @param path The path to navigate to (will be appended to the base URL)
    */
   async navigate(path: string = ''): Promise<void> {
-    await this.page.goto(path);
+    const env = getCurrentEnvironment();
+    const url = new URL(path, env.baseUrl).toString();
+    await this.page.goto(url);
   }
 
   /**
