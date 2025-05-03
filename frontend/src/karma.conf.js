@@ -33,18 +33,19 @@ module.exports = function (config) {
     colors: true,
     logLevel: config.LOG_INFO,
     autoWatch: true,
-    browsers: ['CustomChromeHeadless'],
+    browsers: ['CustomChrome'],
     customLaunchers: {
-      CustomChromeHeadless: {
-        base: 'ChromeHeadless',
+      CustomChrome: {
+        base: 'Chrome',
         flags: [
+          '--headless',
           '--no-sandbox',
           '--disable-gpu',
           '--disable-dev-shm-usage',
           '--disable-setuid-sandbox',
           '--remote-debugging-port=9222'
         ],
-        displayName: 'ChromeHeadless',
+        displayName: 'Chrome Headless',
         chromeDataDir: '/tmp/chrome-data-dir',
         binary: '/home/ubuntu/.local/bin/google-chrome'
       }
