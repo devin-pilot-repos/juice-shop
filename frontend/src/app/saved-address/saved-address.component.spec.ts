@@ -19,7 +19,7 @@ import { MatRadioModule } from '@angular/material/radio'
 import { MatDialogModule } from '@angular/material/dialog'
 import { SavedAddressComponent } from './saved-address.component'
 import { AddressComponent } from '../address/address.component'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { MatIconModule } from '@angular/material/icon'
 import { MatTooltipModule } from '@angular/material/tooltip'
 import { MatSnackBar } from '@angular/material/snack-bar'
@@ -33,7 +33,7 @@ describe('SavedAddressComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule,
+      imports: [
         TranslateModule.forRoot(),
         ReactiveFormsModule,
         BrowserAnimationsModule,
@@ -49,7 +49,12 @@ describe('SavedAddressComponent', () => {
         MatTooltipModule,
         MatCheckboxModule,
         SavedAddressComponent, AddressComponent],
-      providers: [{ provide: MatSnackBar, useValue: snackBar }, provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
+      providers: [
+        { provide: MatSnackBar, useValue: snackBar }, 
+        provideRouter([]),
+        provideHttpClient(withInterceptorsFromDi()), 
+        provideHttpClientTesting()
+      ]
     })
       .compileComponents()
   }))

@@ -13,7 +13,7 @@ import { ReactiveFormsModule } from '@angular/forms'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
 
 import { of, throwError } from 'rxjs'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { AddressService } from '../Services/address.service'
 import { AddressCreateComponent } from '../address-create/address-create.component'
 import { MatTableModule } from '@angular/material/table'
@@ -49,9 +49,7 @@ describe('AddressComponent', () => {
     snackBar.open.and.returnValue(null)
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
-        { path: 'delivery-method', component: DeliveryMethodComponent }
-      ]),
+      imports: [
       TranslateModule.forRoot(),
       ReactiveFormsModule,
       BrowserAnimationsModule,

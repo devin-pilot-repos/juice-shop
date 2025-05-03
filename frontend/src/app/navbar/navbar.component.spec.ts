@@ -20,7 +20,7 @@ import { MatIconModule } from '@angular/material/icon'
 import { MatToolbarModule } from '@angular/material/toolbar'
 import { MatButtonModule } from '@angular/material/button'
 import { AdministrationService } from '../Services/administration.service'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { MatMenuModule } from '@angular/material/menu'
 import { MatTooltipModule } from '@angular/material/tooltip'
 import { CookieModule, CookieService } from 'ngy-cookie'
@@ -80,9 +80,7 @@ describe('NavbarComponent', () => {
     loginGuard.tokenDecode.and.returnValue(of(true))
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
-        { path: 'search', component: SearchResultComponent }
-      ]),
+      imports: [
       CookieModule.forRoot(),
       TranslateModule.forRoot(),
       BrowserAnimationsModule,

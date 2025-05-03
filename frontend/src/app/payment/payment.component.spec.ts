@@ -24,7 +24,7 @@ import { BasketService } from '../Services/basket.service'
 import { QrCodeComponent } from '../qr-code/qr-code.component'
 import { MatDialog, MatDialogModule } from '@angular/material/dialog'
 import { PaymentMethodComponent } from '../payment-method/payment-method.component'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { OrderSummaryComponent } from '../order-summary/order-summary.component'
 import { PurchaseBasketComponent } from '../purchase-basket/purchase-basket.component'
 import { CookieService } from 'ngy-cookie'
@@ -80,11 +80,7 @@ describe('PaymentComponent', () => {
     snackBar = jasmine.createSpyObj('MatSnackBar', ['open'])
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
-        { path: 'order-summary', component: OrderSummaryComponent },
-        { path: 'login', component: LoginComponent },
-        { path: 'wallet', component: WalletComponent }
-      ]),
+      imports: [
       TranslateModule.forRoot(),
       ReactiveFormsModule,
       BrowserAnimationsModule,

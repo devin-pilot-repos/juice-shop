@@ -22,7 +22,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox'
 import { MatNativeDateModule } from '@angular/material/core'
 import { of, throwError } from 'rxjs'
 import { AddressComponent } from '../address/address.component'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { EventEmitter } from '@angular/core'
 import { MatIconModule } from '@angular/material/icon'
 import { MatTableModule } from '@angular/material/table'
@@ -59,7 +59,7 @@ describe('RecycleComponent', () => {
     snackBar = jasmine.createSpyObj('MatSnackBar', ['open'])
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule,
+      imports: [
         TranslateModule.forRoot(),
         BrowserAnimationsModule,
         ReactiveFormsModule,
@@ -79,6 +79,7 @@ describe('RecycleComponent', () => {
         MatDividerModule,
         RecycleComponent, AddressComponent],
       providers: [
+        provideRouter([]),
         { provide: RecycleService, useValue: recycleService },
         { provide: UserService, useValue: userService },
         { provide: ConfigurationService, useValue: configurationService },

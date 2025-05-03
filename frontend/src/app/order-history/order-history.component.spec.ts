@@ -8,7 +8,7 @@ import { MatDividerModule } from '@angular/material/divider'
 import { provideHttpClientTesting } from '@angular/common/http/testing'
 import { type ComponentFixture, fakeAsync, TestBed, waitForAsync } from '@angular/core/testing'
 import { ProductService } from '../Services/product.service'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { MatGridListModule } from '@angular/material/grid-list'
 import { MatCardModule } from '@angular/material/card'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
@@ -43,7 +43,7 @@ describe('AccountingComponent', () => {
     orderHistoryService.get.and.returnValue(of([]))
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule,
+      imports: [
         TranslateModule.forRoot(),
         BrowserAnimationsModule,
         MatTableModule,
@@ -58,6 +58,7 @@ describe('AccountingComponent', () => {
         MatExpansionModule,
         OrderHistoryComponent],
       providers: [
+        provideRouter([]),
         { provide: ProductService, useValue: productService },
         { provide: OrderHistoryService, useValue: orderHistoryService },
         { provide: MatDialog, useValue: dialog },
