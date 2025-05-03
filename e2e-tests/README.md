@@ -36,7 +36,12 @@ e2e-tests/
 │       ├── testData.ts      # Test data generation
 │       └── helpers.ts       # Helper functions
 ├── tests/                   # Test files
-│   └── example.spec.ts      # Example test
+│   ├── example.spec.ts      # Example test
+│   ├── login-logout.spec.ts # Login and logout tests
+│   ├── registration.spec.ts # User registration tests
+│   ├── basket-checkout.spec.ts # Basket and checkout tests
+│   ├── security-challenge.spec.ts # Security challenge tests
+│   └── product-search.spec.ts # Product search tests
 ├── playwright.config.ts     # Main Playwright configuration
 ├── package.json             # Project dependencies and scripts
 └── tsconfig.json            # TypeScript configuration
