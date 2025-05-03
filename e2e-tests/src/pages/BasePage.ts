@@ -1,5 +1,5 @@
 import { Page, Locator } from '@playwright/test';
-import { getCurrentEnvironment } from '../../config/environments';
+import { getCurrentEnvironment } from '@config/environments';
 
 /**
  * Base Page Object class that all page objects should extend
