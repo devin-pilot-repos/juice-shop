@@ -50,9 +50,9 @@ describe('SavedAddressComponent', () => {
         MatCheckboxModule,
         SavedAddressComponent, AddressComponent],
       providers: [
-        { provide: MatSnackBar, useValue: snackBar }, 
+        { provide: MatSnackBar, useValue: snackBar },
         provideRouter([]),
-        provideHttpClient(withInterceptorsFromDi()), 
+        provideHttpClient(withInterceptorsFromDi()),
         provideHttpClientTesting()
       ]
     })
