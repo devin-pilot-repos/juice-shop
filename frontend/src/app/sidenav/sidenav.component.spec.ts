@@ -73,7 +73,6 @@ describe('SidenavComponent', () => {
         MatMenuModule,
         MatListModule,
         CookieModule.forRoot(),
-        RouterTestingModule,
         SidenavComponent],
       providers: [
         provideRouter([]),

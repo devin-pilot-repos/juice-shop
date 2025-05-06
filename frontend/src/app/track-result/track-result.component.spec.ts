@@ -30,7 +30,6 @@ describe('TrackResultComponent', () => {
 
     TestBed.configureTestingModule({
       imports: [TranslateModule.forRoot(),
-        RouterTestingModule,
         MatCardModule,
         MatTableModule,
         TrackResultComponent],
