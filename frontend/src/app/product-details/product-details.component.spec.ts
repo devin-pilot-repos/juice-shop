@@ -5,7 +5,7 @@
 
 import { TranslateModule } from '@ngx-translate/core'
 import { ProductReviewEditComponent } from '../product-review-edit/product-review-edit.component'
-import { By } from '@angular/platform-browser'
+import { By, DomSanitizer } from '@angular/platform-browser'
 import { MatDividerModule } from '@angular/material/divider'
 import { UserService } from '../Services/user.service'
 import { ProductReviewService } from '../Services/product-review.service'
@@ -35,6 +35,7 @@ describe('ProductDetailsComponent', () => {
   let productReviewService: any
   let dialog: any
   let dialogRefMock
+  let sanitizer: DomSanitizer
 
   beforeEach(waitForAsync(() => {
     userService = jasmine.createSpyObj('UserService', ['whoAmI'])
@@ -78,6 +79,7 @@ describe('ProductDetailsComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(ProductDetailsComponent)
     component = fixture.componentInstance
+    sanitizer = TestBed.inject(DomSanitizer)
     fixture.autoDetectChanges()
   })
 
@@ -172,5 +174,36 @@ describe('ProductDetailsComponent', () => {
     const buttonDe = fixture.debugElement.query(By.css('div.review-text'))
     buttonDe.triggerEventHandler('click', null)
     expect(productReviewService.get).toHaveBeenCalledWith(42)
+  })
+
+  it('should sanitize HTML to prevent XSS', () => {
+    const maliciousHtml = '<script>alert("XSS")</script>Harmless text'
+    const sanitizedHtml = component.sanitizeHtml(maliciousHtml)
+    
+    expect(sanitizedHtml.toString()).not.toContain('<script>')
+    
+    expect(sanitizedHtml.toString()).toContain('Harmless text')
+  })
+
+  it('should handle null or undefined input in sanitizeHtml', () => {
+    expect(component.sanitizeHtml(null as any)).toBeFalsy()
+    expect(component.sanitizeHtml(undefined as any)).toBeFalsy()
+  })
+
+  it('should properly sanitize product description when displayed', () => {
+    component.data = { 
+      productData: { 
+        id: 42, 
+        name: 'Test Product', 
+        description: '<img src="x" onerror="alert(\'XSS\')">' 
+      } as Product 
+    }
+    component.ngOnInit()
+    fixture.detectChanges()
+    
+    spyOn(component, 'sanitizeHtml').and.callThrough()
+    fixture.detectChanges()
+    
+    expect(component.sanitizeHtml).toHaveBeenCalled()
   })
 })
