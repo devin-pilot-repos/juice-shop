@@ -15,13 +15,17 @@ import { challenges } from '../data/datacache'
 export function retrieveBasket () {
   return (req: Request, res: Response, next: NextFunction) => {
     const id = req.params.id
+    const user = security.authenticatedUsers.from(req)
+    if (!user || !id || id === 'undefined' || id === 'null' || id === 'NaN') {
+      return res.status(403).json({ error: 'Unauthorized access to basket' })
+    }
+    const parsedId = parseInt(id, 10)
+    if (user.bid !== parsedId) {
+      challengeUtils.solveIf(challenges.basketAccessChallenge, () => { return true })
+      return res.status(403).json({ error: 'Unauthorized access to basket' })
+    }
     BasketModel.findOne({ where: { id }, include: [{ model: ProductModel, paranoid: false, as: 'Products' }] })
       .then((basket: BasketModel | null) => {
-        /* jshint eqeqeq:false */
-        challengeUtils.solveIf(challenges.basketAccessChallenge, () => {
-          const user = security.authenticatedUsers.from(req)
-          return user && id && id !== 'undefined' && id !== 'null' && id !== 'NaN' && user.bid && user?.bid != parseInt(id, 10) // eslint-disable-line eqeqeq
-        })
         if (((basket?.Products) != null) && basket.Products.length > 0) {
           for (let i = 0; i < basket.Products.length; i++) {
             basket.Products[i].name = req.__(basket.Products[i].name)

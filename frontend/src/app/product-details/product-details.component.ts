@@ -6,8 +6,9 @@
 import { ProductReviewEditComponent } from '../product-review-edit/product-review-edit.component'
 import { UserService } from '../Services/user.service'
 import { ProductReviewService } from '../Services/product-review.service'
-import { Component, Inject, type OnDestroy, type OnInit } from '@angular/core'
+import { Component, Inject, type OnDestroy, type OnInit, SecurityContext } from '@angular/core'
 import { MAT_DIALOG_DATA, MatDialog, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog'
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { faArrowCircleLeft, faCrown, faPaperPlane, faThumbsUp, faUserEdit } from '@fortawesome/free-solid-svg-icons'
 import { UntypedFormControl, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms'
@@ -41,7 +42,12 @@ export class ProductDetailsComponent implements OnInit, OnDestroy {
   public reviewControl: UntypedFormControl = new UntypedFormControl('', [Validators.maxLength(160)])
   constructor (private readonly dialog: MatDialog,
     @Inject(MAT_DIALOG_DATA) public data: { productData: Product }, private readonly productReviewService: ProductReviewService,
-    private readonly userService: UserService, private readonly snackBar: MatSnackBar, private readonly snackBarHelperService: SnackBarHelperService) { }
+    private readonly userService: UserService, private readonly snackBar: MatSnackBar,
+    private readonly snackBarHelperService: SnackBarHelperService, private readonly sanitizer: DomSanitizer) { }
+
+  sanitizeHtml (html: string): SafeHtml {
+    return this.sanitizer.sanitize(SecurityContext.HTML, html)
+  }
 
   ngOnInit (): void {
     this.data.productData.points = Math.round(this.data.productData.price / 10)
