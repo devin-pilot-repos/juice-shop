@@ -255,7 +255,7 @@ test.describe('Login and Logout', () => {
       await homePage.openAccountMenu();
       await page.screenshot({ path: `after-logout-menu-${Date.now()}.png` });
       
-      const loginButton = page.locator('#navbarLoginButton, #login-link, button:has-text("Login"), span:has-text("Login")');
+      const loginButton = page.locator('#navbarLoginButton, #login-link, button:has-text("Login"), span:has-text("Login")').first();
       await expect(loginButton).toBeVisible({ timeout: 10000 });
     } catch (error) {
       console.log('Error in logout test:', error);
