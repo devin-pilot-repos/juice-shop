@@ -75,24 +75,38 @@ export class LoginPage extends BasePage {
     } catch (error) {
       console.log(`Error waiting for email input: ${error}`);
       
-      const overlay = this.page.locator('.cdk-overlay-container');
-      if (await overlay.isVisible()) {
-        console.log('Overlay detected during navigation, attempting to dismiss...');
+      try {
+        const overlay = this.page.locator('.cdk-overlay-container');
+        const isOverlayVisible = await overlay.isVisible().catch(() => false);
         
-        const closeButton = this.page.locator('button[aria-label="Close Welcome Banner"]');
-        if (await closeButton.isVisible()) {
-          console.log('Close button found, clicking it...');
-          await closeButton.click({ force: true });
-        } else {
-          console.log('No close button found, clicking outside dialog...');
-          await this.page.mouse.click(10, 10);
+        if (isOverlayVisible) {
+          console.log('Overlay detected during navigation, attempting to dismiss...');
+          
+          const closeButton = this.page.locator('button[aria-label="Close Welcome Banner"]');
+          const isCloseButtonVisible = await closeButton.isVisible().catch(() => false);
+          
+          if (isCloseButtonVisible) {
+            console.log('Close button found, clicking it...');
+            await closeButton.click({ force: true }).catch(e => {
+              console.log(`Error clicking close button: ${e}`);
+            });
+          } else {
+            console.log('No close button found, clicking outside dialog...');
+            await this.page.mouse.click(10, 10).catch(e => {
+              console.log(`Error clicking outside dialog: ${e}`);
+            });
+          }
+          
+          await this.page.waitForTimeout(1000).catch(e => {
+            console.log(`Error waiting timeout: ${e}`);
+          });
+          
+          await this.waitForElement(this.emailInput, 10000).catch(e => {
+            console.log(`Still couldn't find email input after dismissing overlay: ${e}`);
+          });
         }
-        
-        await this.page.waitForTimeout(1000);
-        
-        await this.waitForElement(this.emailInput, 10000).catch(e => {
-          console.log(`Still couldn't find email input after dismissing overlay: ${e}`);
-        });
+      } catch (overlayError) {
+        console.log(`Error handling overlay: ${overlayError}`);
       }
     }
   }
