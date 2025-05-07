@@ -57,9 +57,10 @@ export class HomePage extends BasePage {
 
   /**
    * Navigate to the home page
+   * @param path Optional path to navigate to, defaults to '/'
    */
-  async navigate(): Promise<void> {
-    await super.navigate('/');
+  async navigate(path: string = '/'): Promise<void> {
+    await super.navigate(path);
   }
 
   /**
@@ -133,14 +134,87 @@ export class HomePage extends BasePage {
    * Logout
    */
   async logout(): Promise<void> {
-    await this.openAccountMenu();
-    await this.click(this.logoutButton);
+    console.log('Attempting to logout...');
+    
+    await this.page.screenshot({ path: `before-logout-${Date.now()}.png` });
+    
+    try {
+      await this.openAccountMenu();
+      
+      await this.page.waitForTimeout(1000);
+      
+      const logoutSelectors = [
+        '#navbarLogoutButton',
+        '#logout-link',
+        'button[aria-label="Logout"]',
+        '[data-test="logout-button"]',
+        'button:has-text("Logout")',
+        'span:has-text("Logout")',
+        'mat-list-item:has-text("Logout")'
+      ];
+      
+      for (const selector of logoutSelectors) {
+        try {
+          const logoutButton = this.page.locator(selector);
+          if (await logoutButton.isVisible({ timeout: 2000 })) {
+            console.log(`Found logout button with selector: ${selector}`);
+            await logoutButton.click({ timeout: 5000, force: true });
+            await this.waitForNavigation();
+            console.log('Clicked logout button and navigation completed');
+            return;
+          }
+        } catch (error) {
+          console.log(`Error with logout selector ${selector}:`, error);
+        }
+      }
+      
+      console.log('Could not find logout button with any selector, trying JavaScript...');
+      
+      const loggedOut = await this.page.evaluate(() => {
+        const possibleLogoutElements = [
+          document.querySelector('#navbarLogoutButton'),
+          document.querySelector('#logout-link'),
+          document.querySelector('button[aria-label="Logout"]'),
+          ...Array.from(document.querySelectorAll('button')).filter(el => 
+            el.textContent?.includes('Logout') || 
+            el.textContent?.includes('Log out')
+          ),
+          ...Array.from(document.querySelectorAll('span')).filter(el => 
+            el.textContent?.includes('Logout') || 
+            el.textContent?.includes('Log out')
+          )
+        ].filter(Boolean);
+        
+        for (const element of possibleLogoutElements) {
+          try {
+            (element as HTMLElement).click();
+            console.log('Clicked logout element via JavaScript');
+            return true;
+          } catch (e) {
+            console.log('Error clicking element:', e);
+          }
+        }
+        
+        return false;
+      });
+      
+      if (loggedOut) {
+        await this.waitForNavigation();
+        console.log('Logged out via JavaScript click');
+      } else {
+        console.log('Could not find any logout element to click');
+      }
+    } catch (error) {
+      console.log('Error during logout:', error);
+    }
   }
 
   /**
    * Open the account menu
    */
   async openAccountMenu(): Promise<void> {
+    console.log('Attempting to open account menu...');
+    
     await this.page.screenshot({ path: `before-open-account-menu-${Date.now()}.png` });
     
     await this.dismissOverlays(3, 1000);
@@ -149,40 +223,97 @@ export class HomePage extends BasePage {
       '[aria-label="Account"]',
       '#navbarAccount',
       'button.mat-button[aria-label="Account"]',
-      'button.mat-focus-indicator[aria-label="Account"]'
+      'button.mat-focus-indicator[aria-label="Account"]',
+      'button[aria-label="Go to user profile"]',
+      'mat-toolbar button.mat-button',
+      'button:has-text("Account")'
     ];
     
+    let menuOpened = false;
+    
+    // Try clicking with Playwright first
     for (const selector of selectors) {
       try {
         const button = this.page.locator(selector);
-        if (await button.isVisible()) {
+        if (await button.isVisible({ timeout: 2000 })) {
           console.log(`Found account button with selector: ${selector}`);
-          await button.click({ timeout: 5000 });
-          await this.page.waitForTimeout(500);
-          return;
+          await button.click({ timeout: 5000, force: true });
+          await this.page.waitForTimeout(1000);
+          
+          const logoutButton = this.page.locator('#navbarLogoutButton, #logout-link, button:has-text("Logout")');
+          if (await logoutButton.isVisible({ timeout: 2000 })) {
+            console.log('Account menu opened successfully, logout button is visible');
+            menuOpened = true;
+            break;
+          } else {
+            console.log('Clicked account button but logout button is not visible, trying again...');
+            // Try clicking again
+            await button.click({ timeout: 5000, force: true });
+            await this.page.waitForTimeout(1000);
+            
+            if (await logoutButton.isVisible({ timeout: 2000 })) {
+              console.log('Account menu opened successfully on second attempt');
+              menuOpened = true;
+              break;
+            }
+          }
         }
       } catch (error) {
         console.log(`Error with selector ${selector}:`, error);
       }
     }
     
-    console.log('Could not find account menu button with any selector, taking screenshot...');
-    await this.page.screenshot({ path: `account-menu-not-found-${Date.now()}.png` });
+    if (!menuOpened) {
+      console.log('Could not find account menu button with any selector, taking screenshot...');
+      await this.page.screenshot({ path: `account-menu-not-found-${Date.now()}.png` });
+      
+      // Last resort - try JavaScript click on the first button that might be the account menu
+      try {
+        await this.page.evaluate(() => {
+          // Try to find and click the account button
+          const possibleSelectors = [
+            '[aria-label="Account"]',
+            '#navbarAccount',
+            'button[aria-label="Account"]',
+            'button.mat-button',
+            'mat-toolbar button'
+          ];
+          
+          for (const selector of possibleSelectors) {
+            const elements = document.querySelectorAll(selector);
+            for (const element of elements) {
+              const text = element.textContent || '';
+              const ariaLabel = element.getAttribute('aria-label') || '';
+              
+              if (text.includes('Account') || ariaLabel.includes('Account')) {
+                console.log(`Found account button with JS: ${selector}`);
+                (element as HTMLElement).click();
+                return true;
+              }
+            }
+          }
+          
+          const toolbarButtons = document.querySelectorAll('mat-toolbar button');
+          if (toolbarButtons.length > 0) {
+            console.log('Clicking first toolbar button as fallback');
+            (toolbarButtons[0] as HTMLElement).click();
+            return true;
+          }
+          
+          return false;
+        });
+        console.log('Attempted JavaScript click on possible account button');
+        await this.page.waitForTimeout(1000);
+      } catch (jsError) {
+        console.log('JavaScript click failed:', jsError);
+      }
+    }
     
-    // Last resort - try JavaScript click on the first button that might be the account menu
-    try {
-      await this.page.evaluate(() => {
-        const buttons = Array.from(document.querySelectorAll('button'));
-        const accountButton = buttons.find(button => 
-          button.textContent?.includes('Account') || 
-          button.getAttribute('aria-label')?.includes('Account')
-        );
-        if (accountButton) (accountButton as HTMLElement).click();
-      });
-      console.log('Attempted JavaScript click on possible account button');
-      await this.page.waitForTimeout(500);
-    } catch (jsError) {
-      console.log('JavaScript click failed:', jsError);
+    const logoutButton = this.page.locator('#navbarLogoutButton, #logout-link, button:has-text("Logout")');
+    if (await logoutButton.isVisible({ timeout: 2000 })) {
+      console.log('Account menu is open, logout button is visible');
+    } else {
+      console.log('Warning: Account menu may not be open, logout button is not visible');
     }
   }
 
