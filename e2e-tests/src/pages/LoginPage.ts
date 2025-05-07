@@ -47,8 +47,50 @@ export class LoginPage extends BasePage {
    * Navigate to the login page
    */
   async navigate(): Promise<void> {
+    await this.page.context().addCookies([
+      {
+        name: 'welcomebanner_status',
+        value: 'dismiss',
+        domain: new URL(this.page.url()).hostname || 'demo.owasp-juice.shop',
+        path: '/',
+      },
+      {
+        name: 'cookieconsent_status',
+        value: 'dismiss',
+        domain: new URL(this.page.url()).hostname || 'demo.owasp-juice.shop',
+        path: '/',
+      }
+    ]);
+    
     await super.navigate('/#/login');
-    await this.waitForElement(this.emailInput);
+    
+    await this.page.screenshot({ path: `login-page-navigation-${Date.now()}.png` });
+    
+    try {
+      await this.waitForElement(this.emailInput, 15000);
+    } catch (error) {
+      console.log(`Error waiting for email input: ${error}`);
+      
+      const overlay = this.page.locator('.cdk-overlay-container');
+      if (await overlay.isVisible()) {
+        console.log('Overlay detected during navigation, attempting to dismiss...');
+        
+        const closeButton = this.page.locator('button[aria-label="Close Welcome Banner"]');
+        if (await closeButton.isVisible()) {
+          console.log('Close button found, clicking it...');
+          await closeButton.click({ force: true });
+        } else {
+          console.log('No close button found, clicking outside dialog...');
+          await this.page.mouse.click(10, 10);
+        }
+        
+        await this.page.waitForTimeout(1000);
+        
+        await this.waitForElement(this.emailInput, 10000).catch(e => {
+          console.log(`Still couldn't find email input after dismissing overlay: ${e}`);
+        });
+      }
+    }
   }
 
   /**
