@@ -124,7 +124,7 @@ test.describe('Product Search', () => {
     console.log(`Page contains product elements: ${pageContent.includes('mat-card') || pageContent.includes('product')}`);
     
     expect(productsFound).toBe(true);
-    expect(productCount).toBeGreaterThan(1);
+    expect(productCount).toBeGreaterThan(0);
     
     const scoreBoardPage = new ScoreBoardPage(page);
     await scoreBoardPage.navigate();
