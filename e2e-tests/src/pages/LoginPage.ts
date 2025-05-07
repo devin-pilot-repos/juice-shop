@@ -120,25 +120,39 @@ export class LoginPage extends BasePage {
   async login(email: string, password: string, rememberMe: boolean = false): Promise<void> {
     try {
       const welcomeBanner = this.page.locator('.cdk-overlay-container');
-      if (await welcomeBanner.isVisible()) {
+      const isWelcomeBannerVisible = await welcomeBanner.isVisible().catch(() => false);
+      
+      if (isWelcomeBannerVisible) {
         console.log('Welcome banner detected before login, attempting to dismiss...');
         
         const closeButton = this.page.locator('button[aria-label="Close Welcome Banner"]');
-        if (await closeButton.isVisible()) {
+        const isCloseButtonVisible = await closeButton.isVisible().catch(() => false);
+        
+        if (isCloseButtonVisible) {
           console.log('Close button found, clicking it...');
-          await closeButton.click({ force: true });
+          await closeButton.click({ force: true }).catch(e => {
+            console.log(`Error clicking close button: ${e}`);
+          });
         } else {
           const xButton = this.page.locator('.close-dialog');
-          if (await xButton.isVisible()) {
+          const isXButtonVisible = await xButton.isVisible().catch(() => false);
+          
+          if (isXButtonVisible) {
             console.log('X button found, clicking it...');
-            await xButton.click({ force: true });
+            await xButton.click({ force: true }).catch(e => {
+              console.log(`Error clicking X button: ${e}`);
+            });
           } else {
             console.log('No close buttons found, clicking outside dialog...');
-            await this.page.mouse.click(10, 10);
+            await this.page.mouse.click(10, 10).catch(e => {
+              console.log(`Error clicking outside dialog: ${e}`);
+            });
           }
         }
         
-        await this.page.waitForTimeout(1000);
+        await this.page.waitForTimeout(1000).catch(e => {
+          console.log(`Error waiting timeout: ${e}`);
+        });
       }
     } catch (error) {
       console.log('Error handling welcome dialog:', error);
