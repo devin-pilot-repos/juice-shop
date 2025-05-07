@@ -12,11 +12,8 @@ test.describe('Connectivity Test', () => {
     console.log(`Page title: ${title}`);
     
     const logo = page.locator('.logo');
-    if (await logo.isVisible()) {
-      console.log('Logo is visible');
-    } else {
-      console.log('Logo is not visible');
-    }
+    const isLogoVisible = await logo.isVisible();
+    console.log(`Logo is ${isLogoVisible ? 'visible' : 'not visible'}`);
     
     await page.screenshot({ path: 'connectivity-test.png' });
     
