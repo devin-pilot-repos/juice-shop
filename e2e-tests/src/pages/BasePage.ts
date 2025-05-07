@@ -112,7 +112,45 @@ export class BasePage {
    * @param value Value to fill
    */
   async fill(locator: Locator, value: string): Promise<void> {
-    await locator.fill(value);
+    try {
+      const overlay = this.page.locator('.cdk-overlay-container');
+      if (await overlay.isVisible()) {
+        console.log('Overlay detected before fill, attempting to dismiss...');
+        
+        const closeButton = this.page.locator('button[aria-label="Close Welcome Banner"]');
+        if (await closeButton.isVisible()) {
+          console.log('Close button found, clicking it...');
+          await closeButton.click({ force: true });
+        } else {
+          console.log('No close button found, clicking outside dialog...');
+          await this.page.mouse.click(10, 10);
+        }
+        
+        await this.page.waitForTimeout(1000);
+      }
+      
+      await locator.fill(value);
+    } catch (error) {
+      console.log(`Error filling element: ${error}`);
+      
+      try {
+        await locator.fill(value, { timeout: 5000 });
+        console.log('Fill with timeout successful');
+      } catch (timeoutError) {
+        console.log(`Fill with timeout failed: ${timeoutError}`);
+        
+        try {
+          await this.page.evaluate(([selector, val]) => {
+            const element = document.querySelector(selector) as HTMLInputElement;
+            if (element) element.value = val;
+          }, [locator.toString(), value]);
+          console.log('JavaScript fill attempted');
+        } catch (jsError) {
+          console.log(`JavaScript fill failed: ${jsError}`);
+          throw error; // Re-throw the original error
+        }
+      }
+    }
   }
 
   /**

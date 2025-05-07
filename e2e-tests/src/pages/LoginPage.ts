@@ -36,11 +36,11 @@ export class LoginPage extends BasePage {
    */
   constructor(page: Page) {
     super(page);
-    this.emailInput = page.locator('input[name="email"]');
-    this.passwordInput = page.locator('input[name="password"]');
-    this.loginButton = page.locator('button[id="loginButton"]');
-    this.rememberMeCheckbox = page.locator('mat-checkbox[id="rememberMe"]');
-    this.errorMessage = page.locator('div.error');
+    this.emailInput = page.locator('input[name="email"], input#email, input[id="email"]').first();
+    this.passwordInput = page.locator('input[name="password"], input#password, input[id="password"]').first();
+    this.loginButton = page.locator('button[id="loginButton"], #loginButton, button:has-text("Log in")').first();
+    this.rememberMeCheckbox = page.locator('mat-checkbox[id="rememberMe"], #rememberMe, input[id="rememberMe-input"]').first();
+    this.errorMessage = page.locator('div.error, .error-message, mat-error').first();
   }
 
   /**

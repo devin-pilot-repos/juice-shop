@@ -1,6 +1,8 @@
 /**
  * Environment configuration for the Playwright tests
  */
+import 'dotenv/config';
+
 export type Environment = {
   name: string;
   baseUrl: string;
@@ -21,7 +23,7 @@ export const environments: Record<string, Environment> = {
   },
   tunnel: {
     name: 'Tunnel Environment',
-    baseUrl: process.env.TUNNEL_BASE_URL || 'http://localhost:3000',
+    baseUrl: process.env.TUNNEL_BASE_URL || 'https://demo.owasp-juice.shop',
     credentials: {
       admin: { email: process.env.ADMIN_EMAIL || 'admin@juice-sh.op', password: process.env.ADMIN_PASSWORD || 'admin123' },
       customer: { email: process.env.CUSTOMER_EMAIL || 'demo@juice-sh.op', password: process.env.CUSTOMER_PASSWORD || 'demo' }
