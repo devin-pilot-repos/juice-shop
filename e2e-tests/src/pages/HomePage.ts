@@ -211,10 +211,16 @@ export class HomePage extends BasePage {
       await this.page.waitForSelector('#searchQuery input:not([disabled])', { timeout: 10000 });
       console.log('Search input is ready');
       
-      // Fill the input field - this will now work since searchBox points to the input element
-      await this.searchBox.fill(query);
-      console.log('Filled search query');
+      await this.page.evaluate((searchText) => {
+        const input = document.querySelector('#searchQuery input');
+        if (input) {
+          (input as HTMLInputElement).value = searchText;
+          (input as HTMLInputElement).dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }, query);
+      console.log('Set search query using JavaScript');
       
+      // Click the search button
       await this.searchButton.click({ timeout: 15000 });
       console.log('Clicked search button');
       
@@ -227,8 +233,10 @@ export class HomePage extends BasePage {
         await this.page.screenshot({ path: `search-error-${Date.now()}.png` });
         
         console.log('Trying alternative search approach...');
-        const searchInput = this.page.locator('#searchQuery input');
-        await searchInput.fill(query, { timeout: 10000 });
+        
+        await this.page.locator('#searchQuery').click({ force: true, timeout: 10000 });
+        await this.page.keyboard.type(query, { delay: 100 });
+        console.log('Typed search query using keyboard');
         
         await this.searchButton.click({ force: true, timeout: 15000 });
         
