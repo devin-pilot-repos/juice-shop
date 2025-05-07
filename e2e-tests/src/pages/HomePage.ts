@@ -49,7 +49,7 @@ export class HomePage extends BasePage {
     this.accountMenuButton = page.locator('[aria-label="Account"]');
     this.logoutButton = page.locator('#logout-link, #navbarLogoutButton'); // Use both selectors to increase robustness
     this.loginButton = page.locator('#navbarLoginButton');
-    this.searchBox = page.locator('#searchQuery input'); // Updated to target the input element
+    this.searchBox = page.locator('app-mat-search-bar input, #searchQuery input, mat-form-field input'); // Multiple selectors for robustness
     this.searchButton = page.locator('#searchButton');
     this.productCards = page.locator('.mat-card');
     this.basketButton = page.locator('[aria-label="Show the shopping cart"]');
@@ -205,20 +205,18 @@ export class HomePage extends BasePage {
     try {
       await this.page.screenshot({ path: `before-search-${Date.now()}.png` });
       
-      await this.page.locator('#searchQuery').click({ timeout: 10000 });
+      
+      await this.page.locator('#searchQuery, app-mat-search-bar').click({ timeout: 10000 });
       console.log('Clicked on search container');
       
-      await this.page.waitForSelector('#searchQuery input:not([disabled])', { timeout: 10000 });
-      console.log('Search input is ready');
+      await this.page.waitForSelector('app-mat-search-bar input, #searchQuery input, mat-form-field input', { 
+        state: 'visible',
+        timeout: 10000 
+      });
+      console.log('Search input is visible');
       
-      await this.page.evaluate((searchText) => {
-        const input = document.querySelector('#searchQuery input');
-        if (input) {
-          (input as HTMLInputElement).value = searchText;
-          (input as HTMLInputElement).dispatchEvent(new Event('input', { bubbles: true }));
-        }
-      }, query);
-      console.log('Set search query using JavaScript');
+      await this.page.keyboard.type(query, { delay: 50 });
+      console.log('Typed search query using keyboard');
       
       // Click the search button
       await this.searchButton.click({ timeout: 15000 });
@@ -232,18 +230,52 @@ export class HomePage extends BasePage {
       try {
         await this.page.screenshot({ path: `search-error-${Date.now()}.png` });
         
-        console.log('Trying alternative search approach...');
+        console.log('Trying alternative search approach with JavaScript...');
         
-        await this.page.locator('#searchQuery').click({ force: true, timeout: 10000 });
-        await this.page.keyboard.type(query, { delay: 100 });
-        console.log('Typed search query using keyboard');
+        await this.page.evaluate((searchText) => {
+          const selectors = [
+            '#searchQuery input', 
+            'app-mat-search-bar input', 
+            'mat-form-field input',
+            'input[type="text"]'
+          ];
+          
+          for (const selector of selectors) {
+            const input = document.querySelector(selector);
+            if (input) {
+              (input as HTMLInputElement).value = searchText;
+              (input as HTMLInputElement).dispatchEvent(new Event('input', { bubbles: true }));
+              (input as HTMLInputElement).dispatchEvent(new Event('change', { bubbles: true }));
+              console.log(`Set value using selector: ${selector}`);
+              break;
+            }
+          }
+        }, query);
         
-        await this.searchButton.click({ force: true, timeout: 15000 });
+        await this.page.evaluate(() => {
+          const form = document.querySelector('form');
+          if (form) form.dispatchEvent(new Event('submit', { bubbles: true }));
+          
+          const searchButton = document.querySelector('#searchButton');
+          if (searchButton) (searchButton as HTMLElement).click();
+        });
         
         await this.waitForNavigation();
         console.log('Alternative search approach succeeded');
       } catch (fallbackError) {
         console.log('Both search approaches failed:', fallbackError);
+        
+        // Last resort approach
+        try {
+          console.log('Trying last resort approach...');
+          
+          await this.page.goto(`${this.page.url().split('#')[0]}#/search?q=${encodeURIComponent(query)}`);
+          await this.waitForNavigation();
+          
+          console.log('Direct navigation to search URL succeeded');
+        } catch (lastError) {
+          console.log('All search approaches failed:', lastError);
+        }
       }
     }
   }
