@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { getCurrentEnvironment } from '../config/environments';
+import { EnvironmentManager } from '../src/utils/environmentManager';
 
 test.describe('Connectivity Test', () => {
   test('can access public Juice Shop instance', async ({ page }) => {
     test.setTimeout(60000);
     
-    const environment = getCurrentEnvironment();
+    const environment = EnvironmentManager.getEnvironment();
     await page.goto(environment.baseUrl);
     
     const title = await page.title();
