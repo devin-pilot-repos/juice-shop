@@ -2,7 +2,7 @@
  * Environment configurations for different test environments
  */
 
-import { getEnv } from './dotenv.config';
+import { getEnv } from './dotenv.config.cjs';
 
 export interface Environment {
   name: string;
