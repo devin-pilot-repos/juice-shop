@@ -64,7 +64,11 @@ export class LoginPage extends BasePage {
     
     await super.navigate('/#/login');
     
-    await this.page.screenshot({ path: `login-page-navigation-${Date.now()}.png` });
+    try {
+      await this.page.screenshot({ path: `login-page-navigation-${Date.now()}.png` });
+    } catch (error) {
+      console.log('Failed to take screenshot during navigation:', error);
+    }
     
     try {
       await this.waitForElement(this.emailInput, 15000);
@@ -134,7 +138,11 @@ export class LoginPage extends BasePage {
     }
     
     // Take screenshot before clicking login button
-    await this.page.screenshot({ path: `before-login-click-${Date.now()}.png` });
+    try {
+      await this.page.screenshot({ path: `before-login-click-${Date.now()}.png` });
+    } catch (error) {
+      console.log('Failed to take screenshot before login click:', error);
+    }
     
     try {
       await this.loginButton.click({ timeout: 10000 });
@@ -143,7 +151,11 @@ export class LoginPage extends BasePage {
       await this.loginButton.click({ force: true, timeout: 5000 });
     }
     
-    await this.page.screenshot({ path: `after-login-attempt-${Date.now()}.png` });
+    try {
+      await this.page.screenshot({ path: `after-login-attempt-${Date.now()}.png` });
+    } catch (error) {
+      console.log('Failed to take screenshot after login attempt:', error);
+    }
   }
 
   /**
