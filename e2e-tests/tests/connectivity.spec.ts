@@ -27,7 +27,7 @@ test.describe('Connectivity Test', () => {
       console.log('No welcome banner to dismiss or error dismissing it:', error);
     }
     
-    const navbarText = await page.locator('mat-toolbar:has-text("OWASP Juice Shop")').textContent();
+    const navbarText = await page.locator('mat-toolbar.mat-primary').textContent();
     console.log(`Navbar text: ${navbarText}`);
     expect(navbarText).toContain('OWASP Juice Shop');
     
