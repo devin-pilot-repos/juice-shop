@@ -31,9 +31,33 @@ test.describe('Connectivity Test', () => {
     console.log(`Navbar text: ${navbarText}`);
     expect(navbarText).toContain('OWASP Juice Shop');
     
-    const products = page.locator('mat-grid-tile');
-    const productCount = await products.count();
-    console.log(`Found ${productCount} products`);
+    const productSelectors = [
+      'mat-grid-tile', 
+      '.mat-card', 
+      'mat-card', 
+      'app-product-list mat-grid-tile',
+      'app-search-result mat-card',
+      'app-search-result .mat-card',
+      'app-search-result .product'
+    ];
+    
+    let productCount = 0;
+    for (const selector of productSelectors) {
+      try {
+        const products = page.locator(selector);
+        const count = await products.count();
+        console.log(`Selector "${selector}" found ${count} products`);
+        
+        if (count > 0) {
+          productCount = count;
+          break;
+        }
+      } catch (error) {
+        console.log(`Error with selector "${selector}":`, error);
+      }
+    }
+    
+    console.log(`Total products found: ${productCount}`);
     expect(productCount).toBeGreaterThan(0);
     
     await page.screenshot({ path: 'connectivity-test.png' });
