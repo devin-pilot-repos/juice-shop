@@ -19,7 +19,7 @@ export class HomePage extends BasePage {
   constructor(page: Page) {
     super(page);
     this.navbarAccount = page.locator('#navbarAccount');
-    this.searchBox = page.locator('#searchQuery');
+    this.searchBox = page.locator('#searchQuery input');
     this.searchButton = page.locator('#searchButton');
     this.productCards = page.locator('.mat-card');
     this.basketButton = page.locator('[aria-label="Show the shopping cart"]');
@@ -31,7 +31,7 @@ export class HomePage extends BasePage {
    */
   async navigate(): Promise<void> {
     await super.navigate('/');
-    await this.waitForElement(this.searchBox);
+    await this.waitForElement(this.page.locator('#searchQuery'));
   }
 
   /**
@@ -39,9 +39,12 @@ export class HomePage extends BasePage {
    * @param query Search query
    */
   async searchProduct(query: string): Promise<void> {
+    await this.page.locator('#searchQuery').click();
+    await this.page.waitForSelector('#searchQuery input:not([disabled])');
+    // Now fill the search query
     await this.searchBox.fill(query);
     await this.searchButton.click();
-    await this.page.waitForNavigation();
+    await this.waitForNavigation();
   }
 
   /**
@@ -64,7 +67,7 @@ export class HomePage extends BasePage {
    */
   async goToBasket(): Promise<void> {
     await this.basketButton.click();
-    await this.page.waitForNavigation();
+    await this.waitForNavigation();
   }
 
   /**
@@ -73,6 +76,6 @@ export class HomePage extends BasePage {
   async logout(): Promise<void> {
     await this.openAccountMenu();
     await this.logoutButton.click();
-    await this.page.waitForNavigation();
+    await this.waitForNavigation();
   }
 }
