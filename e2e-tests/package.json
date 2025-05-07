@@ -1,0 +1,22 @@
+{
+  "name": "juice-shop-e2e-tests",
+  "version": "1.0.0",
+  "description": "E2E tests for OWASP Juice Shop",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:debug": "playwright test debug-login.spec.ts --project=chromium",
+    "test:login": "playwright test login-logout.spec.ts --project=chromium"
+  },
+  "keywords": [
+    "e2e",
+    "testing",
+    "playwright",
+    "juice-shop"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.52.0"
+  }
+}
