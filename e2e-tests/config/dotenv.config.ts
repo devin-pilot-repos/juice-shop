@@ -1,28 +1,20 @@
+/**
+ * Load environment variables from .env file
+ */
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
-
-const isESM = typeof import.meta !== 'undefined';
-
-let dirPath;
-if (isESM) {
-  const __filename = fileURLToPath(import.meta.url);
-  dirPath = path.dirname(__filename);
-} else {
-  dirPath = __dirname;
-}
 
 /**
  * Load environment variables from .env file
  * This function tries multiple possible paths to find the .env file
  */
-export function loadEnv() {
+export function loadEnv(): void {
   const possiblePaths = [
-    path.resolve(dirPath, '../.env'),           // Standard path
-    path.resolve(dirPath, '../../.env'),        // One level up
-    path.resolve(dirPath, './.env'),            // Same directory
-    path.resolve(process.cwd(), '.env'),        // Current working directory
+    path.resolve(__dirname, '../.env'),           // Standard path
+    path.resolve(__dirname, '../../.env'),        // One level up
+    path.resolve(__dirname, './.env'),            // Same directory
+    path.resolve(process.cwd(), '.env'),          // Current working directory
     path.resolve(process.cwd(), 'e2e-tests/.env') // From project root
   ];
 
@@ -57,7 +49,7 @@ export function loadEnv() {
  * @param defaultValue The default value if the environment variable is not set
  * @returns The environment variable value or the default value
  */
-export function getEnv(key, defaultValue = '') {
+export function getEnv(key: string, defaultValue: string = ''): string {
   return process.env[key] || defaultValue;
 }
 
