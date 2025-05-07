@@ -57,7 +57,44 @@ export class BasePage {
    * @param timeout Timeout in milliseconds
    */
   async waitForElement(locator: Locator, timeout?: number): Promise<void> {
-    await locator.waitFor({ state: 'visible', timeout });
+    try {
+      const overlay = this.page.locator('.cdk-overlay-container');
+      if (await overlay.isVisible()) {
+        console.log('Overlay detected before waitForElement, attempting to dismiss...');
+        
+        const closeButton = this.page.locator('button[aria-label="Close Welcome Banner"]');
+        if (await closeButton.isVisible()) {
+          console.log('Close button found, clicking it...');
+          await closeButton.click({ force: true });
+        } else {
+          console.log('No close button found, clicking outside dialog...');
+          await this.page.mouse.click(10, 10);
+        }
+        
+        await this.page.waitForTimeout(1000);
+      }
+      
+      await this.page.screenshot({ path: `before-wait-for-element-${Date.now()}.png` });
+      
+      await locator.waitFor({ state: 'visible', timeout: timeout || 10000 });
+    } catch (error) {
+      console.log(`Error waiting for element: ${error}`);
+      
+      await this.page.screenshot({ path: `wait-for-element-error-${Date.now()}.png` });
+      
+      const exists = await locator.count() > 0;
+      if (exists) {
+        console.log('Element exists but is not visible, trying to scroll to it...');
+        try {
+          await locator.scrollIntoViewIfNeeded();
+          await this.page.waitForTimeout(1000);
+        } catch (scrollError) {
+          console.log(`Error scrolling to element: ${scrollError}`);
+        }
+      }
+      
+      throw error;
+    }
   }
 
   /**
