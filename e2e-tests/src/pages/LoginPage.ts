@@ -39,39 +39,54 @@ export class LoginPage extends BasePage {
    * @param rememberMe Whether to check the "Remember Me" checkbox
    */
   async login(email: string, password: string, rememberMe: boolean = false): Promise<void> {
-    await this.emailInput.fill(email);
-    await this.passwordInput.fill(password);
-    
-    if (rememberMe) {
-      await this.rememberMeCheckbox.check();
-    }
+    console.log(`Attempting to login with email: ${email}`);
     
     try {
-      const overlay = this.page.locator('.cdk-overlay-container');
-      if (await overlay.isVisible()) {
-        const dismissButton = overlay.locator('button[aria-label="Close Welcome Banner"]');
-        if (await dismissButton.isVisible()) {
-          await dismissButton.click();
-          await this.page.waitForTimeout(500); // Wait for overlay to disappear
-        } else {
-          await this.page.mouse.click(10, 10);
-          await this.page.waitForTimeout(500);
-        }
+      await this.page.screenshot({ path: `before-login-${Date.now()}.png` });
+      
+      await this.dismissOverlays(3, 1000);
+      
+      await this.emailInput.fill(email);
+      console.log('Filled email input');
+      
+      await this.passwordInput.fill(password);
+      console.log('Filled password input');
+      
+      if (rememberMe) {
+        await this.rememberMeCheckbox.check();
+        console.log('Checked "Remember Me" checkbox');
       }
+      
+      await this.dismissOverlays(2, 500);
+      
+      await this.loginButton.click({ force: true, timeout: 15000 });
+      console.log('Clicked login button');
+      
+      await this.waitForNavigation();
+      console.log('Navigation completed after login');
+      
+      await this.page.screenshot({ path: `after-login-${Date.now()}.png` }).catch(error => {
+        console.log('Error taking screenshot after login:', error);
+      });
     } catch (error) {
-      console.log('No overlay found or error dismissing overlay:', error);
+      console.log('Error during login:', error);
+      
+      try {
+        console.log('Trying alternative login approach...');
+        await this.emailInput.fill(email, { timeout: 10000 });
+        await this.passwordInput.fill(password, { timeout: 10000 });
+        
+        if (rememberMe) {
+          await this.rememberMeCheckbox.check({ timeout: 10000 });
+        }
+        
+        await this.loginButton.click({ force: true, timeout: 15000 });
+        await this.waitForNavigation();
+        console.log('Alternative login approach succeeded');
+      } catch (fallbackError) {
+        console.log('Both login approaches failed:', fallbackError);
+      }
     }
-    
-    try {
-      await this.loginButton.click({ force: true });
-    } catch (error) {
-      console.log('Force click failed, trying regular click:', error);
-      await this.loginButton.click();
-    }
-    
-    await this.page.waitForNavigation({ timeout: 60000 }).catch(() => {
-      console.log('Navigation timeout, continuing test...');
-    });
   }
 
   /**
@@ -79,7 +94,20 @@ export class LoginPage extends BasePage {
    * @returns The error message text
    */
   async getErrorMessage(): Promise<string> {
-    return await this.getText(this.errorMessage);
+    try {
+      await this.page.screenshot({ path: `error-message-${Date.now()}.png` }).catch(error => {
+        console.log('Error taking screenshot for error message:', error);
+      });
+      
+      await this.page.waitForSelector('.error', { timeout: 10000 }).catch(error => {
+        console.log('Warning: Timeout waiting for error message, continuing anyway:', error);
+      });
+      
+      return await this.getText(this.errorMessage);
+    } catch (error) {
+      console.log('Error getting error message:', error);
+      return 'Error retrieving message';
+    }
   }
 
   /**

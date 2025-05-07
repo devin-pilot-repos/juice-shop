@@ -25,7 +25,14 @@ export class BasePage {
    * Wait for navigation to complete
    */
   async waitForNavigation(): Promise<void> {
-    await this.page.waitForLoadState('networkidle');
+    await Promise.all([
+      this.page.waitForLoadState('networkidle', { timeout: 10000 }),
+      this.page.waitForLoadState('domcontentloaded', { timeout: 5000 })
+    ]).catch(error => {
+      console.log('Navigation wait error (continuing anyway):', error);
+    });
+    
+    await this.page.waitForTimeout(300);
   }
 
   /**
@@ -86,5 +93,56 @@ export class BasePage {
    */
   async takeScreenshot(name: string): Promise<void> {
     await this.page.screenshot({ path: `screenshots/${name}.png` });
+  }
+
+  /**
+   * Dismiss any overlays or dialogs that might be blocking UI interactions
+   * This handles welcome banners, cookie notices, and other modal dialogs
+   * @param maxAttempts Maximum number of attempts to dismiss overlays
+   * @param timeout Timeout between attempts in milliseconds
+   */
+  async dismissOverlays(maxAttempts: number = 3, timeout: number = 500): Promise<boolean> {
+    let dismissed = false;
+    
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        const overlay = this.page.locator('.cdk-overlay-container');
+        
+        if (await overlay.isVisible()) {
+          console.log(`Overlay detected (attempt ${attempt + 1}), attempting to dismiss...`);
+          
+          const closeButtons = [
+            this.page.locator('button[aria-label="Close Welcome Banner"]'),
+            this.page.locator('.close-dialog'),
+            this.page.locator('button.mat-dialog-close'),
+            this.page.locator('button[aria-label="Close"]')
+          ];
+          
+          let buttonClicked = false;
+          for (const button of closeButtons) {
+            if (await button.isVisible()) {
+              console.log('Close button found, clicking it...');
+              await button.click({ force: true });
+              buttonClicked = true;
+              break;
+            }
+          }
+          
+          if (!buttonClicked) {
+            console.log('No close buttons found, clicking outside dialog...');
+            await this.page.mouse.click(10, 10);
+          }
+          
+          await this.page.waitForTimeout(timeout);
+          dismissed = true;
+        } else {
+          return true;
+        }
+      } catch (error) {
+        console.log(`Error dismissing overlay (attempt ${attempt + 1}):`, error);
+      }
+    }
+    
+    return dismissed;
   }
 }

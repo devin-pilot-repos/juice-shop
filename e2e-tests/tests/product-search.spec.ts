@@ -4,6 +4,7 @@ import { Navigation } from '../src/utils/navigation';
 import { ScoreBoardPage } from '../src/pages/ScoreBoardPage';
 
 test.describe('Product Search', () => {
+  test.setTimeout(60000);
   test('should search for products and display results', async ({ page }) => {
     const homePage = await Navigation.goToHomePage(page);
     

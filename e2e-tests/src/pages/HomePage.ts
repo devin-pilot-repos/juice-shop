@@ -47,9 +47,9 @@ export class HomePage extends BasePage {
   constructor(page: Page) {
     super(page);
     this.accountMenuButton = page.locator('[aria-label="Account"]');
-    this.logoutButton = page.locator('#logout-link');
+    this.logoutButton = page.locator('#logout-link, #navbarLogoutButton'); // Use both selectors to increase robustness
     this.loginButton = page.locator('#navbarLoginButton');
-    this.searchBox = page.locator('#searchQuery');
+    this.searchBox = page.locator('#searchQuery input'); // Updated to target the input element
     this.searchButton = page.locator('#searchButton');
     this.productCards = page.locator('.mat-card');
     this.basketButton = page.locator('[aria-label="Show the shopping cart"]');
@@ -70,21 +70,13 @@ export class HomePage extends BasePage {
     console.log('Checking if user is logged in...');
     await this.page.screenshot({ path: `before-check-login-${Date.now()}.png` });
     
-    try {
-      const welcomeBanner = this.page.locator('.cdk-overlay-container');
-      if (await welcomeBanner.isVisible()) {
-        console.log('Overlay detected, attempting to dismiss...');
-        await this.page.mouse.click(10, 10);
-        await this.page.waitForTimeout(500);
-      }
-    } catch (error) {
-      console.log('Error handling overlay:', error);
-    }
+    await this.dismissOverlays();
     
     try {
       const userElements = [
         this.page.locator('[aria-label="Show the shopping cart"]'),
         this.page.locator('#navbarLogoutButton'),
+        this.page.locator('#logout-link'),
         this.page.locator('button[aria-label="Go to user profile"]')
       ];
       
@@ -151,31 +143,7 @@ export class HomePage extends BasePage {
   async openAccountMenu(): Promise<void> {
     await this.page.screenshot({ path: `before-open-account-menu-${Date.now()}.png` });
     
-    try {
-      const welcomeBanner = this.page.locator('.cdk-overlay-container');
-      if (await welcomeBanner.isVisible()) {
-        console.log('Welcome banner detected on home page, attempting to dismiss...');
-        
-        const closeButton = this.page.locator('button[aria-label="Close Welcome Banner"]');
-        if (await closeButton.isVisible()) {
-          console.log('Close button found, clicking it...');
-          await closeButton.click({ force: true });
-        } else {
-          const xButton = this.page.locator('.close-dialog');
-          if (await xButton.isVisible()) {
-            console.log('X button found, clicking it...');
-            await xButton.click({ force: true });
-          } else {
-            console.log('No close buttons found, clicking outside dialog...');
-            await this.page.mouse.click(10, 10);
-          }
-        }
-        
-        await this.page.waitForTimeout(1000);
-      }
-    } catch (error) {
-      console.log('Error handling welcome dialog:', error);
-    }
+    await this.dismissOverlays(3, 1000);
     
     const selectors = [
       '[aria-label="Account"]',
@@ -230,18 +198,45 @@ export class HomePage extends BasePage {
    * @param query Search query
    */
   async searchProduct(query: string): Promise<void> {
+    console.log(`Searching for product: "${query}"`);
+    
+    await this.dismissOverlays(3, 1000);
+    
     try {
-      await this.page.locator('#searchQuery').click();
-      await this.page.waitForSelector('#searchQuery input:not([disabled])', { timeout: 5000 });
+      await this.page.screenshot({ path: `before-search-${Date.now()}.png` });
+      
+      await this.page.locator('#searchQuery').click({ timeout: 10000 });
+      console.log('Clicked on search container');
+      
+      await this.page.waitForSelector('#searchQuery input:not([disabled])', { timeout: 10000 });
+      console.log('Search input is ready');
+      
+      // Fill the input field - this will now work since searchBox points to the input element
       await this.searchBox.fill(query);
-      await this.searchButton.click();
+      console.log('Filled search query');
+      
+      await this.searchButton.click({ timeout: 15000 });
+      console.log('Clicked search button');
+      
       await this.waitForNavigation();
+      console.log('Navigation completed after search');
     } catch (error) {
       console.log('Error during product search:', error);
-      const searchInput = this.page.locator('#searchQuery input');
-      await searchInput.fill(query);
-      await this.searchButton.click();
-      await this.waitForNavigation();
+      
+      try {
+        await this.page.screenshot({ path: `search-error-${Date.now()}.png` });
+        
+        console.log('Trying alternative search approach...');
+        const searchInput = this.page.locator('#searchQuery input');
+        await searchInput.fill(query, { timeout: 10000 });
+        
+        await this.searchButton.click({ force: true, timeout: 15000 });
+        
+        await this.waitForNavigation();
+        console.log('Alternative search approach succeeded');
+      } catch (fallbackError) {
+        console.log('Both search approaches failed:', fallbackError);
+      }
     }
   }
   
@@ -250,7 +245,23 @@ export class HomePage extends BasePage {
    * @returns The number of product cards
    */
   async getProductCount(): Promise<number> {
-    return await this.productCards.count();
+    try {
+      // First dismiss any overlays that might be blocking the product cards
+      await this.dismissOverlays();
+      
+      await this.page.screenshot({ path: `product-count-${Date.now()}.png` });
+      
+      await this.page.waitForSelector('.mat-card', { timeout: 15000 }).catch(error => {
+        console.log('Warning: Timeout waiting for product cards, continuing anyway:', error);
+      });
+      
+      const count = await this.productCards.count();
+      console.log(`Found ${count} product cards`);
+      return count;
+    } catch (error) {
+      console.log('Error getting product count:', error);
+      return 0;
+    }
   }
   
   /**

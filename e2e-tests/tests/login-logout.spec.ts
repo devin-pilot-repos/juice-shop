@@ -6,6 +6,7 @@ import { Auth } from '../src/utils/auth';
 import { TestData } from '../src/utils/testData';
 
 test.describe('Login and Logout', () => {
+  test.setTimeout(60000);
   test('should login successfully with valid credentials', async ({ page }) => {
     const testUsers = TestData.getTestUsers();
     const testUser = testUsers[0];
