@@ -11,6 +11,14 @@ export class TestData {
     const randomString = Math.random().toString(36).substring(2, 8);
     return `test.${randomString}.${timestamp}@example.com`;
   }
+  
+  /**
+   * Get a random email address (alias for generateRandomEmail)
+   * @returns A random email address
+   */
+  static getRandomEmail(): string {
+    return this.generateRandomEmail();
+  }
 
   /**
    * Generate a random password

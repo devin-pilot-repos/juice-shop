@@ -133,7 +133,7 @@ export class EnvironmentManager {
       });
       
       const env = this.getEnvironment().name.toLowerCase();
-      await page.evaluate((environment) => {
+      await page.evaluate((environment: string) => {
         localStorage.setItem('environment', environment);
       }, env);
     } catch (error) {

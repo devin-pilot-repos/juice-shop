@@ -3,7 +3,7 @@ import { EnvironmentManager } from '../src/utils/environmentManager';
 import { BasePage } from '../src/pages/BasePage';
 
 test.describe('Connectivity Test', () => {
-  test('can access public Juice Shop instance', async ({ page }) => {
+  test('can access public Juice Shop instance', async ({ page }: { page: any }) => {
     test.setTimeout(120000); // Increased timeout for fallback attempts
     
     EnvironmentManager.initialize();

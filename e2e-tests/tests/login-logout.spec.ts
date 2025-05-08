@@ -27,7 +27,7 @@ function getRegisteredUser() {
 test.describe('Login and Logout', () => {
   test.setTimeout(180000); // Increased timeout for flaky connections and fallback attempts
   
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }: { page: any }) => {
     test.skip(
       process.env.CI !== 'true', 
       'Skipping login tests on demo site - they are unreliable. Run with CI=true to force tests.'
@@ -36,7 +36,7 @@ test.describe('Login and Logout', () => {
     EnvironmentManager.initialize();
   });
   
-  test('should login successfully with valid credentials', async ({ page }) => {
+  test('should login successfully with valid credentials', async ({ page }: { page: any }) => {
     try {
       const registeredUser = getRegisteredUser();
       console.log(`Using registered user: ${registeredUser.email}`);
@@ -66,7 +66,7 @@ test.describe('Login and Logout', () => {
     }
   });
   
-  test('should show error with invalid credentials', async ({ page }) => {
+  test('should show error with invalid credentials', async ({ page }: { page: any }) => {
     try {
       const connected = await EnvironmentManager.setupEnvironment(page);
       if (!connected) {
@@ -103,7 +103,7 @@ test.describe('Login and Logout', () => {
     }
   });
   
-  test('should logout successfully', async ({ page }) => {
+  test('should logout successfully', async ({ page }: { page: any }) => {
     try {
       const registeredUser = getRegisteredUser();
       console.log(`Logging in with registered user: ${registeredUser.email}`);
@@ -133,7 +133,7 @@ test.describe('Login and Logout', () => {
     }
   });
   
-  test('should remember user when "Remember Me" is checked', async ({ page }) => {
+  test('should remember user when "Remember Me" is checked', async ({ page }: { page: any }) => {
     try {
       const registeredUser = getRegisteredUser();
       console.log(`Logging in with registered user and Remember Me: ${registeredUser.email}`);
