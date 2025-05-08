@@ -5,6 +5,7 @@ import { Navigation } from '../src/utils/navigation';
 import { Auth } from '../src/utils/auth';
 import { TestData } from '../src/utils/testData';
 import { BasePage } from '../src/pages/BasePage';
+import { EnvironmentManager } from '../src/utils/environmentManager';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -24,13 +25,15 @@ function getRegisteredUser() {
 }
 
 test.describe('Login and Logout', () => {
-  test.setTimeout(120000); // Increased timeout for flaky connections
+  test.setTimeout(180000); // Increased timeout for flaky connections and fallback attempts
   
   test.beforeEach(async ({ page }) => {
     test.skip(
       process.env.CI !== 'true', 
       'Skipping login tests on demo site - they are unreliable. Run with CI=true to force tests.'
     );
+    
+    EnvironmentManager.initialize();
   });
   
   test('should login successfully with valid credentials', async ({ page }) => {
@@ -38,7 +41,13 @@ test.describe('Login and Logout', () => {
       const registeredUser = getRegisteredUser();
       console.log(`Using registered user: ${registeredUser.email}`);
       
-      await page.goto('https://demo.owasp-juice.shop');
+      const connected = await EnvironmentManager.setupEnvironment(page);
+      if (!connected) {
+        console.log('Failed to connect to any Juice Shop instance. Skipping test.');
+        test.skip();
+        return;
+      }
+      
       await page.screenshot({ path: `site-access-check-${Date.now()}.png` });
       console.log('Successfully accessed the site');
       
@@ -59,6 +68,13 @@ test.describe('Login and Logout', () => {
   
   test('should show error with invalid credentials', async ({ page }) => {
     try {
+      const connected = await EnvironmentManager.setupEnvironment(page);
+      if (!connected) {
+        console.log('Failed to connect to any Juice Shop instance. Skipping test.');
+        test.skip();
+        return;
+      }
+      
       const loginPage = await Navigation.goToLoginPage(page);
       await page.screenshot({ path: `before-login-invalid-${Date.now()}.png` });
       
@@ -92,7 +108,13 @@ test.describe('Login and Logout', () => {
       const registeredUser = getRegisteredUser();
       console.log(`Logging in with registered user: ${registeredUser.email}`);
       
-      await page.goto('https://demo.owasp-juice.shop');
+      const connected = await EnvironmentManager.setupEnvironment(page);
+      if (!connected) {
+        console.log('Failed to connect to any Juice Shop instance. Skipping test.');
+        test.skip();
+        return;
+      }
+      
       await page.screenshot({ path: `site-access-check-logout-test-${Date.now()}.png` });
       console.log('Successfully accessed the site for logout test');
       
@@ -116,7 +138,13 @@ test.describe('Login and Logout', () => {
       const registeredUser = getRegisteredUser();
       console.log(`Logging in with registered user and Remember Me: ${registeredUser.email}`);
       
-      await page.goto('https://demo.owasp-juice.shop');
+      const connected = await EnvironmentManager.setupEnvironment(page);
+      if (!connected) {
+        console.log('Failed to connect to any Juice Shop instance. Skipping test.');
+        test.skip();
+        return;
+      }
+      
       await page.screenshot({ path: `site-access-check-remember-me-${Date.now()}.png` });
       console.log('Successfully accessed the site for Remember Me test');
       

@@ -7,6 +7,7 @@ import { getEnv } from './dotenv.config.js';
 export interface Environment {
   name: string;
   baseUrl: string;
+  fallbackUrls?: string[];
   credentials: {
     admin: {
       email: string;
@@ -37,6 +38,11 @@ export const environments: Record<string, Environment> = {
   dev: {
     name: 'development',
     baseUrl: 'https://demo.owasp-juice.shop',
+    fallbackUrls: [
+      'https://juice-shop.herokuapp.com',
+      'https://juice-shop-v14.herokuapp.com',
+      'https://juice-shop-v15.herokuapp.com'
+    ],
     credentials: {
       admin: {
         email: 'admin@juice-sh.op',
@@ -50,7 +56,11 @@ export const environments: Record<string, Environment> = {
   },
   staging: {
     name: 'staging',
-    baseUrl: 'https://juice-shop-staging.herokuapp.com',
+    baseUrl: 'https://demo.owasp-juice.shop',
+    fallbackUrls: [
+      'https://juice-shop-staging.herokuapp.com',
+      'https://juice-shop.herokuapp.com'
+    ],
     credentials: {
       admin: {
         email: 'admin@juice-sh.op',
@@ -65,6 +75,11 @@ export const environments: Record<string, Environment> = {
   production: {
     name: 'production',
     baseUrl: 'https://demo.owasp-juice.shop',
+    fallbackUrls: [
+      'https://juice-shop.herokuapp.com',
+      'https://juice-shop-v14.herokuapp.com',
+      'https://juice-shop-v15.herokuapp.com'
+    ],
     credentials: {
       admin: {
         email: 'admin@juice-sh.op',

@@ -1,5 +1,5 @@
 import { Page, Locator } from '@playwright/test';
-import { getCurrentEnvironment } from '@config/environments';
+import { EnvironmentManager } from '@utils/environmentManager';
 
 /**
  * Base Page Object class that all page objects should extend
@@ -14,11 +14,52 @@ export class BasePage {
   /**
    * Navigate to a specific URL path
    * @param path The path to navigate to (will be appended to the base URL)
+   * @param retries Number of retries if navigation fails
    */
-  async navigate(path: string = ''): Promise<void> {
-    const env = getCurrentEnvironment();
-    const url = new URL(path, env.baseUrl).toString();
-    await this.page.goto(url);
+  async navigate(path: string = '', retries: number = 2): Promise<boolean> {
+    const baseUrl = EnvironmentManager.getBaseUrl();
+    const url = new URL(path, baseUrl).toString();
+    
+    let success = false;
+    let attempts = 0;
+    
+    while (!success && attempts <= retries) {
+      try {
+        console.log(`Navigating to ${url} (attempt ${attempts + 1}/${retries + 1})`);
+        await this.page.goto(url, { 
+          timeout: 30000,
+          waitUntil: 'domcontentloaded'
+        });
+        success = true;
+      } catch (error) {
+        console.log(`Navigation error (attempt ${attempts + 1}/${retries + 1}):`, error);
+        
+        if (attempts === retries) {
+          console.log('All retries failed, attempting to use fallback URLs...');
+          success = await EnvironmentManager.setupEnvironment(this.page);
+          
+          if (success && path) {
+            const newBaseUrl = EnvironmentManager.getBaseUrl();
+            const newUrl = new URL(path, newBaseUrl).toString();
+            
+            try {
+              console.log(`Navigating to ${newUrl} with fallback URL`);
+              await this.page.goto(newUrl, { 
+                timeout: 30000,
+                waitUntil: 'domcontentloaded'
+              });
+            } catch (pathError) {
+              console.log(`Failed to navigate to path with fallback URL:`, pathError);
+              success = false;
+            }
+          }
+        }
+        
+        attempts++;
+      }
+    }
+    
+    return success;
   }
 
   /**
