@@ -111,9 +111,41 @@ export class SearchResultPage extends BasePage {
    * @returns The search query or empty string if not found
    */
   async getSearchQuery(): Promise<string> {
-    const url = this.page.url();
-    const match = url.match(/[?&]q=([^&]*)/);
-    return match ? decodeURIComponent(match[1]) : '';
+    try {
+      const url = this.page.url();
+      console.log(`Getting search query from URL: ${url}`);
+      
+      const patterns = [
+        /[?&]q=([^&]*)/, // Standard query parameter
+        /[?&]search=([^&]*)/, // Alternative parameter name
+        /\/search\/(.+?)(?:\/|$)/, // Path-based search
+        /#\/search\?q=([^&]*)/ // Angular route with query
+      ];
+      
+      for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match && match[1]) {
+          const decoded = decodeURIComponent(match[1]);
+          console.log(`Found search query: ${decoded}`);
+          return decoded;
+        }
+      }
+      
+      if (url.includes('search')) {
+        const searchInput = this.page.locator('#searchQuery, input[name="q"], input[aria-label="Search"]');
+        const inputValue = await searchInput.inputValue().catch(() => '');
+        if (inputValue) {
+          console.log(`Found search query in input field: ${inputValue}`);
+          return inputValue;
+        }
+      }
+      
+      console.log('No search query found in URL');
+      return '';
+    } catch (error) {
+      console.log('Error getting search query:', error);
+      return '';
+    }
   }
 
   /**
