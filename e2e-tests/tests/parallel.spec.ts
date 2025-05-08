@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { BasePage } from '../src/pages/BasePage';
 
 test.describe('Parallel test execution', () => {
   test.describe.configure({ mode: 'parallel' });
@@ -8,6 +9,9 @@ test.describe('Parallel test execution', () => {
       await page.goto('/');
       
       await page.waitForTimeout(1000);
+      
+      const basePage = new BasePage(page);
+      await basePage.dismissOverlays();
       
       await expect(page).toHaveTitle(/OWASP Juice Shop/);
       

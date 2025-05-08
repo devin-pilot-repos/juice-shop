@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { Navigation } from '../src/utils/navigation';
 import { Auth } from '../src/utils/auth';
 import { ScoreBoardPage } from '../src/pages/ScoreBoardPage';
+import { BasePage } from '../src/pages/BasePage';
 
 test.describe('Security Challenges', () => {
   test('should manipulate basket item price', async ({ page }) => {
@@ -13,6 +14,9 @@ test.describe('Security Challenges', () => {
       test.skip();
       return;
     }
+    
+    const basePage = new BasePage(page);
+    await basePage.dismissOverlays();
     
     await homePage.searchProduct('apple');
     
@@ -49,6 +53,9 @@ test.describe('Security Challenges', () => {
   });
   
   test('should access score board by directly navigating to its URL', async ({ page }) => {
+    const basePage = new BasePage(page);
+    await basePage.dismissOverlays();
+    
     await Navigation.goToScoreBoard(page);
     
     await expect(page).toHaveURL(/.*\/score-board/);

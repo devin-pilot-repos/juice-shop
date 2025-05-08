@@ -51,6 +51,9 @@ test.describe('Login and Logout', () => {
       await page.screenshot({ path: `site-access-check-${Date.now()}.png` });
       console.log('Successfully accessed the site');
       
+      const basePage = new BasePage(page);
+      await basePage.dismissOverlays();
+      
       const loginPage = await Navigation.goToLoginPage(page);
       if (!loginPage) {
         console.log('Failed to navigate to login page, skipping test');
@@ -79,6 +82,9 @@ test.describe('Login and Logout', () => {
         test.skip();
         return;
       }
+      
+      const basePage = new BasePage(page);
+      await basePage.dismissOverlays();
       
       const loginPage = await Navigation.goToLoginPage(page);
       if (!loginPage) {
@@ -128,6 +134,9 @@ test.describe('Login and Logout', () => {
       await page.screenshot({ path: `site-access-check-logout-test-${Date.now()}.png` });
       console.log('Successfully accessed the site for logout test');
       
+      const basePage = new BasePage(page);
+      await basePage.dismissOverlays();
+      
       const loginPage = await Navigation.goToLoginPage(page);
       if (!loginPage) {
         console.log('Failed to navigate to login page for logout test, skipping test');
@@ -162,6 +171,9 @@ test.describe('Login and Logout', () => {
       
       await page.screenshot({ path: `site-access-check-remember-me-${Date.now()}.png` });
       console.log('Successfully accessed the site for Remember Me test');
+      
+      const basePage = new BasePage(page);
+      await basePage.dismissOverlays();
       
       const loginPage = await Navigation.goToLoginPage(page);
       if (!loginPage) {

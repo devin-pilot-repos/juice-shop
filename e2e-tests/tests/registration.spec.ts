@@ -4,6 +4,7 @@ import { LoginPage } from '../src/pages/LoginPage';
 import { HomePage } from '../src/pages/HomePage';
 import { Navigation } from '../src/utils/navigation';
 import { TestData } from '../src/utils/testData';
+import { BasePage } from '../src/pages/BasePage';
 
 test.describe('User Registration', () => {
   test('should register a new user successfully', async ({ page }) => {
@@ -17,6 +18,9 @@ test.describe('User Registration', () => {
       test.skip();
       return;
     }
+    
+    const basePage = new BasePage(page);
+    await basePage.dismissOverlays();
     
     await registrationPage.register(email, password, 1, securityAnswer);
     
@@ -42,6 +46,9 @@ test.describe('User Registration', () => {
       return;
     }
     
+    const basePage = new BasePage(page);
+    await basePage.dismissOverlays();
+    
     await registrationPage.register(email, password, 1, securityAnswer);
     
     const errorMessage = await registrationPage.getErrorMessage();
@@ -60,6 +67,9 @@ test.describe('User Registration', () => {
       test.skip();
       return;
     }
+    
+    const basePage = new BasePage(page);
+    await basePage.dismissOverlays();
     
     await page.locator('#emailControl').fill(email);
     await page.locator('#passwordControl').fill(password);

@@ -4,6 +4,7 @@ import { ProductPage } from '../src/pages/ProductPage';
 import { BasketPage } from '../src/pages/BasketPage';
 import { Navigation } from '../src/utils/navigation';
 import { Auth } from '../src/utils/auth';
+import { BasePage } from '../src/pages/BasePage';
 
 test.describe('Basket and Checkout', () => {
   test.beforeEach(async ({ page }) => {
@@ -17,6 +18,9 @@ test.describe('Basket and Checkout', () => {
       test.skip();
       return;
     }
+    
+    const basePage = new BasePage(page);
+    await basePage.dismissOverlays();
     
     await homePage.searchProduct('apple');
     
@@ -43,6 +47,9 @@ test.describe('Basket and Checkout', () => {
       test.skip();
       return;
     }
+    
+    const basePage = new BasePage(page);
+    await basePage.dismissOverlays();
     
     await homePage.searchProduct('apple');
     
@@ -77,6 +84,9 @@ test.describe('Basket and Checkout', () => {
       test.skip();
       return;
     }
+    
+    const basePage = new BasePage(page);
+    await basePage.dismissOverlays();
     
     await homePage.searchProduct('apple');
     
