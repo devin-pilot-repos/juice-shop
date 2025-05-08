@@ -85,7 +85,7 @@ test.describe('Product Search', () => {
       console.log(`Searching for non-existent product: "${searchTerm}"`);
       
       await page.evaluate((term) => {
-        window._lastSearchTerm = term;
+        document.body.setAttribute('data-last-search', term);
       }, searchTerm);
       
       const searchResultPage = await homePage.searchProduct(searchTerm);
@@ -110,7 +110,7 @@ test.describe('Product Search', () => {
       console.log(`URL query: "${urlQuery}", Search term: "${searchTerm}"`);
       
       if (isDemoSite) {
-        const storedTerm = await page.evaluate(() => window._lastSearchTerm || '');
+        const storedTerm = await page.evaluate(() => document.body.getAttribute('data-last-search') || '');
         console.log(`Stored search term: ${storedTerm}`);
         
         if (!urlQuery && storedTerm) {
