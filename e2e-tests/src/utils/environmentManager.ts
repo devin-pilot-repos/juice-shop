@@ -1,4 +1,4 @@
-import { Environment, getCurrentEnvironment } from '@config/environments';
+import { Environment, getCurrentEnvironment } from '../../config/environments';
 import { Page } from '@playwright/test';
 
 /**

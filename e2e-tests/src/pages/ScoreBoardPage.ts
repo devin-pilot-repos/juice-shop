@@ -26,10 +26,13 @@ export class ScoreBoardPage extends BasePage {
 
   /**
    * Navigate to the score board page
+   * @param path Path to navigate to, defaults to '/#/score-board'
+   * @returns True if navigation was successful
    */
-  async navigate(): Promise<void> {
-    await super.navigate('/#/score-board');
+  async navigate(path: string = '/#/score-board'): Promise<boolean> {
+    const success = await super.navigate(path);
     await this.waitForElement(this.challengeCards);
+    return success;
   }
 
   /**

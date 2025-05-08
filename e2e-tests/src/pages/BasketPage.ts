@@ -26,10 +26,12 @@ export class BasketPage extends BasePage {
 
   /**
    * Navigate to the basket page
+   * @returns True if navigation was successful
    */
-  async navigate(): Promise<void> {
-    await super.navigate('/#/basket');
+  async navigate(): Promise<boolean> {
+    const success = await super.navigate('/#/basket');
     await this.page.waitForLoadState('networkidle');
+    return success;
   }
 
   /**

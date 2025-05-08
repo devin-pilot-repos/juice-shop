@@ -26,10 +26,13 @@ export class LoginPage extends BasePage {
 
   /**
    * Navigate to the login page
+   * @param path Optional path to navigate to, defaults to '/#/login'
+   * @returns True if navigation was successful
    */
-  async navigate(path: string = '/#/login'): Promise<void> {
-    await super.navigate(path);
+  async navigate(path: string = '/#/login'): Promise<boolean> {
+    const success = await super.navigate(path);
     await this.waitForElement(this.emailInput);
+    return success;
   }
 
   /**

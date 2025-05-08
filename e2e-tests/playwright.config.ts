@@ -48,9 +48,8 @@ export default defineConfig({
     /* Take screenshot on failure */
     screenshot: 'only-on-failure',
     
-    /* Add headless and timeout settings from environment */
+    /* Add headless setting from environment */
     headless: process.env.HEADLESS !== 'false',
-    timeout: parseInt(process.env.TIMEOUT || '30000'),
   },
 
   /* Configure projects for major browsers */

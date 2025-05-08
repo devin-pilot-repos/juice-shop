@@ -30,10 +30,13 @@ export class RegistrationPage extends BasePage {
 
   /**
    * Navigate to the registration page
+   * @param path Path to navigate to, defaults to '/#/register'
+   * @returns True if navigation was successful
    */
-  async navigate(): Promise<void> {
-    await super.navigate('/#/register');
+  async navigate(path: string = '/#/register'): Promise<boolean> {
+    const success = await super.navigate(path);
     await this.waitForElement(this.emailInput);
+    return success;
   }
 
   /**
