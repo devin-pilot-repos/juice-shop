@@ -1,5 +1,6 @@
 import { Locator, Page } from '@playwright/test';
 import { BasePage } from './BasePage';
+import { SearchResultPage } from './SearchResultPage';
 
 /**
  * Page object for the home page
@@ -543,37 +544,30 @@ branch    * @returns True if navigation was successful
   }
 
   /**
-   * Search for a product
+   * Execute search with all fallback mechanisms
    * @param query Search query
+   * @returns Promise<boolean> Whether search was successful
    */
-  async searchProduct(query: string): Promise<void> {
-    console.log(`Searching for product: "${query}"`);
-
-    await this.dismissOverlays(3, 1000);
-
+  private async executeSearch(query: string): Promise<boolean> {
     try {
-      await this.page.screenshot({ path: `before-search-${Date.now()}.png` });
-
       await this.openSearchInput();
-
       await this.fillSearchInput(query);
-
       await this.submitSearch();
-
+      
       try {
         await this.waitForNavigation();
         console.log('Navigation completed after search');
+        return true;
       } catch (navError) {
         console.log('Navigation timeout after search, continuing anyway:', navError);
+        return true; // Consider successful even if navigation times out
       }
     } catch (error) {
-      console.log('Error during product search:', error);
-
+      console.log('Primary search approach failed:', error);
+      
       try {
-        await this.page.screenshot({ path: `search-error-${Date.now()}.png` });
-
         console.log('Trying alternative search approach with JavaScript...');
-
+        
         await this.page.evaluate((searchText) => {
           const selectors = [
             '#searchQuery input',
@@ -581,7 +575,7 @@ branch    * @returns True if navigation was successful
             'mat-form-field input',
             'input[type="text"]'
           ];
-
+          
           for (const selector of selectors) {
             const input = document.querySelector(selector);
             if (input) {
@@ -593,15 +587,16 @@ branch    * @returns True if navigation was successful
             }
           }
         }, query);
-
+        
         await this.page.evaluate(() => {
+          // Try to submit any form
           const form = document.querySelector('form');
           if (form) {
             form.dispatchEvent(new Event('submit', { bubbles: true }));
             console.log('Submitted form via JavaScript');
             return;
           }
-
+          
           // Try to click any search button
           const searchSelectors = [
             '#searchButton',
@@ -610,7 +605,7 @@ branch    * @returns True if navigation was successful
             'button[aria-label="Search"]',
             'button mat-icon'
           ];
-
+          
           for (const selector of searchSelectors) {
             const button = document.querySelector(selector);
             if (button) {
@@ -619,7 +614,7 @@ branch    * @returns True if navigation was successful
               return;
             }
           }
-
+          
           const searchInput = document.querySelector('input[type="text"]');
           if (searchInput) {
             const event = new KeyboardEvent('keydown', {
@@ -633,31 +628,55 @@ branch    * @returns True if navigation was successful
             console.log('Dispatched Enter key event on search input');
           }
         });
-
+        
         try {
           await this.waitForNavigation();
           console.log('Alternative search approach succeeded');
+          return true;
         } catch (navError) {
           console.log('Navigation timeout after alternative search, continuing anyway:', navError);
+          return true; // Consider successful even if navigation times out
         }
       } catch (fallbackError) {
-        console.log('Both search approaches failed:', fallbackError);
+        console.log('JavaScript fallback search failed:', fallbackError);
+        return false;
+      }
+    }
+  }
 
-        // Last resort approach
-        try {
-          console.log('Trying last resort approach...');
-
-          await this.page.goto(`${this.page.url().split('#')[0]}#/search?q=${encodeURIComponent(query)}`);
-
-          try {
-            await this.waitForNavigation();
-            console.log('Direct navigation to search URL succeeded');
-          } catch (navError) {
-            console.log('Navigation timeout after direct URL navigation, continuing anyway:', navError);
-          }
-        } catch (lastError) {
-          console.log('All search approaches failed:', lastError);
-        }
+  /**
+   * Search for a product
+   * @param query Search query
+   * @returns Promise<SearchResultPage> Returns the search result page
+   */
+  async searchProduct(query: string): Promise<SearchResultPage> {
+    console.log(`Searching for product: "${query}"`);
+    
+    await this.dismissOverlays(3, 1000);
+    
+    try {
+      await this.page.screenshot({ path: `before-search-${Date.now()}.png` });
+      
+      const searchSuccess = await this.executeSearch(query);
+      if (!searchSuccess) {
+        throw new Error('Primary search method failed');
+      }
+      
+      return new SearchResultPage(this.page);
+    } catch (error) {
+      console.log('Error during product search:', error);
+      
+      try {
+        await this.page.screenshot({ path: `search-error-${Date.now()}.png` });
+        
+        console.log('Trying direct navigation to search URL...');
+        await this.page.goto(`${this.page.url().split('#')[0]}#/search?q=${encodeURIComponent(query)}`);
+        console.log('Direct navigation to search URL completed');
+        
+        return new SearchResultPage(this.page);
+      } catch (fallbackError) {
+        console.log('All search approaches failed:', fallbackError);
+        throw new Error(`Failed to search for "${query}": ${fallbackError}`);
       }
     }
   }
