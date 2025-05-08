@@ -9,6 +9,8 @@ test.describe('Connectivity Test', () => {
     const environment = EnvironmentManager.getEnvironment();
     const basePage = new BasePage(page);
     
+    console.log(`Accessing URL: ${environment.baseUrl}`);
+    
     await page.goto(environment.baseUrl, { 
       timeout: 60000,
       waitUntil: 'domcontentloaded' 
@@ -38,7 +40,12 @@ test.describe('Connectivity Test', () => {
       'app-product-list mat-grid-tile',
       'app-search-result mat-card',
       'app-search-result .mat-card',
-      'app-search-result .product'
+      'app-search-result .product',
+      '.product',
+      '.item-name',
+      'app-product-list .product',
+      'app-product-list .item-name',
+      'mat-grid-list mat-grid-tile'
     ];
     
     let productCount = 0;
