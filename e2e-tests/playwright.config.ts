@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { EnvironmentManager } from './src/utils/environmentManager';
 
 /**
  * Read environment variables from file.
@@ -8,6 +9,8 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
+const env = EnvironmentManager.getEnvironment();
+
 export default defineConfig({
   testDir: './tests',
   /* Maximum time one test can run for. */
@@ -32,7 +35,12 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: process.env.BASE_URL || 'http://localhost:3000',
+    baseURL: env.baseUrl,
+    
+    httpCredentials: env.name === 'Development Environment' ? {
+      username: process.env.TUNNEL_USERNAME || 'user',
+      password: process.env.TUNNEL_PASSWORD || 'password'
+    } : undefined,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -45,24 +53,21 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { 
+        browserName: 'chromium',
+      },
     },
     {
       name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      use: { 
+        browserName: 'firefox',
+      },
     },
     {
       name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-    /* Test against mobile viewports. */
-    {
-      name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
-    },
-    {
-      name: 'Mobile Safari',
-      use: { ...devices['iPhone 12'] },
+      use: { 
+        browserName: 'webkit',
+      },
     },
   ],
 
