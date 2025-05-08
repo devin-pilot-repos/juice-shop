@@ -9,33 +9,43 @@ export class Auth {
   /**
    * Login as an admin user
    * @param page Playwright page object
-   * @returns Promise that resolves when login is complete
+   * @returns Promise that resolves to boolean indicating if login was successful
    */
-  static async loginAsAdmin(page: Page): Promise<void> {
+  static async loginAsAdmin(page: Page): Promise<boolean> {
     const env = getCurrentEnvironment();
     const loginPage = new LoginPage(page);
     
-    await loginPage.navigate();
+    const success = await loginPage.navigate();
+    if (!success) {
+      console.log('Failed to navigate to login page for admin login');
+      return false;
+    }
     await loginPage.login(
       env.credentials.admin.email,
       env.credentials.admin.password
     );
+    return true;
   }
 
   /**
    * Login as a customer user
    * @param page Playwright page object
-   * @returns Promise that resolves when login is complete
+   * @returns Promise that resolves to boolean indicating if login was successful
    */
-  static async loginAsCustomer(page: Page): Promise<void> {
+  static async loginAsCustomer(page: Page): Promise<boolean> {
     const env = getCurrentEnvironment();
     const loginPage = new LoginPage(page);
     
-    await loginPage.navigate();
+    const success = await loginPage.navigate();
+    if (!success) {
+      console.log('Failed to navigate to login page for customer login');
+      return false;
+    }
     await loginPage.login(
       env.credentials.customer.email,
       env.credentials.customer.password
     );
+    return true;
   }
 
   /**
@@ -43,13 +53,18 @@ export class Auth {
    * @param page Playwright page object
    * @param email User email
    * @param password User password
-   * @returns Promise that resolves when login is complete
+   * @returns Promise that resolves to boolean indicating if login was successful
    */
-  static async loginWithCredentials(page: Page, email: string, password: string): Promise<void> {
+  static async loginWithCredentials(page: Page, email: string, password: string): Promise<boolean> {
     const loginPage = new LoginPage(page);
     
-    await loginPage.navigate();
+    const success = await loginPage.navigate();
+    if (!success) {
+      console.log(`Failed to navigate to login page for credentials: ${email}`);
+      return false;
+    }
     await loginPage.login(email, password);
+    return true;
   }
 
   /**
