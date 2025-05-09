@@ -36,6 +36,11 @@ export class BasketManipulation {
             context = await browser.newContext();
             console.log('Successfully created a new browser context');
           } catch (contextError) {
+            const errorMessage = contextError instanceof Error ? contextError.message : String(contextError);
+            if (errorMessage.includes('Test ended') || errorMessage.includes('has been closed')) {
+              console.log('Test has ended or browser has been closed, cannot create new context');
+              return false;
+            }
             console.log('Failed to create a new browser context:', contextError);
             return false;
           }
@@ -50,6 +55,11 @@ export class BasketManipulation {
             const baseUrl = EnvironmentManager.getBaseUrl();
             await page.goto(baseUrl, { timeout: 10000 });
           } catch (pageError) {
+            const errorMessage = pageError instanceof Error ? pageError.message : String(pageError);
+            if (errorMessage.includes('Test ended') || errorMessage.includes('has been closed')) {
+              console.log('Test has ended or context has been closed, cannot create new page');
+              return false;
+            }
             console.log('Failed to create a new page in the context:', pageError);
             return false;
           }
@@ -195,6 +205,11 @@ export class BasketManipulation {
             context = await browser.newContext();
             console.log('Successfully created a new browser context for basket clearing');
           } catch (contextError) {
+            const errorMessage = contextError instanceof Error ? contextError.message : String(contextError);
+            if (errorMessage.includes('Test ended') || errorMessage.includes('has been closed')) {
+              console.log('Test has ended or browser has been closed, cannot create new context for basket clearing');
+              return false;
+            }
             console.log('Failed to create a new browser context for basket clearing:', contextError);
             return false;
           }
@@ -209,6 +224,11 @@ export class BasketManipulation {
             const baseUrl = EnvironmentManager.getBaseUrl();
             await page.goto(baseUrl, { timeout: 10000 });
           } catch (pageError) {
+            const errorMessage = pageError instanceof Error ? pageError.message : String(pageError);
+            if (errorMessage.includes('Test ended') || errorMessage.includes('has been closed')) {
+              console.log('Test has ended or context has been closed, cannot create new page for basket clearing');
+              return false;
+            }
             console.log('Failed to create a new page in the context for basket clearing:', pageError);
             return false;
           }
@@ -322,6 +342,11 @@ export class BasketManipulation {
             context = await browser.newContext();
             console.log('Successfully created a new browser context for basket check');
           } catch (contextError) {
+            const errorMessage = contextError instanceof Error ? contextError.message : String(contextError);
+            if (errorMessage.includes('Test ended') || errorMessage.includes('has been closed')) {
+              console.log('Test has ended or browser has been closed, cannot create new context for basket check');
+              return false;
+            }
             console.log('Failed to create a new browser context for basket check:', contextError);
             return false;
           }
@@ -336,6 +361,11 @@ export class BasketManipulation {
             const baseUrl = EnvironmentManager.getBaseUrl();
             await page.goto(baseUrl, { timeout: 10000 });
           } catch (pageError) {
+            const errorMessage = pageError instanceof Error ? pageError.message : String(pageError);
+            if (errorMessage.includes('Test ended') || errorMessage.includes('has been closed')) {
+              console.log('Test has ended or context has been closed, cannot create new page for basket check');
+              return false;
+            }
             console.log('Failed to create a new page in the context for basket check:', pageError);
             return false;
           }
@@ -410,6 +440,11 @@ export class BasketManipulation {
             context = await browser.newContext();
             console.log('Successfully created a new browser context for item count');
           } catch (contextError) {
+            const errorMessage = contextError instanceof Error ? contextError.message : String(contextError);
+            if (errorMessage.includes('Test ended') || errorMessage.includes('has been closed')) {
+              console.log('Test has ended or browser has been closed, cannot create new context for item count');
+              return 0;
+            }
             console.log('Failed to create a new browser context for item count:', contextError);
             return 0;
           }
@@ -424,6 +459,11 @@ export class BasketManipulation {
             const baseUrl = EnvironmentManager.getBaseUrl();
             await page.goto(baseUrl, { timeout: 10000 });
           } catch (pageError) {
+            const errorMessage = pageError instanceof Error ? pageError.message : String(pageError);
+            if (errorMessage.includes('Test ended') || errorMessage.includes('has been closed')) {
+              console.log('Test has ended or context has been closed, cannot create new page for item count');
+              return 0;
+            }
             console.log('Failed to create a new page in the context for item count:', pageError);
             return 0;
           }
