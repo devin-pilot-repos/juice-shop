@@ -17,6 +17,11 @@ export class BasePage {
    * @param retries Number of retries if navigation fails
    */
   async navigate(path: string = '', retries: number = 2): Promise<boolean> {
+    if (!this.page || this.page.isClosed?.()) {
+      console.log('Page is closed or invalid when navigating');
+      return false;
+    }
+    
     const baseUrl = EnvironmentManager.getBaseUrl();
     const url = new URL(path, baseUrl).toString();
     
@@ -26,10 +31,20 @@ export class BasePage {
     while (!success && attempts <= retries) {
       try {
         console.log(`Navigating to ${url} (attempt ${attempts + 1}/${retries + 1})`);
+        
         await this.page.goto(url, { 
-          timeout: 30000,
+          timeout: 20000,
           waitUntil: 'domcontentloaded'
         });
+        
+        // Wait for networkidle with a short timeout, but don't fail if it times out
+        try {
+          await this.page.waitForLoadState('networkidle', { timeout: 2000 });
+        } catch (loadError) {
+          console.log('Network idle timeout after navigation (continuing anyway):', 
+            loadError instanceof Error ? loadError.message : String(loadError));
+        }
+        
         success = true;
       } catch (error) {
         console.log(`Navigation error (attempt ${attempts + 1}/${retries + 1}):`, error);
@@ -44,10 +59,19 @@ export class BasePage {
             
             try {
               console.log(`Navigating to ${newUrl} with fallback URL`);
+              
               await this.page.goto(newUrl, { 
-                timeout: 30000,
+                timeout: 15000,
                 waitUntil: 'domcontentloaded'
               });
+              
+              // Wait for networkidle with a short timeout, but don't fail if it times out
+              try {
+                await this.page.waitForLoadState('networkidle', { timeout: 2000 });
+              } catch (loadError) {
+                console.log('Network idle timeout after fallback navigation (continuing anyway):', 
+                  loadError instanceof Error ? loadError.message : String(loadError));
+              }
             } catch (pathError) {
               console.log(`Failed to navigate to path with fallback URL:`, pathError);
               success = false;
@@ -56,6 +80,14 @@ export class BasePage {
         }
         
         attempts++;
+      }
+    }
+    
+    if (success) {
+      try {
+        await this.page.screenshot({ path: `navigation-success-${Date.now()}.png` });
+      } catch (screenshotError) {
+        console.log('Failed to take navigation success screenshot:', screenshotError);
       }
     }
     
@@ -68,29 +100,49 @@ export class BasePage {
    */
   async waitForNavigation(): Promise<boolean> {
     try {
-      const networkIdlePromise = this.page.waitForLoadState('networkidle', { timeout: 3000 })
+      if (!this.page || this.page.isClosed?.()) {
+        console.log('Page is closed or invalid when waiting for navigation');
+        return false;
+      }
+      
+      const networkIdlePromise = this.page.waitForLoadState('networkidle', { timeout: 2000 })
         .catch(error => {
           console.log('Network idle timeout (continuing anyway):', error.message);
           return null;
         });
       
-      const domContentPromise = this.page.waitForLoadState('domcontentloaded', { timeout: 2000 })
+      const domContentPromise = this.page.waitForLoadState('domcontentloaded', { timeout: 1500 })
         .catch(error => {
           console.log('DOM content timeout (continuing anyway):', error.message);
           return null;
         });
       
-      // Wait for either of the load states to complete
+      const loadPromise = this.page.waitForLoadState('load', { timeout: 1500 })
+        .catch(error => {
+          console.log('Load timeout (continuing anyway):', error.message);
+          return null;
+        });
+      
+      // Wait for any of the load states to complete or a maximum timeout
       await Promise.race([
         networkIdlePromise, 
         domContentPromise,
-        new Promise(resolve => setTimeout(resolve, 4000))
+        loadPromise,
+        new Promise(resolve => setTimeout(resolve, 3000))
       ]);
       
       try {
-        await this.page.waitForTimeout(50);
+        await this.page.waitForTimeout(30);
       } catch (timeoutError) {
         console.log('Navigation timeout after load, continuing anyway');
+      }
+      
+      try {
+        const url = this.page.url();
+        console.log(`Navigation completed, current URL: ${url}`);
+      } catch (urlError) {
+        console.log('Error getting URL after navigation:', urlError);
+        return false;
       }
       
       return true;
@@ -166,42 +218,109 @@ export class BasePage {
    * @param maxAttempts Maximum number of attempts to dismiss overlays
    * @param timeout Timeout between attempts in milliseconds
    */
-  async dismissOverlays(maxAttempts: number = 3, timeout: number = 500): Promise<boolean> {
+  async dismissOverlays(maxAttempts: number = 3, timeout: number = 300): Promise<boolean> {
+    if (!this.page || this.page.isClosed?.()) {
+      console.log('Page is closed or invalid when dismissing overlays');
+      return false;
+    }
+    
     let dismissed = false;
     
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
         const overlay = this.page.locator('.cdk-overlay-container');
         
-        if (await overlay.isVisible()) {
+        const isOverlayVisible = await overlay.isVisible({ timeout: 1000 })
+          .catch(error => {
+            console.log(`Error checking overlay visibility (attempt ${attempt + 1}):`, error);
+            return false;
+          });
+        
+        if (isOverlayVisible) {
           console.log(`Overlay detected (attempt ${attempt + 1}), attempting to dismiss...`);
           
           const closeButtons = [
             this.page.locator('button[aria-label="Close Welcome Banner"]'),
             this.page.locator('.close-dialog'),
             this.page.locator('button.mat-dialog-close'),
-            this.page.locator('button[aria-label="Close"]')
+            this.page.locator('button[aria-label="Close"]'),
+            this.page.locator('.close-button'),
+            this.page.locator('button.close'),
+            this.page.locator('[data-dismiss="modal"]')
           ];
           
           let buttonClicked = false;
           for (const button of closeButtons) {
-            if (await button.isVisible()) {
-              console.log('Close button found, clicking it...');
-              await button.click({ force: true });
-              buttonClicked = true;
-              break;
+            try {
+              const isButtonVisible = await button.isVisible({ timeout: 1000 })
+                .catch(() => false);
+              
+              if (isButtonVisible) {
+                console.log('Close button found, clicking it...');
+                await button.click({ force: true, timeout: 2000 })
+                  .catch(clickError => {
+                    console.log('Error clicking close button:', clickError);
+                    return false;
+                  });
+                buttonClicked = true;
+                break;
+              }
+            } catch (buttonError) {
+              console.log('Error checking button visibility:', buttonError);
             }
           }
           
           if (!buttonClicked) {
-            console.log('No close buttons found, clicking outside dialog...');
-            await this.page.mouse.click(10, 10);
+            try {
+              console.log('No close buttons found with standard selectors, trying JavaScript click...');
+              
+              const jsClicked = await this.page.evaluate(() => {
+                const closeSelectors = [
+                  'button[aria-label="Close Welcome Banner"]',
+                  '.close-dialog',
+                  'button.mat-dialog-close',
+                  'button[aria-label="Close"]',
+                  '.close-button',
+                  'button.close',
+                  '[data-dismiss="modal"]'
+                ];
+                
+                for (const selector of closeSelectors) {
+                  const elements = document.querySelectorAll(selector);
+                  if (elements.length > 0) {
+                    (elements[0] as HTMLElement).click();
+                    return true;
+                  }
+                }
+                
+                document.body.click();
+                return false;
+              }).catch(() => false);
+              
+              if (!jsClicked) {
+                console.log('No close buttons found, clicking outside dialog...');
+                await this.page.mouse.click(10, 10)
+                  .catch(mouseError => {
+                    console.log('Error clicking outside dialog:', mouseError);
+                  });
+              }
+            } catch (jsError) {
+              console.log('Error with JavaScript click:', jsError);
+              
+              try {
+                await this.page.mouse.click(10, 10);
+              } catch (mouseError) {
+                console.log('Error clicking outside dialog:', mouseError);
+              }
+            }
           }
           
-          await this.page.waitForTimeout(timeout);
+          await this.page.waitForTimeout(timeout)
+            .catch(() => {});
+          
           dismissed = true;
         } else {
-          return true;
+          return true; // No overlay detected
         }
       } catch (error) {
         console.log(`Error dismissing overlay (attempt ${attempt + 1}):`, error);
