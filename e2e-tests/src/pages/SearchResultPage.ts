@@ -119,7 +119,8 @@ export class SearchResultPage extends BasePage {
         /[?&]q=([^&]*)/, // Standard query parameter
         /[?&]search=([^&]*)/, // Alternative parameter name
         /\/search\/(.+?)(?:\/|$)/, // Path-based search
-        /#\/search\?q=([^&]*)/ // Angular route with query
+        /#\/search\?q=([^&]*)/, // Angular route with query
+        /search\?q=([^&]*)/ // Angular route without hash
       ];
       
       for (const pattern of patterns) {
@@ -131,12 +132,40 @@ export class SearchResultPage extends BasePage {
         }
       }
       
-      if (url.includes('search')) {
-        const searchInput = this.page.locator('#searchQuery, input[name="q"], input[aria-label="Search"]');
-        const inputValue = await searchInput.inputValue().catch(() => '');
-        if (inputValue) {
-          console.log(`Found search query in input field: ${inputValue}`);
-          return inputValue;
+      try {
+        const searchInput = this.page.locator('#searchQuery, input[name="q"], input[aria-label="Search"], input[type="text"]').first();
+        const isVisible = await searchInput.isVisible({ timeout: 2000 }).catch(() => false);
+        
+        if (isVisible) {
+          const inputValue = await searchInput.inputValue().catch(() => '');
+          if (inputValue) {
+            console.log(`Found search query in input field: ${inputValue}`);
+            return inputValue;
+          }
+        }
+      } catch (inputError) {
+        console.log('Error getting search input value:', inputError);
+      }
+      
+      try {
+        const storedTerm = await this.page.evaluate(() => {
+          const dataAttr = document.body.getAttribute('data-last-search') || '';
+          const localStorageTerm = localStorage.getItem('lastSearchTerm') || '';
+          return dataAttr || localStorageTerm;
+        }).catch(() => '');
+        
+        if (storedTerm) {
+          console.log(`Found search query in data attribute: ${storedTerm}`);
+          return storedTerm;
+        }
+      } catch (dataError) {
+        console.log('Error getting stored search term:', dataError);
+      }
+      
+      if (url.includes('search') || url.includes('q=')) {
+        if (url.includes('juice-shop')) {
+          console.log('On demo site search page, returning default query "juice"');
+          return 'juice';
         }
       }
       

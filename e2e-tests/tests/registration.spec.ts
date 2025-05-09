@@ -22,7 +22,7 @@ test.describe('User Registration', () => {
     const basePage = new BasePage(page);
     await basePage.dismissOverlays();
     
-    await registrationPage.register(email, password, 1, securityAnswer);
+    await registrationPage.register(email, password, password, 1, securityAnswer);
     
     const loginPage = new LoginPage(page);
     await expect(page).toHaveURL(/.*\/login/);
@@ -49,7 +49,7 @@ test.describe('User Registration', () => {
     const basePage = new BasePage(page);
     await basePage.dismissOverlays();
     
-    await registrationPage.register(email, password, 1, securityAnswer);
+    await registrationPage.register(email, password, password, 1, securityAnswer);
     
     const errorMessage = await registrationPage.getErrorMessage();
     expect(errorMessage).toContain('already exists');
@@ -71,12 +71,7 @@ test.describe('User Registration', () => {
     const basePage = new BasePage(page);
     await basePage.dismissOverlays();
     
-    await page.locator('#emailControl').fill(email);
-    await page.locator('#passwordControl').fill(password);
-    await page.locator('#repeatPasswordControl').fill(differentPassword);
-    await registrationPage.selectSecurityQuestion(1);
-    await page.locator('#securityAnswerControl').fill(securityAnswer);
-    await page.locator('#registerButton').click();
+    await registrationPage.register(email, password, differentPassword, 1, securityAnswer);
     
     const errorMessage = await registrationPage.getErrorMessage();
     expect(errorMessage).toContain('do not match');
