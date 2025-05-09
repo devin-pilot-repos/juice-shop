@@ -254,18 +254,72 @@ export class BasketPage extends BasePage {
         return true;
       }
       
+      await this.page.screenshot({ path: `basket-empty-check-${Date.now()}.png` })
+        .catch(error => console.log('Error taking screenshot:', error));
+      
+      // Strategy 1: Check if empty basket message is visible
       const isEmptyVisible = await this.emptyBasketMessage.isVisible({ timeout: 3000 })
         .catch(error => {
           console.log('Error checking empty basket visibility:', error);
-          return true; // Assume empty on error
+          return false; // Don't assume empty on error for this check
         });
       
-      return isEmptyVisible;
+      if (isEmptyVisible) {
+        console.log('Empty basket message is visible');
+        return true;
+      }
+      
+      const itemCount = await this.getItemCount()
+        .catch(error => {
+          console.log('Error getting item count:', error);
+          return -1; // Invalid count
+        });
+      
+      if (itemCount === 0) {
+        console.log('Basket item count is 0');
+        return true;
+      }
+      
+      const pageContent = await this.page.content()
+        .catch(error => {
+          console.log('Error getting page content:', error);
+          return '';
+        });
+      
+      const emptyBasketIndicators = [
+        'Your basket is empty',
+        'No items in basket',
+        'emptyBasket',
+        'empty-basket',
+        'empty basket',
+        'nothing in your basket'
+      ];
+      
+      for (const indicator of emptyBasketIndicators) {
+        if (pageContent.toLowerCase().includes(indicator.toLowerCase())) {
+          console.log(`Found empty basket indicator: "${indicator}"`);
+          return true;
+        }
+      }
+      
+      const removeButtons = await this.removeItemButtons.count()
+        .catch(error => {
+          console.log('Error counting remove buttons:', error);
+          return -1;
+        });
+      
+      if (removeButtons === 0) {
+        console.log('No remove buttons found, basket likely empty');
+        return true;
+      }
+      
+      console.log('All empty basket detection strategies failed, basket appears to have items');
+      return false;
     } catch (error) {
       console.log('Error checking if basket is empty:', error);
       await this.page.screenshot({ path: `empty-basket-check-error-${Date.now()}.png` })
         .catch(() => {});
-      return true; // Assume empty on error
+      return true; // Assume empty on error for the overall method
     }
   }
 }
