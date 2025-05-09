@@ -393,8 +393,27 @@ test.describe('Basket and Checkout', () => {
     }
   });
   
-  test('should show empty basket message when basket is empty', async ({ page }) => {
+  test('should show empty basket message when basket is empty', async ({ page, browser, context }) => {
     try {
+      console.log('Explicitly clearing basket before test...');
+      const cleared = await BasketManipulation.clearBasketDirectly(page, browser, context);
+      if (!cleared) {
+        console.log('Failed to clear basket directly, will try UI method');
+        const basketPage = await Navigation.goToBasketPage(page);
+        if (basketPage) {
+          const itemCount = await basketPage.getItemCount();
+          console.log(`Initial basket item count: ${itemCount}`);
+          
+          for (let i = 0; i < itemCount; i++) {
+            await basketPage.removeItem(0)
+              .catch(error => console.log(`Error removing item ${i}:`, error));
+            await page.waitForTimeout(500).catch(() => {});
+          }
+        }
+      } else {
+        console.log('Successfully cleared basket directly');
+      }
+      
       const basketPage = await Navigation.goToBasketPage(page);
       if (!basketPage) {
         console.log('Failed to navigate to basket page, skipping test');
@@ -409,6 +428,9 @@ test.describe('Basket and Checkout', () => {
         
         await page.screenshot({ path: `empty-basket-check-${Date.now()}.png` })
           .catch(error => console.log('Error taking screenshot:', error));
+        
+        await page.reload().catch(error => console.log('Error reloading page:', error));
+        await page.waitForTimeout(1000).catch(() => {});
         
         const isBasketEmpty = await basketPage.isBasketEmpty();
         console.log(`Is basket empty: ${isBasketEmpty}`);
