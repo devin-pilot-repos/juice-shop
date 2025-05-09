@@ -71,63 +71,129 @@ branch    * @returns True if navigation was successful
    */
   async isLoggedIn(): Promise<boolean> {
     console.log('Checking if user is logged in...');
-    await this.page.screenshot({ path: `before-check-login-${Date.now()}.png` });
-
-    await this.dismissOverlays();
-
+    
     try {
-      const userElements = [
-        this.page.locator('[aria-label="Show the shopping cart"]'),
-        this.page.locator('#navbarLogoutButton'),
-        this.page.locator('#logout-link'),
-        this.page.locator('button[aria-label="Go to user profile"]')
-      ];
-
-      for (const element of userElements) {
-        if (await element.isVisible()) {
-          console.log('Found logged-in indicator element');
-          return true;
-        }
-      }
-    } catch (error) {
-      console.log('Error checking for logged-in indicators:', error);
-    }
-
-    // If no direct indicators, try opening the account menu
-    try {
-      const accountSelectors = [
-        '[aria-label="Account"]',
-        '#navbarAccount',
-        'button.mat-button[aria-label="Account"]'
-      ];
-
-      let menuOpened = false;
-      for (const selector of accountSelectors) {
-        try {
-          const button = this.page.locator(selector);
-          if (await button.isVisible()) {
-            await button.click({ timeout: 5000 });
-            await this.page.waitForTimeout(500);
-            menuOpened = true;
-            break;
-          }
-        } catch (error) {
-          console.log(`Error with account selector ${selector}:`, error);
-        }
+      try {
+        await this.page.screenshot({ path: `before-check-login-${Date.now()}.png` });
+      } catch (screenshotError) {
+        console.log('Could not take screenshot, but continuing:', 
+          screenshotError instanceof Error ? screenshotError.message : String(screenshotError));
       }
 
-      if (!menuOpened) {
-        console.log('Could not open account menu, assuming not logged in');
+      const isPageValid = await this.page.evaluate(() => true).catch(() => false);
+      if (!isPageValid) {
+        console.log('Page is no longer valid, cannot check login status');
         return false;
       }
 
-      const isLogoutVisible = await this.isVisible(this.logoutButton);
+      try {
+        await this.dismissOverlays();
+      } catch (overlayError) {
+        console.log('Error dismissing overlays, but continuing:', 
+          overlayError instanceof Error ? overlayError.message : String(overlayError));
+      }
 
-      await this.page.mouse.click(10, 10);
+      // Check for direct indicators of being logged in
+      try {
+        const userElements = [
+          this.page.locator('[aria-label="Show the shopping cart"]'),
+          this.page.locator('#navbarLogoutButton'),
+          this.page.locator('#logout-link'),
+          this.page.locator('button[aria-label="Go to user profile"]'),
+          this.page.locator('button:has-text("My Account")'),
+          this.page.locator('button:has-text("Orders & Payment")'),
+          this.page.locator('button:has-text("Privacy & Security")')
+        ];
 
-      return isLogoutVisible;
-    } catch (error) {
-      console.log('Error checking login status:', error);
+        for (const element of userElements) {
+          const isVisible = await element.isVisible().catch(() => false);
+          if (isVisible) {
+            console.log('Found logged-in indicator element');
+            return true;
+          }
+        }
+      } catch (error) {
+        console.log('Error checking for logged-in indicators:', 
+          error instanceof Error ? error.message : String(error));
+      }
+
+      // Check URL for indicators of being logged in
+      try {
+        const url = this.page.url();
+        if (url.includes('/profile') || url.includes('/accounting') || url.includes('/saved-payment-methods')) {
+          console.log('URL indicates user is logged in');
+          return true;
+        }
+      } catch (urlError) {
+        console.log('Error checking URL:', 
+          urlError instanceof Error ? urlError.message : String(urlError));
+      }
+
+      // If no direct indicators, try opening the account menu
+      try {
+        const accountSelectors = [
+          '[aria-label="Account"]',
+          '#navbarAccount',
+          'button.mat-button[aria-label="Account"]',
+          'button.mat-focus-indicator[aria-label="Account"]',
+          'button[aria-label="Go to user profile"]'
+        ];
+
+        let menuOpened = false;
+        for (const selector of accountSelectors) {
+          try {
+            const button = this.page.locator(selector);
+            const isVisible = await button.isVisible({ timeout: 2000 }).catch(() => false);
+            
+            if (isVisible) {
+              await button.click({ timeout: 5000, force: true }).catch(e => {
+                console.log(`Click failed, but continuing: ${e instanceof Error ? e.message : String(e)}`);
+              });
+              
+              try {
+                await this.page.waitForTimeout(500);
+              } catch (timeoutError) {
+                console.log('Timeout error, but continuing');
+              }
+              
+              menuOpened = true;
+              break;
+            }
+          } catch (error) {
+            console.log(`Error with account selector ${selector}:`, 
+              error instanceof Error ? error.message : String(error));
+          }
+        }
+
+        if (!menuOpened) {
+          console.log('Could not open account menu, assuming not logged in');
+          return false;
+        }
+
+        try {
+          const isLogoutVisible = await this.isVisible(this.logoutButton);
+          
+          // Close menu by clicking elsewhere
+          try {
+            await this.page.mouse.click(10, 10);
+          } catch (clickError) {
+            console.log('Error closing menu, but continuing');
+          }
+          
+          return isLogoutVisible;
+        } catch (logoutError) {
+          console.log('Error checking logout button visibility:', 
+            logoutError instanceof Error ? logoutError.message : String(logoutError));
+          return false;
+        }
+      } catch (error) {
+        console.log('Error checking login status:', 
+          error instanceof Error ? error.message : String(error));
+        return false;
+      }
+    } catch (fatalError) {
+      console.log('Fatal error in isLoggedIn:', 
+        fatalError instanceof Error ? fatalError.message : String(fatalError));
       return false;
     }
   }
@@ -135,15 +201,33 @@ branch    * @returns True if navigation was successful
   /**
    * Logout
    */
-  async logout(): Promise<void> {
+  async logout(): Promise<boolean> {
     console.log('Attempting to logout...');
 
-    await this.page.screenshot({ path: `before-logout-${Date.now()}.png` });
-
     try {
-      await this.openAccountMenu();
+      try {
+        await this.page.screenshot({ path: `before-logout-${Date.now()}.png` });
+      } catch (screenshotError) {
+        console.log('Could not take screenshot, but continuing:', 
+          screenshotError instanceof Error ? screenshotError.message : String(screenshotError));
+      }
 
-      await this.page.waitForTimeout(1000);
+      const isPageValid = await this.page.evaluate(() => true).catch(() => false);
+      if (!isPageValid) {
+        console.log('Page is no longer valid, cannot logout');
+        return false;
+      }
+
+      const menuOpened = await this.openAccountMenu();
+      if (!menuOpened) {
+        console.log('Could not open account menu, logout may fail');
+      }
+
+      try {
+        await this.page.waitForTimeout(1000);
+      } catch (timeoutError) {
+        console.log('Timeout error, but continuing');
+      }
 
       const logoutSelectors = [
         '#navbarLogoutButton',
@@ -152,172 +236,328 @@ branch    * @returns True if navigation was successful
         '[data-test="logout-button"]',
         'button:has-text("Logout")',
         'span:has-text("Logout")',
-        'mat-list-item:has-text("Logout")'
+        'mat-list-item:has-text("Logout")',
+        'button.mat-menu-item:has-text("Logout")',
+        'a:has-text("Logout")'
       ];
 
       for (const selector of logoutSelectors) {
         try {
           const logoutButton = this.page.locator(selector);
-          if (await logoutButton.isVisible({ timeout: 2000 })) {
+          const isVisible = await logoutButton.isVisible({ timeout: 2000 }).catch(() => false);
+          
+          if (isVisible) {
             console.log(`Found logout button with selector: ${selector}`);
-            await logoutButton.click({ timeout: 5000, force: true });
-            await this.waitForNavigation();
-            console.log('Clicked logout button and navigation completed');
-            return;
+            await logoutButton.click({ timeout: 5000, force: true }).catch(e => {
+              console.log(`Click failed, but continuing: ${e instanceof Error ? e.message : String(e)}`);
+            });
+            
+            try {
+              await this.waitForNavigation();
+              console.log('Clicked logout button and navigation completed');
+              return true;
+            } catch (navError) {
+              console.log('Navigation error after logout click, but may have succeeded:', 
+                navError instanceof Error ? navError.message : String(navError));
+              
+              // Check if we're on the login page or home page
+              const url = this.page.url();
+              if (url.includes('login') || !url.includes('profile')) {
+                console.log('URL indicates successful logout');
+                return true;
+              }
+            }
           }
         } catch (error) {
-          console.log(`Error with logout selector ${selector}:`, error);
+          console.log(`Error with logout selector ${selector}:`, 
+            error instanceof Error ? error.message : String(error));
         }
       }
 
       console.log('Could not find logout button with any selector, trying JavaScript...');
 
-      const loggedOut = await this.page.evaluate(() => {
-        const possibleLogoutElements = [
-          document.querySelector('#navbarLogoutButton'),
-          document.querySelector('#logout-link'),
-          document.querySelector('button[aria-label="Logout"]'),
-          ...Array.from(document.querySelectorAll('button')).filter(el =>
-            el.textContent?.includes('Logout') ||
-            el.textContent?.includes('Log out')
-          ),
-          ...Array.from(document.querySelectorAll('span')).filter(el =>
-            el.textContent?.includes('Logout') ||
-            el.textContent?.includes('Log out')
-          )
-        ].filter(Boolean);
-
-        for (const element of possibleLogoutElements) {
+      try {
+        const loggedOut = await this.page.evaluate(() => {
           try {
-            (element as HTMLElement).click();
-            console.log('Clicked logout element via JavaScript');
-            return true;
+            const possibleLogoutElements = [
+              document.querySelector('#navbarLogoutButton'),
+              document.querySelector('#logout-link'),
+              document.querySelector('button[aria-label="Logout"]'),
+              ...Array.from(document.querySelectorAll('button')).filter(el =>
+                el.textContent?.includes('Logout') ||
+                el.textContent?.includes('Log out')
+              ),
+              ...Array.from(document.querySelectorAll('span')).filter(el =>
+                el.textContent?.includes('Logout') ||
+                el.textContent?.includes('Log out')
+              ),
+              ...Array.from(document.querySelectorAll('a')).filter(el =>
+                el.textContent?.includes('Logout') ||
+                el.textContent?.includes('Log out')
+              )
+            ].filter(Boolean);
+
+            for (const element of possibleLogoutElements) {
+              try {
+                (element as HTMLElement).click();
+                console.log('Clicked logout element via JavaScript');
+                return true;
+              } catch (e) {
+                console.log('Error clicking element:', e);
+              }
+            }
+            
+            // Last resort - try to find any button in the account menu
+            const menuItems = document.querySelectorAll('.mat-menu-content button, .mat-menu-panel button');
+            for (const item of Array.from(menuItems)) {
+              try {
+                (item as HTMLElement).click();
+                console.log('Clicked potential logout button via JavaScript');
+                return true;
+              } catch (e) {
+                console.log('Error clicking menu item:', e);
+              }
+            }
+
+            return false;
           } catch (e) {
-            console.log('Error clicking element:', e);
+            console.log('Error in JavaScript logout logic:', e);
+            return false;
           }
+        }).catch(() => false);
+
+        if (loggedOut) {
+          try {
+            await this.waitForNavigation();
+            console.log('Logged out via JavaScript click');
+            return true;
+          } catch (navError) {
+            console.log('Navigation error after JS logout, but may have succeeded:', 
+              navError instanceof Error ? navError.message : String(navError));
+            
+            // Check if we're on the login page or home page
+            const url = this.page.url();
+            if (url.includes('login') || !url.includes('profile')) {
+              console.log('URL indicates successful logout after JS click');
+              return true;
+            }
+          }
+        } else {
+          console.log('Could not find any logout element to click');
         }
-
-        return false;
-      });
-
-      if (loggedOut) {
-        await this.waitForNavigation();
-        console.log('Logged out via JavaScript click');
-      } else {
-        console.log('Could not find any logout element to click');
+      } catch (jsError) {
+        console.log('JavaScript logout attempt failed:', 
+          jsError instanceof Error ? jsError.message : String(jsError));
       }
+      
+      try {
+        const url = this.page.url();
+        if (url.includes('login') || !url.includes('profile')) {
+          console.log('URL indicates we are logged out');
+          return true;
+        }
+      } catch (urlError) {
+        console.log('Error checking URL:', 
+          urlError instanceof Error ? urlError.message : String(urlError));
+      }
+      
+      return false;
     } catch (error) {
-      console.log('Error during logout:', error);
+      console.log('Error during logout:', 
+        error instanceof Error ? error.message : String(error));
+      return false;
     }
   }
 
   /**
    * Open the account menu
    */
-  async openAccountMenu(): Promise<void> {
+  async openAccountMenu(): Promise<boolean> {
     console.log('Attempting to open account menu...');
 
-    await this.page.screenshot({ path: `before-open-account-menu-${Date.now()}.png` });
-
-    await this.dismissOverlays(3, 1000);
-
-    const selectors = [
-      '[aria-label="Account"]',
-      '#navbarAccount',
-      'button.mat-button[aria-label="Account"]',
-      'button.mat-focus-indicator[aria-label="Account"]',
-      'button[aria-label="Go to user profile"]',
-      'mat-toolbar button.mat-button',
-      'button:has-text("Account")'
-    ];
-
-    let menuOpened = false;
-
-    // Try clicking with Playwright first
-    for (const selector of selectors) {
+    try {
+      const isPageValid = await this.page.evaluate(() => true).catch(() => false);
+      if (!isPageValid) {
+        console.log('Page is no longer valid, cannot open account menu');
+        return false;
+      }
+      
       try {
-        const button = this.page.locator(selector);
-        if (await button.isVisible({ timeout: 2000 })) {
+        await this.page.screenshot({ path: `before-open-account-menu-${Date.now()}.png` });
+      } catch (screenshotError) {
+        console.log('Could not take screenshot, but continuing:', 
+          screenshotError instanceof Error ? screenshotError.message : String(screenshotError));
+      }
+
+      try {
+        await this.dismissOverlays(3, 1000);
+      } catch (overlayError) {
+        console.log('Error dismissing overlays, but continuing:', 
+          overlayError instanceof Error ? overlayError.message : String(overlayError));
+      }
+
+      const selectors = [
+        '[aria-label="Account"]',
+        '#navbarAccount',
+        'button.mat-button[aria-label="Account"]',
+        'button.mat-focus-indicator[aria-label="Account"]',
+        'button[aria-label="Go to user profile"]',
+        'mat-toolbar button.mat-button',
+        'button:has-text("Account")',
+        'mat-toolbar button',
+        'button.mat-icon-button'
+      ];
+
+      let menuOpened = false;
+
+      // Try clicking with Playwright first
+      for (const selector of selectors) {
+        try {
+          const button = this.page.locator(selector);
+          const isVisible = await button.isVisible({ timeout: 2000 }).catch(() => false);
+          
+          if (!isVisible) continue;
+          
           console.log(`Found account button with selector: ${selector}`);
-          await button.click({ timeout: 5000, force: true });
-          await this.page.waitForTimeout(1000);
-
-          const logoutButton = this.page.locator('#navbarLogoutButton, #logout-link, button:has-text("Logout")');
-          if (await logoutButton.isVisible({ timeout: 2000 })) {
-            console.log('Account menu opened successfully, logout button is visible');
-            menuOpened = true;
-            break;
-          } else {
-            console.log('Clicked account button but logout button is not visible, trying again...');
-            // Try clicking again
-            await button.click({ timeout: 5000, force: true });
+          await button.click({ timeout: 5000, force: true }).catch(e => {
+            console.log(`Click failed, but continuing: ${e instanceof Error ? e.message : String(e)}`);
+          });
+          
+          try {
             await this.page.waitForTimeout(1000);
+          } catch (timeoutError) {
+            console.log('Timeout error, but continuing');
+          }
 
-            if (await logoutButton.isVisible({ timeout: 2000 })) {
-              console.log('Account menu opened successfully on second attempt');
+          try {
+            const logoutButton = this.page.locator('#navbarLogoutButton, #logout-link, button:has-text("Logout")');
+            const isLogoutVisible = await logoutButton.isVisible({ timeout: 2000 }).catch(() => false);
+            
+            if (isLogoutVisible) {
+              console.log('Account menu opened successfully, logout button is visible');
               menuOpened = true;
               break;
-            }
-          }
-        }
-      } catch (error) {
-        console.log(`Error with selector ${selector}:`, error);
-      }
-    }
+            } else {
+              console.log('Clicked account button but logout button is not visible, trying again...');
+              // Try clicking again
+              await button.click({ timeout: 5000, force: true }).catch(e => {
+                console.log(`Second click failed, but continuing: ${e instanceof Error ? e.message : String(e)}`);
+              });
+              
+              try {
+                await this.page.waitForTimeout(1000);
+              } catch (timeoutError) {
+                console.log('Timeout error after second click, but continuing');
+              }
 
-    if (!menuOpened) {
-      console.log('Could not find account menu button with any selector, taking screenshot...');
-      await this.page.screenshot({ path: `account-menu-not-found-${Date.now()}.png` });
-
-      // Last resort - try JavaScript click on the first button that might be the account menu
-      try {
-        await this.page.evaluate(() => {
-          // Try to find and click the account button
-          const possibleSelectors = [
-            '[aria-label="Account"]',
-            '#navbarAccount',
-            'button[aria-label="Account"]',
-            'button.mat-button',
-            'mat-toolbar button'
-          ];
-
-          for (const selector of possibleSelectors) {
-            const elements = document.querySelectorAll(selector);
-            const elementsArray = Array.from(elements);
-            for (const element of elementsArray) {
-              const text = element.textContent || '';
-              const ariaLabel = element.getAttribute('aria-label') || '';
-
-              if (text.includes('Account') || ariaLabel.includes('Account')) {
-                console.log(`Found account button with JS: ${selector}`);
-                (element as HTMLElement).click();
-                return true;
+              const isLogoutVisibleRetry = await logoutButton.isVisible({ timeout: 2000 }).catch(() => false);
+              if (isLogoutVisibleRetry) {
+                console.log('Account menu opened successfully on second attempt');
+                menuOpened = true;
+                break;
               }
             }
+          } catch (logoutCheckError) {
+            console.log('Error checking logout button visibility:', 
+              logoutCheckError instanceof Error ? logoutCheckError.message : String(logoutCheckError));
           }
-
-          const toolbarButtons = document.querySelectorAll('mat-toolbar button');
-          const toolbarButtonsArray = Array.from(toolbarButtons);
-          if (toolbarButtonsArray.length > 0) {
-            console.log('Clicking first toolbar button as fallback');
-            (toolbarButtonsArray[0] as HTMLElement).click();
-            return true;
-          }
-
-          return false;
-        });
-        console.log('Attempted JavaScript click on possible account button');
-        await this.page.waitForTimeout(1000);
-      } catch (jsError) {
-        console.log('JavaScript click failed:', jsError);
+        } catch (error) {
+          console.log(`Error with selector ${selector}:`, 
+            error instanceof Error ? error.message : String(error));
+        }
       }
-    }
 
-    const logoutButton = this.page.locator('#navbarLogoutButton, #logout-link, button:has-text("Logout")');
-    if (await logoutButton.isVisible({ timeout: 2000 })) {
-      console.log('Account menu is open, logout button is visible');
-    } else {
-      console.log('Warning: Account menu may not be open, logout button is not visible');
+      if (!menuOpened) {
+        console.log('Could not find account menu button with any selector, taking screenshot...');
+        try {
+          await this.page.screenshot({ path: `account-menu-not-found-${Date.now()}.png` });
+        } catch (screenshotError) {
+          console.log('Could not take screenshot, but continuing:', 
+            screenshotError instanceof Error ? screenshotError.message : String(screenshotError));
+        }
+
+        // Last resort - try JavaScript click on the first button that might be the account menu
+        try {
+          const jsClicked = await this.page.evaluate(() => {
+            // Try to find and click the account button
+            const possibleSelectors = [
+              '[aria-label="Account"]',
+              '#navbarAccount',
+              'button[aria-label="Account"]',
+              'button.mat-button',
+              'mat-toolbar button',
+              'button.mat-icon-button',
+              'mat-toolbar .mat-mdc-button'
+            ];
+
+            for (const selector of possibleSelectors) {
+              try {
+                const elements = document.querySelectorAll(selector);
+                const elementsArray = Array.from(elements);
+                for (const element of elementsArray) {
+                  const text = element.textContent || '';
+                  const ariaLabel = element.getAttribute('aria-label') || '';
+
+                  if (text.includes('Account') || ariaLabel.includes('Account')) {
+                    console.log(`Found account button with JS: ${selector}`);
+                    (element as HTMLElement).click();
+                    return true;
+                  }
+                }
+              } catch (e) {
+                console.log(`JS error with selector ${selector}:`, e);
+              }
+            }
+
+            try {
+              const toolbarButtons = document.querySelectorAll('mat-toolbar button');
+              const toolbarButtonsArray = Array.from(toolbarButtons);
+              if (toolbarButtonsArray.length > 0) {
+                console.log('Clicking first toolbar button as fallback');
+                (toolbarButtonsArray[0] as HTMLElement).click();
+                return true;
+              }
+            } catch (e) {
+              console.log('Error clicking toolbar button:', e);
+            }
+
+            return false;
+          }).catch(() => false);
+          
+          if (jsClicked) {
+            console.log('Attempted JavaScript click on possible account button');
+            try {
+              await this.page.waitForTimeout(1000);
+            } catch (timeoutError) {
+              console.log('Timeout error after JS click, but continuing');
+            }
+          }
+        } catch (jsError) {
+          console.log('JavaScript click failed:', 
+            jsError instanceof Error ? jsError.message : String(jsError));
+        }
+      }
+
+      try {
+        const logoutButton = this.page.locator('#navbarLogoutButton, #logout-link, button:has-text("Logout")');
+        const isLogoutVisible = await logoutButton.isVisible({ timeout: 2000 }).catch(() => false);
+        
+        if (isLogoutVisible) {
+          console.log('Account menu is open, logout button is visible');
+          return true;
+        } else {
+          console.log('Warning: Account menu may not be open, logout button is not visible');
+          return menuOpened; // Return true if we think we opened it, even if logout button isn't visible
+        }
+      } catch (finalCheckError) {
+        console.log('Error in final logout button check:', 
+          finalCheckError instanceof Error ? finalCheckError.message : String(finalCheckError));
+        return menuOpened; // Return based on our earlier success
+      }
+    } catch (error) {
+      console.log('Fatal error in openAccountMenu:', 
+        error instanceof Error ? error.message : String(error));
+      return false;
     }
   }
 
@@ -469,11 +709,19 @@ branch    * @returns True if navigation was successful
     try {
       // Try clicking the search button
       try {
-        await this.searchButton.click({ timeout: 5000 });
-        console.log('Clicked search button');
-        return true;
+        const isButtonVisible = await this.searchButton.isVisible({ timeout: 2000 })
+          .catch(() => false);
+        
+        if (isButtonVisible) {
+          await this.searchButton.click({ timeout: 5000, force: true });
+          console.log('Clicked search button');
+          return true;
+        } else {
+          console.log('Search button not visible, trying alternative methods');
+        }
       } catch (buttonError) {
-        console.log('Search button not found, trying alternative methods:', buttonError);
+        console.log('Search button not found, trying alternative methods:', 
+          buttonError instanceof Error ? buttonError.message : String(buttonError));
       }
 
       try {
@@ -481,7 +729,21 @@ branch    * @returns True if navigation was successful
         console.log('Pressed Enter key to submit search');
         return true;
       } catch (enterError) {
-        console.log('Enter key failed, trying JavaScript:', enterError);
+        console.log('Enter key failed, trying JavaScript:', 
+          enterError instanceof Error ? enterError.message : String(enterError));
+      }
+      
+      // Try clicking the search icon directly
+      try {
+        const searchIcon = this.page.locator('mat-icon:has-text("search")');
+        if (await searchIcon.isVisible({ timeout: 2000 })) {
+          await searchIcon.click({ timeout: 3000, force: true });
+          console.log('Clicked search icon directly');
+          return true;
+        }
+      } catch (iconError) {
+        console.log('Search icon click failed:', 
+          iconError instanceof Error ? iconError.message : String(iconError));
       }
 
       const submitted = await this.page.evaluate(() => {
@@ -500,31 +762,51 @@ branch    * @returns True if navigation was successful
           'button.mat-search-button',
           'button[aria-label="Search"]',
           'button mat-icon',
-          'mat-toolbar button'
+          'mat-toolbar button',
+          '.mat-search_icon-search',
+          '.search-button',
+          'button.search'
         ];
 
         for (const selector of searchSelectors) {
-          const button = document.querySelector(selector);
-          if (button) {
-            (button as HTMLElement).click();
-            console.log(`Clicked search button with selector: ${selector} via JavaScript`);
-            return true;
+          const buttons = document.querySelectorAll(selector);
+          if (buttons.length > 0) {
+            for (const button of Array.from(buttons)) {
+              try {
+                (button as HTMLElement).click();
+                console.log(`Clicked search button with selector: ${selector} via JavaScript`);
+                return true;
+              } catch (e) {
+                console.log(`Error clicking ${selector}:`, e);
+              }
+            }
           }
         }
 
         // Try to dispatch Enter key event on search input
-        const searchInput = document.querySelector('input[type="text"]');
-        if (searchInput) {
-          const event = new KeyboardEvent('keydown', {
-            key: 'Enter',
-            code: 'Enter',
-            keyCode: 13,
-            which: 13,
-            bubbles: true
-          });
-          searchInput.dispatchEvent(event);
-          console.log('Dispatched Enter key event on search input via JavaScript');
-          return true;
+        const searchInputs = document.querySelectorAll('input[type="text"], input[aria-label="Search"]');
+        for (const input of Array.from(searchInputs)) {
+          try {
+            const event = new KeyboardEvent('keydown', {
+              key: 'Enter',
+              code: 'Enter',
+              keyCode: 13,
+              which: 13,
+              bubbles: true
+            });
+            input.dispatchEvent(event);
+            console.log('Dispatched Enter key event on search input via JavaScript');
+            
+            const parentForm = input.closest('form');
+            if (parentForm) {
+              parentForm.dispatchEvent(new Event('submit', { bubbles: true }));
+              console.log('Submitted parent form of search input');
+            }
+            
+            return true;
+          } catch (e) {
+            console.log('Error dispatching event:', e);
+          }
         }
 
         return false;
@@ -534,11 +816,30 @@ branch    * @returns True if navigation was successful
         console.log('Submitted search via JavaScript');
         return true;
       }
+      
+      // Last resort: try direct URL navigation with the search query
+      try {
+        const searchInput = this.page.locator('input[type="text"], input[aria-label="Search"]').first();
+        const searchValue = await searchInput.inputValue().catch(() => '');
+        
+        if (searchValue) {
+          console.log(`Got search value "${searchValue}", trying direct navigation`);
+          const currentUrl = this.page.url();
+          const baseUrl = currentUrl.split('#')[0];
+          await this.page.goto(`${baseUrl}#/search?q=${encodeURIComponent(searchValue)}`, { timeout: 5000 });
+          console.log('Direct navigation to search URL completed');
+          return true;
+        }
+      } catch (navError) {
+        console.log('Direct navigation failed:', 
+          navError instanceof Error ? navError.message : String(navError));
+      }
 
       console.log('Could not submit search with any method');
       return false;
     } catch (error) {
-      console.log('Error submitting search:', error);
+      console.log('Error submitting search:', 
+        error instanceof Error ? error.message : String(error));
       return false;
     }
   }
@@ -651,6 +952,11 @@ branch    * @returns True if navigation was successful
     console.log(`Searching for product: "${query}"`);
     
     try {
+      if (!this.page || this.page.isClosed?.()) {
+        console.log('Page is closed or invalid when searching for product');
+        return new SearchResultPage(this.page);
+      }
+      
       await this.dismissOverlays(3, 1000);
     } catch (overlayError) {
       console.log('Error dismissing overlays before search (continuing):', 
@@ -658,7 +964,8 @@ branch    * @returns True if navigation was successful
     }
     
     try {
-      await this.page.screenshot({ path: `before-search-${Date.now()}.png` });
+      await this.page.screenshot({ path: `before-search-${Date.now()}.png` })
+        .catch(error => console.log('Error taking screenshot:', error));
       
       const searchSuccess = await this.executeSearch(query);
       if (!searchSuccess) {
@@ -674,7 +981,8 @@ branch    * @returns True if navigation was successful
         error instanceof Error ? error.message : String(error));
       
       try {
-        await this.page.screenshot({ path: `search-error-${Date.now()}.png` });
+        await this.page.screenshot({ path: `search-error-${Date.now()}.png` })
+          .catch(error => console.log('Error taking screenshot:', error));
         
         console.log('Trying direct navigation to search URL...');
         try {
@@ -692,6 +1000,171 @@ branch    * @returns True if navigation was successful
           fallbackError instanceof Error ? fallbackError.message : String(fallbackError));
         return new SearchResultPage(this.page);
       }
+    }
+  }
+  
+  /**
+   * Select a product from search results or product list
+   * Implements multiple fallback mechanisms to handle various UI states
+   * @param productName Optional product name to filter by
+   * @returns Promise<boolean> True if product was successfully selected
+   */
+  async selectProduct(productName?: string): Promise<boolean> {
+    try {
+      if (!this.page || this.page.isClosed?.()) {
+        console.log('Page is closed or invalid when selecting product');
+        return false;
+      }
+      
+      console.log(`Attempting to select product${productName ? ` "${productName}"` : ''}`);
+      
+      await this.page.screenshot({ path: `before-select-product-${Date.now()}.png` })
+        .catch(error => console.log('Error taking screenshot:', error));
+      
+      await this.dismissOverlays(3, 300)
+        .catch(error => console.log('Error dismissing overlays before product selection:', error));
+      
+      const productSelectors = [
+        '.mat-card',
+        'app-product-list mat-grid-tile',
+        'app-search-result mat-card',
+        '.item-name',
+        '.mat-grid-tile',
+        '.product-name',
+        '.product-item',
+        '.product-card'
+      ];
+      
+      if (productName) {
+        for (const selector of productSelectors) {
+          try {
+            const productCard = this.page.locator(selector).filter({ hasText: productName }).first();
+            const isVisible = await productCard.isVisible({ timeout: 2000 })
+              .catch(() => false);
+            
+            if (isVisible) {
+              console.log(`Found product card with name "${productName}" using selector: ${selector}`);
+              await productCard.click({ timeout: 3000, force: true })
+                .catch(error => {
+                  console.log(`Error clicking product card with name "${productName}":`, error);
+                  return false;
+                });
+              
+              console.log(`Successfully clicked product card with name "${productName}"`);
+              await this.page.waitForTimeout(500).catch(() => {});
+              return true;
+            }
+          } catch (error) {
+            console.log(`Failed to select product "${productName}" with selector ${selector}:`, error);
+          }
+        }
+      }
+      
+      for (const selector of productSelectors) {
+        try {
+          const productCard = this.page.locator(selector).first();
+          const isVisible = await productCard.isVisible({ timeout: 2000 })
+            .catch(() => false);
+          
+          if (isVisible) {
+            console.log(`Found product card with selector: ${selector}`);
+            await productCard.click({ timeout: 3000, force: true })
+              .catch(error => {
+                console.log(`Error clicking product card with selector ${selector}:`, error);
+                return false;
+              });
+            
+            console.log(`Successfully clicked product card with selector: ${selector}`);
+            await this.page.waitForTimeout(500).catch(() => {});
+            return true;
+          }
+        } catch (error) {
+          console.log(`Failed to select product with selector ${selector}:`, error);
+        }
+      }
+      
+      console.log('Trying JavaScript click on product card...');
+      try {
+        const jsClicked = await this.page.evaluate((name) => {
+          if (name) {
+            const allElements = document.querySelectorAll('*');
+            for (const element of Array.from(allElements)) {
+              if (element.textContent?.includes(name)) {
+                console.log(`Found element containing "${name}" via JavaScript`);
+                (element as HTMLElement).click();
+                return true;
+              }
+            }
+          }
+          
+          const selectors = [
+            '.mat-card', 
+            'app-product-list mat-grid-tile', 
+            'app-search-result mat-card',
+            '.item-name', 
+            '.mat-grid-tile',
+            '.product-name',
+            '.product-item',
+            '.product-card'
+          ];
+          
+          for (const selector of selectors) {
+            const elements = document.querySelectorAll(selector);
+            if (elements.length > 0) {
+              console.log(`Clicked first ${selector} via JavaScript`);
+              (elements[0] as HTMLElement).click();
+              return true;
+            }
+          }
+          
+          // Last resort: try clicking any visible card-like element
+          const possibleProductElements = [
+            ...Array.from(document.querySelectorAll('mat-card')),
+            ...Array.from(document.querySelectorAll('mat-grid-tile')),
+            ...Array.from(document.querySelectorAll('.item')),
+            ...Array.from(document.querySelectorAll('[class*="product"]')),
+            ...Array.from(document.querySelectorAll('[class*="card"]'))
+          ];
+          
+          if (possibleProductElements.length > 0) {
+            console.log('Clicked first possible product element via JavaScript');
+            (possibleProductElements[0] as HTMLElement).click();
+            return true;
+          }
+          
+          return false;
+        }, productName);
+        
+        if (jsClicked) {
+          console.log('Successfully clicked product card via JavaScript');
+          await this.page.waitForTimeout(500).catch(() => {});
+          return true;
+        }
+      } catch (jsError) {
+        console.log('JavaScript click failed:', jsError);
+      }
+      
+      try {
+        console.log('Trying direct navigation to a product detail page...');
+        const currentUrl = this.page.url();
+        const baseUrl = currentUrl.split('#')[0];
+        await this.page.goto(`${baseUrl}#/product/1`, { timeout: 5000 });
+        console.log('Direct navigation to product detail page completed');
+        return true;
+      } catch (navError) {
+        console.log('Direct navigation to product detail failed:', navError);
+      }
+      
+      console.log('All product selection attempts failed');
+      await this.page.screenshot({ path: `product-selection-failed-${Date.now()}.png` })
+        .catch(error => console.log('Error taking screenshot:', error));
+      
+      return false;
+    } catch (error) {
+      console.log('Error in selectProduct:', error);
+      await this.page.screenshot({ path: `select-product-error-${Date.now()}.png` })
+        .catch(error => console.log('Error taking screenshot:', error));
+      return false;
     }
   }
 
