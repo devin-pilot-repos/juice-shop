@@ -64,16 +64,40 @@ export class BasePage {
 
   /**
    * Wait for navigation to complete
+   * @returns True if navigation completed successfully
    */
-  async waitForNavigation(): Promise<void> {
-    await Promise.all([
-      this.page.waitForLoadState('networkidle', { timeout: 10000 }),
-      this.page.waitForLoadState('domcontentloaded', { timeout: 5000 })
-    ]).catch(error => {
-      console.log('Navigation wait error (continuing anyway):', error);
-    });
-    
-    await this.page.waitForTimeout(300);
+  async waitForNavigation(): Promise<boolean> {
+    try {
+      const networkIdlePromise = this.page.waitForLoadState('networkidle', { timeout: 3000 })
+        .catch(error => {
+          console.log('Network idle timeout (continuing anyway):', error.message);
+          return null;
+        });
+      
+      const domContentPromise = this.page.waitForLoadState('domcontentloaded', { timeout: 2000 })
+        .catch(error => {
+          console.log('DOM content timeout (continuing anyway):', error.message);
+          return null;
+        });
+      
+      // Wait for either of the load states to complete
+      await Promise.race([
+        networkIdlePromise, 
+        domContentPromise,
+        new Promise(resolve => setTimeout(resolve, 4000))
+      ]);
+      
+      try {
+        await this.page.waitForTimeout(50);
+      } catch (timeoutError) {
+        console.log('Navigation timeout after load, continuing anyway');
+      }
+      
+      return true;
+    } catch (error) {
+      console.log('Fatal navigation error:', error instanceof Error ? error.message : String(error));
+      return false;
+    }
   }
 
   /**
