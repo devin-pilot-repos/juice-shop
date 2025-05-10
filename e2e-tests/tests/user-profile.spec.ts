@@ -332,11 +332,17 @@ test.describe('User Profile', () => {
       const newUsername = `test_user_${Date.now()}`;
       console.log(`Filling username field with: ${newUsername}`);
       
-      await usernameField.fill(newUsername).catch(async (e) => {
+      await usernameField.fill(newUsername).catch(async (e: any) => {
         console.log(`Fill failed: ${e instanceof Error ? e.message : String(e)}`);
         
-        await page.evaluate((selector: string, value: string) => {
-          const input = document.querySelector(selector);
+        const selector = await usernameField.evaluate((el: any) => {
+          return el.tagName.toLowerCase() + 
+                 (el.id ? '#' + el.id : '') + 
+                 (el.className ? '.' + el.className.replace(/\s+/g, '.') : '');
+        });
+        
+        await page.evaluate(({ selector, value }: { selector: string, value: string }) => {
+          const input = document.querySelector(selector) as HTMLInputElement;
           if (input) {
             input.value = value;
             input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -344,11 +350,7 @@ test.describe('User Profile', () => {
             return true;
           }
           return false;
-        }, await usernameField.evaluate((el: any) => {
-          return el.tagName.toLowerCase() + 
-                 (el.id ? '#' + el.id : '') + 
-                 (el.className ? '.' + el.className.replace(/\s+/g, '.') : '');
-        }), newUsername).catch((jsError: any) => {
+        }, { selector, value: newUsername }).catch((jsError: any) => {
           console.log(`JavaScript fill also failed: ${jsError}`);
         });
       });
