@@ -183,19 +183,55 @@ test.describe('Login and Logout', () => {
       const basePage = new BasePage(page);
       await basePage.dismissOverlays();
       
-      const loginPage = await Navigation.goToLoginPage(page);
-      if (!loginPage) {
-        console.log('Failed to navigate to login page for logout test, skipping test');
-        test.skip();
-        return;
+      const alreadyLoggedIn = await Auth.isLoggedIn(page);
+      console.log(`Already logged in: ${alreadyLoggedIn}`);
+      
+      if (!alreadyLoggedIn) {
+        const loginPage = await Navigation.goToLoginPage(page);
+        if (!loginPage) {
+          console.log('Failed to navigate to login page for logout test, skipping test');
+          test.skip();
+          return;
+        }
+        await page.screenshot({ path: `before-login-for-logout-${Date.now()}.png` });
+        
+        await loginPage.login(registeredUser.email, registeredUser.password);
+        await page.screenshot({ path: `after-login-for-logout-${Date.now()}.png` });
+        
+        const loggedIn = await Auth.isLoggedIn(page);
+        if (!loggedIn) {
+          console.log('Login failed, cannot test logout. Skipping test.');
+          test.skip();
+          return;
+        }
+        console.log('Successfully logged in for logout test');
       }
-      await page.screenshot({ path: `before-login-for-logout-${Date.now()}.png` });
       
-      await loginPage.login(registeredUser.email, registeredUser.password);
-      await page.screenshot({ path: `after-login-for-logout-${Date.now()}.png` });
+      console.log('Attempting to logout...');
+      await page.screenshot({ path: `before-logout-${Date.now()}.png` });
       
-      console.log('Test framework is working correctly for logout test');
-      expect(true).toBe(true);
+      const logoutSuccess = await Auth.logout(page);
+      
+      await page.screenshot({ path: `after-logout-${Date.now()}.png` });
+      console.log(`Logout success: ${logoutSuccess}`);
+      
+      const stillLoggedIn = await Auth.isLoggedIn(page);
+      console.log(`Still logged in after logout: ${stillLoggedIn}`);
+      
+      expect(logoutSuccess).toBe(true);
+      expect(stillLoggedIn).toBe(false);
+      
+      const loginButtonVisible = await page.locator('#navbarLoginButton').isVisible()
+        .catch(() => false);
+      
+      console.log(`Login button visible after logout: ${loginButtonVisible}`);
+      
+      const currentUrl = page.url();
+      const onLoginPage = currentUrl.includes('/login');
+      
+      console.log(`On login page after logout: ${onLoginPage}`);
+      
+      expect(loginButtonVisible || onLoginPage).toBe(true);
     } catch (error) {
       console.log('Error in logout test:', error);
       await page.screenshot({ path: `logout-test-error-${Date.now()}.png` });
@@ -203,7 +239,7 @@ test.describe('Login and Logout', () => {
     }
   });
   
-  test('should remember user when "Remember Me" is checked', async ({ page }: { page: any }) => {
+  test('should remember user when "Remember Me" is checked', async ({ page, context }: { page: any, context: any }) => {
     try {
       const registeredUser = getRegisteredUser();
       console.log(`Logging in with registered user and Remember Me: ${registeredUser.email}`);
@@ -229,11 +265,55 @@ test.describe('Login and Logout', () => {
       }
       await page.screenshot({ path: `before-remember-login-${Date.now()}.png` });
       
+      console.log('Logging in with Remember Me checked');
       await loginPage.login(registeredUser.email, registeredUser.password, true);
       await page.screenshot({ path: `after-remember-login-${Date.now()}.png` });
       
-      console.log('Test framework is working correctly for remember me test');
-      expect(true).toBe(true);
+      const loggedIn = await Auth.isLoggedIn(page);
+      if (!loggedIn) {
+        console.log('Login failed, cannot test Remember Me. Skipping test.');
+        test.skip();
+        return;
+      }
+      console.log('Successfully logged in with Remember Me checked');
+      
+      const cookies = await context.cookies();
+      const authCookies = cookies.filter((cookie: any) => 
+        cookie.name.toLowerCase().includes('token') || 
+        cookie.name.toLowerCase().includes('auth') ||
+        cookie.name.toLowerCase().includes('session')
+      );
+      
+      console.log(`Found ${authCookies.length} authentication-related cookies`);
+      for (const cookie of authCookies) {
+        console.log(`Cookie: ${cookie.name}, Expires: ${cookie.expires}, HttpOnly: ${cookie.httpOnly}`);
+      }
+      
+      console.log('Creating new page to simulate browser restart');
+      const newPage = await context.newPage();
+      
+      try {
+        await newPage.goto(EnvironmentManager.getBaseUrl());
+        await newPage.waitForTimeout(2000);
+        
+        const newBasePage = new BasePage(newPage);
+        await newBasePage.dismissOverlays();
+        
+        await newPage.screenshot({ path: `new-page-remember-me-${Date.now()}.png` });
+        
+        const stillLoggedIn = await Auth.isLoggedIn(newPage);
+        console.log(`Still logged in on new page: ${stillLoggedIn}`);
+        
+        expect(stillLoggedIn).toBe(true);
+        
+        await newPage.close();
+      } catch (newPageError) {
+        console.log('Error in new page for Remember Me test:', newPageError);
+        await newPage.screenshot({ path: `new-page-error-${Date.now()}.png` })
+          .catch(() => {});
+        await newPage.close().catch(() => {});
+        throw newPageError;
+      }
     } catch (error) {
       console.log('Error in remember me test:', error);
       await page.screenshot({ path: `remember-test-error-${Date.now()}.png` });
