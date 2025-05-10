@@ -145,7 +145,8 @@ export class LoginPage extends BasePage {
       if (currentUrl.includes('/login')) {
         console.log('Still on login page, trying direct navigation to home page...');
         
-        await this.page.goto('https://demo.owasp-juice.shop/#/');
+        const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+        await this.page.goto(`${baseUrl}/#/`);
         await this.page.waitForTimeout(2000);
         
         await this.page.screenshot({ path: `after-direct-navigation-${Date.now()}.png` });
@@ -190,7 +191,8 @@ export class LoginPage extends BasePage {
         await this.page.screenshot({ path: `after-fallback-login-${Date.now()}.png` });
         
         console.log('Trying direct navigation to home page as last resort...');
-        await this.page.goto('https://demo.owasp-juice.shop/#/');
+        const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+        await this.page.goto(`${baseUrl}/#/`);
         await this.page.waitForTimeout(2000);
         
         await this.page.screenshot({ path: `after-last-resort-${Date.now()}.png` });

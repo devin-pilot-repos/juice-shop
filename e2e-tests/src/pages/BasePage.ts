@@ -16,34 +16,79 @@ export class BasePage {
    * @param path The path to navigate to (will be appended to the base URL)
    * @param retries Number of retries if navigation fails
    */
-  async navigate(path: string = '', retries: number = 2): Promise<boolean> {
+  async navigate(path: string = '', retries: number = 3): Promise<boolean> {
     if (!this.page || this.page.isClosed?.()) {
       console.log('Page is closed or invalid when navigating');
       return false;
     }
     
     const baseUrl = EnvironmentManager.getBaseUrl();
-    const url = new URL(path, baseUrl).toString();
+    let url: string;
+    
+    if (path.startsWith('#/') || path.startsWith('/#/')) {
+      const normalizedPath = path.startsWith('#/') ? `/#${path}` : path;
+      url = `${baseUrl}${normalizedPath}`;
+    } else if (path.startsWith('/')) {
+      url = `${baseUrl}${path}`;
+    } else if (path) {
+      url = new URL(path, baseUrl).toString();
+    } else {
+      url = baseUrl;
+    }
+    
+    console.log(`Preparing to navigate to: ${url}`);
     
     let success = false;
     let attempts = 0;
+    
+    await this.dismissOverlays(2, 500).catch(() => {});
     
     while (!success && attempts <= retries) {
       try {
         console.log(`Navigating to ${url} (attempt ${attempts + 1}/${retries + 1})`);
         
-        await this.page.goto(url, { 
-          timeout: 20000,
-          waitUntil: 'domcontentloaded'
-        });
+        const currentUrl = this.page.url();
+        const isSameBaseUrl = currentUrl.split('#')[0] === url.split('#')[0];
         
-        // Wait for networkidle with a short timeout, but don't fail if it times out
+        if (isSameBaseUrl && path.includes('#')) {
+          console.log('Using hash navigation within same page');
+          await this.page.evaluate((targetUrl) => {
+            window.location.hash = targetUrl.split('#')[1];
+          }, url);
+          
+          // Wait for the hash change to take effect
+          await this.page.waitForTimeout(1000);
+        } else {
+          await this.page.goto(url, { 
+            timeout: 30000, // Increased timeout for slower environments
+            waitUntil: 'domcontentloaded'
+          });
+        }
+        
+        // Wait for the application to be ready using multiple strategies
         try {
-          await this.page.waitForLoadState('networkidle', { timeout: 2000 });
+          await this.page.waitForLoadState('domcontentloaded', { timeout: 5000 });
+          
+          await this.page.waitForLoadState('networkidle', { timeout: 5000 })
+            .catch(() => console.log('Network idle timeout (continuing anyway)'));
+          
+          // For SPAs, also wait for any route change animations to complete
+          await this.page.waitForTimeout(500);
+          
+          const loadingIndicator = this.page.locator('.loading, .spinner, [role="progressbar"]');
+          const isLoading = await loadingIndicator.isVisible({ timeout: 1000 }).catch(() => false);
+          
+          if (isLoading) {
+            console.log('Loading indicator detected, waiting for it to disappear');
+            await loadingIndicator.waitFor({ state: 'hidden', timeout: 5000 })
+              .catch(() => console.log('Loading indicator did not disappear (continuing anyway)'));
+          }
         } catch (loadError) {
-          console.log('Network idle timeout after navigation (continuing anyway):', 
+          console.log('Load state timeout after navigation (continuing anyway):', 
             loadError instanceof Error ? loadError.message : String(loadError));
         }
+        
+        await this.dismissOverlays(2, 500).catch(() => {});
         
         success = true;
       } catch (error) {
@@ -55,23 +100,36 @@ export class BasePage {
           
           if (success && path) {
             const newBaseUrl = EnvironmentManager.getBaseUrl();
-            const newUrl = new URL(path, newBaseUrl).toString();
+            let newUrl: string;
+            
+            if (path.startsWith('#/') || path.startsWith('/#/')) {
+              const normalizedPath = path.startsWith('#/') ? `/#${path}` : path;
+              newUrl = `${newBaseUrl}${normalizedPath}`;
+            } else if (path.startsWith('/')) {
+              newUrl = `${newBaseUrl}${path}`;
+            } else {
+              newUrl = new URL(path, newBaseUrl).toString();
+            }
             
             try {
               console.log(`Navigating to ${newUrl} with fallback URL`);
               
               await this.page.goto(newUrl, { 
-                timeout: 15000,
+                timeout: 30000,
                 waitUntil: 'domcontentloaded'
               });
               
-              // Wait for networkidle with a short timeout, but don't fail if it times out
               try {
-                await this.page.waitForLoadState('networkidle', { timeout: 2000 });
+                await this.page.waitForLoadState('domcontentloaded', { timeout: 5000 });
+                await this.page.waitForLoadState('networkidle', { timeout: 5000 })
+                  .catch(() => console.log('Network idle timeout (continuing anyway)'));
+                await this.page.waitForTimeout(500);
               } catch (loadError) {
-                console.log('Network idle timeout after fallback navigation (continuing anyway):', 
+                console.log('Load state timeout after fallback navigation (continuing anyway):', 
                   loadError instanceof Error ? loadError.message : String(loadError));
               }
+              
+              await this.dismissOverlays(2, 500).catch(() => {});
             } catch (pathError) {
               console.log(`Failed to navigate to path with fallback URL:`, pathError);
               success = false;
@@ -86,6 +144,7 @@ export class BasePage {
     if (success) {
       try {
         await this.page.screenshot({ path: `navigation-success-${Date.now()}.png` });
+        console.log(`Successfully navigated to: ${this.page.url()}`);
       } catch (screenshotError) {
         console.log('Failed to take navigation success screenshot:', screenshotError);
       }

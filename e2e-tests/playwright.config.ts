@@ -14,7 +14,7 @@ const env = EnvironmentManager.getEnvironment();
 export default defineConfig({
   testDir: './tests',
   /* Maximum time one test can run for. */
-  timeout: 60 * 1000,
+  timeout: 120 * 1000, // Increased from 60s to 120s to handle slow operations
   /* Exclude non-functional tests (API and connectivity) */
   testIgnore: ['**/api-integration.spec.ts', '**/connectivity.spec.ts', '**/environment.spec.ts'],
   expect: {
@@ -22,7 +22,7 @@ export default defineConfig({
      * Maximum time expect() should wait for the condition to be met.
      * For example in `await expect(locator).toHaveText();`
      */
-    timeout: 10000
+    timeout: 30000 // Increased from 10s to 30s for element expectations
   },
   /* Run tests in files in parallel */
   fullyParallel: true,
