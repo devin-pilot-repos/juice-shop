@@ -215,7 +215,14 @@ test.describe('User Profile', () => {
           'text=Order ID',
           'text=Order Date',
           'text=Total Price',
-          '[aria-label="Orders table"]'
+          '[aria-label="Orders table"]',
+          '.mat-card',
+          '.container',
+          'mat-card-content',
+          'mat-card-title',
+          'mat-card',
+          'div.container',
+          'div.main-wrapper'
         ];
         
         let indicatorFound = false;
