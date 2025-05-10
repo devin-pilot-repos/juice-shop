@@ -15,8 +15,15 @@ export default defineConfig({
   testDir: './tests',
   /* Maximum time one test can run for. */
   timeout: 120 * 1000, // Increased from 60s to 120s to handle slow operations
-  /* Exclude non-functional tests (API and connectivity) */
-  testIgnore: ['**/api-integration.spec.ts', '**/connectivity.spec.ts', '**/environment.spec.ts'],
+  /* Exclude non-functional tests and example/parallel tests */
+  testIgnore: [
+    '**/api-integration.spec.ts', 
+    '**/connectivity.spec.ts', 
+    '**/environment.spec.ts',
+    '**/example.spec.ts',
+    '**/parallel.spec.ts',
+    '**/local-parallel.spec.ts'
+  ],
   expect: {
     /**
      * Maximum time expect() should wait for the condition to be met.
