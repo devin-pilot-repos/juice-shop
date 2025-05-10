@@ -515,4 +515,77 @@ export class BasketManipulation {
       return 0;
     }
   }
+
+  /**
+   * Empty the basket by removing all items
+   * This method is used to clean up after tests
+   * @param page Playwright page object
+   * @param browser Optional browser instance for page recreation
+   * @param context Optional browser context for page recreation
+   * @returns True if basket was successfully emptied
+   */
+  static async emptyBasket(
+    page: Page,
+    browser?: Browser,
+    context?: BrowserContext
+  ): Promise<boolean> {
+    console.log('Attempting to empty basket...');
+    
+    try {
+      const basketPage = await Navigation.goToBasketPage(page);
+      if (!basketPage) {
+        console.log('Failed to navigate to basket page, trying direct approach');
+        return await this.clearBasketDirectly(page, browser, context);
+      }
+      
+      const hasItems = await this.hasItemsDirectly(page, browser, context);
+      if (!hasItems) {
+        console.log('Basket is already empty');
+        return true;
+      }
+      
+      try {
+        console.log('Trying to remove items via UI');
+        
+        const removeButtons = page.locator('button[aria-label="Remove from Basket"], mat-icon:has-text("delete"), button.mat-icon-button:has-text("delete")');
+        const count = await removeButtons.count().catch(() => 0);
+        
+        if (count > 0) {
+          console.log(`Found ${count} remove buttons`);
+          
+          for (let i = 0; i < count; i++) {
+            try {
+              await removeButtons.first().click({ timeout: 5000, force: true }).catch(e => {
+                console.log(`Click failed, but continuing: ${e instanceof Error ? e.message : String(e)}`);
+              });
+              
+              await page.waitForTimeout(500);
+            } catch (clickError) {
+              console.log('Error clicking remove button:', clickError);
+            }
+          }
+          
+          const remainingItems = await this.getBasketItemCountDirectly(page, browser, context);
+          if (remainingItems === 0) {
+            console.log('Successfully emptied basket via UI');
+            return true;
+          }
+        }
+      } catch (uiError) {
+        console.log('Error emptying basket via UI:', uiError);
+      }
+      
+      console.log('UI approach failed or no remove buttons found, trying direct approach');
+      return await this.clearBasketDirectly(page, browser, context);
+    } catch (error) {
+      console.log('Error in emptyBasket:', error);
+      
+      try {
+        return await this.clearBasketDirectly(page, browser, context);
+      } catch (directError) {
+        console.log('Direct approach also failed:', directError);
+        return false;
+      }
+    }
+  }
 }
