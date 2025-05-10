@@ -1,0 +1,23 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint", "playwright"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:playwright/recommended"
+  ],
+  "rules": {
+    "@typescript-eslint/no-unused-vars": "error",
+    "playwright/no-conditional-in-test": "warn"
+  },
+  "ignorePatterns": ["*.cjs"],
+  "overrides": [
+    {
+      "files": ["*.ts"],
+      "rules": {
+        "playwright/no-force-option": "warn"
+      }
+    }
+  ]
+}
