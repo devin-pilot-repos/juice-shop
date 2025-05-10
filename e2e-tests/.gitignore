@@ -2,6 +2,9 @@
 .env
 .env.*
 !.env.example
+playwright-report/
+test-results/
+*.png
 
 # Configuration with sensitive information
 config/environments.ts
