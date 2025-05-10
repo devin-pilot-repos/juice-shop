@@ -38,7 +38,7 @@ test.describe('Score Board', () => {
       
       const totalChallenges = await scoreBoardPage.getChallengeCount();
       
-      await scoreBoardPage.filterByDifficulty(1);
+      await scoreBoardPage.filterByDifficulty('1');
       
       const filteredChallenges = await scoreBoardPage.getChallengeCount();
       
