@@ -5,3 +5,10 @@
 
 # Configuration with sensitive information
 config/environments.ts
+
+# Test results and reports
+test-results/
+playwright-report/
+
+# Screenshots and other test artifacts
+*.png
