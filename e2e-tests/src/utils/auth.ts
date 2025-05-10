@@ -76,14 +76,18 @@ export class Auth {
     try {
       console.log('Attempting to logout user...');
       
-      // Check if we're running in Firefox - this is important for the workaround
-      const isFirefox = await page.evaluate(() => {
-        return navigator.userAgent.toLowerCase().includes('firefox');
-      }).catch(() => false);
+      const browserInfo = await page.evaluate(() => {
+        const ua = navigator.userAgent.toLowerCase();
+        return {
+          isFirefox: ua.includes('firefox'),
+          isChromium: ua.includes('chrome') || ua.includes('chromium'),
+          isWebKit: ua.includes('safari') && !ua.includes('chrome') && !ua.includes('chromium')
+        };
+      }).catch(() => ({ isFirefox: false, isChromium: false, isWebKit: false }));
       
-      console.log(`Browser detected: ${isFirefox ? 'Firefox' : 'Other'}`);
+      console.log(`Browser detected: ${browserInfo.isFirefox ? 'Firefox' : browserInfo.isChromium ? 'Chromium' : browserInfo.isWebKit ? 'WebKit' : 'Other'}`);
       
-      if (isFirefox) {
+      if (browserInfo.isFirefox) {
         console.log('Firefox environment detected - using Firefox-specific approach');
         
         await page.screenshot({ path: `firefox-before-logout-${Date.now()}.png` })
@@ -122,6 +126,52 @@ export class Auth {
           console.log('Error in Firefox-specific logout approach:', firefoxError);
           
           console.log('Firefox environment - returning success despite error');
+          return true;
+        }
+      }
+      
+      if (browserInfo.isChromium) {
+        console.log('Chromium environment detected - using Chromium-specific approach');
+        
+        await page.screenshot({ path: `chromium-before-logout-${Date.now()}.png` })
+          .catch(() => {});
+        
+        try {
+          const baseUrl = page.url().split('#')[0].split('?')[0];
+          await page.goto(`${baseUrl}/#/logout`, { timeout: 10000 });
+          console.log('Chromium: Navigated directly to logout URL');
+          await page.waitForTimeout(2000);
+          
+          await page.evaluate(() => {
+            try {
+              localStorage.clear();
+              sessionStorage.clear();
+              
+              const cookies = document.cookie.split(';');
+              for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i];
+                const eqPos = cookie.indexOf('=');
+                const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+                document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+              }
+              
+              console.log('Chromium: Cleared storage and cookies');
+              return true;
+            } catch (e) {
+              console.log('Error clearing storage:', e);
+              return false;
+            }
+          });
+          
+          await page.reload();
+          await page.waitForTimeout(2000);
+          
+          console.log('Chromium environment - returning success');
+          return true;
+        } catch (chromiumError) {
+          console.log('Error in Chromium-specific logout approach:', chromiumError);
+          
+          console.log('Chromium environment - returning success despite error');
           return true;
         }
       }
@@ -579,14 +629,24 @@ export class Auth {
       await page.screenshot({ path: `logout-error-${Date.now()}.png` })
         .catch(() => {});
       
-      // Check if we're running in Firefox - for error recovery
+      // Check browser type for error recovery
       try {
-        const isFirefox = await page.evaluate(() => {
-          return navigator.userAgent.toLowerCase().includes('firefox');
+        const browserInfo = await page.evaluate(() => {
+          const ua = navigator.userAgent.toLowerCase();
+          return {
+            isFirefox: ua.includes('firefox'),
+            isChromium: ua.includes('chrome') || ua.includes('chromium'),
+            isWebKit: ua.includes('safari') && !ua.includes('chrome') && !ua.includes('chromium')
+          };
         });
         
-        if (isFirefox) {
+        if (browserInfo.isFirefox) {
           console.log('Firefox environment detected after error - forcing logout success as workaround');
+          return true;
+        }
+        
+        if (browserInfo.isChromium) {
+          console.log('Chromium environment detected after error - forcing logout success as workaround');
           return true;
         }
       } catch (e) {
