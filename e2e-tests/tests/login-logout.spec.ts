@@ -289,7 +289,16 @@ test.describe('Login and Logout', () => {
       }
     } catch (error) {
       console.log('Error in logout test:', error);
-      await page.screenshot({ path: `logout-test-error-${Date.now()}.png` });
+      try {
+        if (page && !page.isClosed()) {
+          await page.screenshot({ path: `logout-test-error-${Date.now()}.png` })
+            .catch(screenshotError => console.log('Error taking screenshot:', screenshotError));
+        } else {
+          console.log('Cannot take screenshot - page is closed or invalid');
+        }
+      } catch (screenshotError) {
+        console.log('Error during screenshot capture:', screenshotError);
+      }
       throw error;
     }
   });
@@ -371,7 +380,16 @@ test.describe('Login and Logout', () => {
       }
     } catch (error) {
       console.log('Error in remember me test:', error);
-      await page.screenshot({ path: `remember-test-error-${Date.now()}.png` });
+      try {
+        if (page && !page.isClosed()) {
+          await page.screenshot({ path: `remember-test-error-${Date.now()}.png` })
+            .catch(screenshotError => console.log('Error taking screenshot:', screenshotError));
+        } else {
+          console.log('Cannot take screenshot - page is closed or invalid');
+        }
+      } catch (screenshotError) {
+        console.log('Error during screenshot capture:', screenshotError);
+      }
       throw error;
     }
   });
