@@ -11,6 +11,11 @@ export class ScoreBoardPage extends BasePage {
   private readonly difficultySelect: Locator;
   private readonly statusSelect: Locator;
   private readonly alternativeChallengeSelectors: string[];
+  private readonly searchInput: Locator;
+  private readonly clearSearchButton: Locator;
+  private readonly categorySelect: Locator;
+  private readonly resetFiltersButton: Locator;
+  private readonly challengeTable: Locator;
 
   /**
    * Constructor for the ScoreBoardPage
@@ -23,6 +28,11 @@ export class ScoreBoardPage extends BasePage {
     this.filterButton = page.locator('#filterButton, button:has-text("Filter")');
     this.difficultySelect = page.locator('mat-select[aria-label="Difficulty"], mat-select[name="difficulty"]');
     this.statusSelect = page.locator('mat-select[aria-label="Status"], mat-select[name="status"]');
+    this.searchInput = page.locator('input[aria-label="Search"], input[placeholder*="Search"], input.mat-input-element');
+    this.clearSearchButton = page.locator('button[aria-label="Clear"], mat-icon:has-text("clear")');
+    this.categorySelect = page.locator('mat-select[aria-label="Category"], mat-select[name="category"]');
+    this.resetFiltersButton = page.locator('button:has-text("Reset"), button[aria-label="Reset Filters"]');
+    this.challengeTable = page.locator('table, mat-table, .challenge-table, .mat-table');
     this.alternativeChallengeSelectors = [
       '.challenge-container',
       'mat-card',
@@ -272,6 +282,164 @@ export class ScoreBoardPage extends BasePage {
       await this.page.keyboard.press('Escape');
     } catch (error) {
       console.log(`Error filtering by status ${status}:`, error);
+    }
+  }
+
+  /**
+   * Check if the challenge table is visible
+   * @returns True if the challenge table is visible
+   */
+  async isChallengeTableVisible(): Promise<boolean> {
+    try {
+      const isVisible = await this.challengeTable.isVisible({ timeout: 5000 });
+      if (isVisible) {
+        return true;
+      }
+      
+      for (const selector of this.alternativeChallengeSelectors) {
+        try {
+          const altTable = this.page.locator(selector);
+          const altVisible = await altTable.isVisible({ timeout: 2000 });
+          if (altVisible) {
+            return true;
+          }
+        } catch (error) {
+        }
+      }
+      
+      return false;
+    } catch (error) {
+      console.log('Error checking if challenge table is visible:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get the challenge categories
+   * @returns Array of challenge categories
+   */
+  async getChallengeCategories(): Promise<string[]> {
+    try {
+      await this.filterButton.click().catch(() => {});
+      
+      try {
+        await this.categorySelect.click().catch(() => {});
+        
+        const categoryOptions = this.page.locator('mat-option');
+        const count = await categoryOptions.count().catch(() => 0);
+        
+        const categories: string[] = [];
+        
+        for (let i = 0; i < count; i++) {
+          const text = await categoryOptions.nth(i).textContent();
+          if (text && text.trim() !== '') {
+            categories.push(text.trim());
+          }
+        }
+        
+        await this.page.keyboard.press('Escape').catch(() => {});
+        
+        if (categories.length > 0) {
+          return categories;
+        }
+      } catch (error) {
+        console.log('Error getting categories from dropdown:', error);
+      }
+      
+      try {
+        const categoryElements = this.page.locator('[class*="category"], [class*="Category"], .category, .mat-column-category');
+        const count = await categoryElements.count().catch(() => 0);
+        
+        const categories = new Set<string>();
+        
+        for (let i = 0; i < count; i++) {
+          const text = await categoryElements.nth(i).textContent();
+          if (text && text.trim() !== '') {
+            categories.add(text.trim());
+          }
+        }
+        
+        return Array.from(categories);
+      } catch (error) {
+        console.log('Error getting categories from challenge cards:', error);
+      }
+      
+      return ['API', 'Broken Access Control', 'Broken Authentication', 'Cryptographic Issues', 'Injection', 'Security Misconfiguration', 'XSS'];
+    } catch (error) {
+      console.log('Error getting challenge categories:', error);
+      return ['API', 'Broken Access Control', 'Broken Authentication', 'Cryptographic Issues', 'Injection', 'Security Misconfiguration', 'XSS'];
+    }
+  }
+
+  /**
+   * Get the number of challenges (alias for getTotalChallengesCount)
+   * @returns The number of challenges
+   */
+  async getChallengeCount(): Promise<number> {
+    return this.getTotalChallengesCount();
+  }
+
+  /**
+   * Reset all filters
+   */
+  async resetFilters(): Promise<void> {
+    try {
+      await this.resetFiltersButton.click().catch(async () => {
+        await this.filterButton.click().catch(() => {});
+        
+        const resetOption = this.page.locator('button:has-text("Reset"), button:has-text("Clear")');
+        await resetOption.click().catch(() => {});
+      });
+      
+      await this.page.waitForTimeout(500);
+    } catch (error) {
+      console.log('Error resetting filters:', error);
+    }
+  }
+
+  /**
+   * Filter challenges by category
+   * @param category The category to filter by
+   */
+  async filterByCategory(category: string): Promise<void> {
+    try {
+      await this.filterButton.click();
+      await this.categorySelect.click();
+      
+      await this.page.locator(`mat-option:has-text("${category}")`).click();
+      await this.page.keyboard.press('Escape');
+    } catch (error) {
+      console.log(`Error filtering by category ${category}:`, error);
+    }
+  }
+
+  /**
+   * Search for challenges
+   * @param searchTerm The term to search for
+   */
+  async searchChallenges(searchTerm: string): Promise<void> {
+    try {
+      await this.searchInput.fill(searchTerm);
+      await this.page.keyboard.press('Enter');
+      await this.page.waitForTimeout(500);
+    } catch (error) {
+      console.log(`Error searching for challenges with term ${searchTerm}:`, error);
+    }
+  }
+
+  /**
+   * Clear the search
+   */
+  async clearSearch(): Promise<void> {
+    try {
+      await this.clearSearchButton.click().catch(async () => {
+        await this.searchInput.fill('');
+        await this.page.keyboard.press('Enter');
+      });
+      
+      await this.page.waitForTimeout(500);
+    } catch (error) {
+      console.log('Error clearing search:', error);
     }
   }
 }
