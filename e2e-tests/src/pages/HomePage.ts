@@ -1209,4 +1209,78 @@ branch    * @returns True if navigation was successful
       return false;
     }
   }
+
+  /**
+   * Navigate to the user profile page
+   * @returns True if navigation was successful
+   */
+  async goToUserProfile(): Promise<boolean> {
+    try {
+      console.log('Attempting to navigate to user profile...');
+      
+      const menuOpened = await this.openAccountMenu();
+      if (!menuOpened) {
+        console.log('Could not open account menu, trying direct navigation');
+        return await this.navigate('/#/profile');
+      }
+      
+      await this.page.waitForTimeout(1000);
+      
+      const profileSelectors = [
+        'text=My Account',
+        '[aria-label="Go to user profile"]',
+        'button:has-text("My Account")',
+        'a:has-text("My Account")',
+        'mat-list-item:has-text("My Account")',
+        'button.mat-menu-item:has-text("My Account")',
+        'span:has-text("My Account")'
+      ];
+      
+      for (const selector of profileSelectors) {
+        try {
+          const profileLink = this.page.locator(selector);
+          const isVisible = await profileLink.isVisible({ timeout: 2000 }).catch(() => false);
+          
+          if (isVisible) {
+            console.log(`Found profile link with selector: ${selector}`);
+            await profileLink.click({ timeout: 5000, force: true }).catch(e => {
+              console.log(`Click failed, but continuing: ${e instanceof Error ? e.message : String(e)}`);
+            });
+            
+            try {
+              await this.waitForNavigation();
+              
+              const url = this.page.url();
+              if (url.includes('/profile')) {
+                console.log('Successfully navigated to profile page');
+                return true;
+              }
+            } catch (navError) {
+              console.log('Navigation error after profile click:', 
+                navError instanceof Error ? navError.message : String(navError));
+            }
+          }
+        } catch (error) {
+          console.log(`Error with profile selector ${selector}:`, 
+            error instanceof Error ? error.message : String(error));
+        }
+      }
+      
+      // Last resort - try direct navigation
+      console.log('All profile navigation attempts failed, trying direct navigation');
+      return await this.navigate('/#/profile');
+    } catch (error) {
+      console.log('Error navigating to user profile:', 
+        error instanceof Error ? error.message : String(error));
+      
+      // Last resort - try direct navigation
+      try {
+        return await this.navigate('/#/profile');
+      } catch (navError) {
+        console.log('Direct navigation to profile also failed:', 
+          navError instanceof Error ? navError.message : String(navError));
+        return false;
+      }
+    }
+  }
 }
