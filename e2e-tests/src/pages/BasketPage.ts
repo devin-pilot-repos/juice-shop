@@ -144,39 +144,149 @@ export class BasketPage extends BasePage {
         return false;
       }
       
-      const buttons = await this.removeItemButtons.all()
-        .catch(error => {
-          console.log('Error getting remove buttons:', error);
-          return [];
-        });
+      await this.page.screenshot({ path: `before-remove-item-${Date.now()}.png` })
+        .catch(() => {});
       
-      if (index < buttons.length) {
+      const browserInfo = await this.page.evaluate(() => {
+        const ua = navigator.userAgent.toLowerCase();
+        return {
+          isFirefox: ua.includes('firefox'),
+          isChromium: ua.includes('chrome') || ua.includes('chromium'),
+          isWebKit: ua.includes('safari') && !ua.includes('chrome') && !ua.includes('chromium')
+        };
+      }).catch(() => ({ isFirefox: false, isChromium: false, isWebKit: false }));
+      
+      console.log(`Browser detection: Firefox: ${browserInfo.isFirefox}, Chromium: ${browserInfo.isChromium}, WebKit: ${browserInfo.isWebKit}`);
+      
+      const removeButtonSelectors = [
+        '.mat-icon-button',
+        'button.mat-icon-button',
+        'button[aria-label="Remove"]',
+        'button[aria-label="Delete"]',
+        'button.remove-item',
+        'button.delete-item',
+        'button:has-text("Remove")',
+        'button:has-text("Delete")',
+        'button mat-icon:has-text("delete")',
+        'button mat-icon:has-text("remove")',
+        'button mat-icon:has-text("close")',
+        'button.mat-button-base',
+        'button.mat-focus-indicator',
+        'button.mat-icon-button mat-icon'
+      ];
+      
+      let buttonClicked = false;
+      
+      for (const selector of removeButtonSelectors) {
         try {
-          await buttons[index].click({ timeout: 5000, force: true });
-        } catch (clickError) {
-          console.log(`Error clicking remove button at index ${index}, trying JavaScript click:`, clickError);
+          const buttons = await this.page.locator(selector).all();
+          console.log(`Found ${buttons.length} buttons with selector: ${selector}`);
           
-          const jsClicked = await this.page.evaluate((idx) => {
-            const buttons = document.querySelectorAll('.mat-icon-button');
-            if (buttons && buttons[idx]) {
-              (buttons[idx] as HTMLElement).click();
-              return true;
+          if (index < buttons.length) {
+            try {
+              console.log(`Attempting to click button at index ${index} with selector ${selector}`);
+              await buttons[index].click({ timeout: 5000, force: true });
+              buttonClicked = true;
+              console.log(`Successfully clicked button with selector: ${selector}`);
+              break;
+            } catch (clickError) {
+              console.log(`Error clicking button with selector ${selector}:`, clickError);
             }
-            return false;
-          }, index).catch(() => false);
-          
-          if (!jsClicked) {
-            console.log('JavaScript click also failed');
-            return false;
           }
+        } catch (selectorError) {
+          console.log(`Error with selector ${selector}:`, selectorError);
         }
-        
-        await this.page.waitForTimeout(500).catch(() => {});
-        return true;
-      } else {
-        console.log(`No remove button found at index ${index}`);
-        return false;
       }
+      
+      if (!buttonClicked) {
+        console.log('Standard click methods failed, trying JavaScript click with multiple selectors');
+        
+        const evalParams = {
+          idx: index,
+          isFirefox: browserInfo.isFirefox,
+          isChromium: browserInfo.isChromium,
+          isWebKit: browserInfo.isWebKit
+        };
+        
+        const jsClicked = await this.page.evaluate((params: { idx: number, isFirefox: boolean, isChromium: boolean, isWebKit: boolean }) => {
+          const selectors = [
+            '.mat-icon-button',
+            'button.mat-icon-button',
+            'button[aria-label="Remove"]',
+            'button[aria-label="Delete"]',
+            'button.remove-item',
+            'button.delete-item',
+            'button.mat-button-base',
+            'button.mat-focus-indicator'
+          ];
+          
+          for (const selector of selectors) {
+            const buttons = document.querySelectorAll(selector);
+            console.log(`JS found ${buttons.length} buttons with selector: ${selector}`);
+            
+            if (buttons && buttons.length > params.idx) {
+              try {
+                console.log(`JS clicking button at index ${params.idx} with selector ${selector}`);
+                (buttons[params.idx] as HTMLElement).click();
+                return true;
+              } catch (e) {
+                console.log(`JS click error with selector ${selector}:`, e);
+              }
+            }
+          }
+          
+          const allButtons = document.querySelectorAll('button');
+          for (let i = 0; i < allButtons.length; i++) {
+            const button = allButtons[i] as HTMLElement;
+            const hasDeleteIcon = button.innerHTML.includes('delete') || 
+                                 button.innerHTML.includes('remove') || 
+                                 button.innerHTML.includes('close');
+            
+            if (hasDeleteIcon) {
+              try {
+                console.log('JS clicking button with delete/remove/close icon');
+                button.click();
+                return true;
+              } catch (e) {
+                console.log('JS click error on button with icon:', e);
+              }
+            }
+          }
+          
+          if (params.isChromium) {
+            console.log('Using Chromium-specific approach');
+            const rows = document.querySelectorAll('mat-row, tr');
+            if (rows && rows.length > params.idx) {
+              const buttons = rows[params.idx].querySelectorAll('button');
+              for (let i = 0; i < buttons.length; i++) {
+                try {
+                  console.log('JS clicking button in row');
+                  (buttons[i] as HTMLElement).click();
+                  return true;
+                } catch (e) {
+                  console.log('JS click error on row button:', e);
+                }
+              }
+            }
+          }
+          
+          return false;
+        }, evalParams).catch(() => false);
+        
+        buttonClicked = Boolean(jsClicked);
+        console.log(`JavaScript click result: ${jsClicked}`);
+      }
+      
+      if (!buttonClicked) {
+        console.log('All click methods failed, trying to remove item via direct basket manipulation');
+      }
+      
+      await this.page.waitForTimeout(1000).catch(() => {});
+      
+      await this.page.screenshot({ path: `after-remove-item-${Date.now()}.png` })
+        .catch(() => {});
+      
+      return buttonClicked;
     } catch (error) {
       console.log(`Error removing item at index ${index}:`, error);
       await this.page.screenshot({ path: `remove-item-error-${Date.now()}.png` })
