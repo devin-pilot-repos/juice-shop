@@ -61,6 +61,9 @@ jobs:
         run: |
           cd e2e-tests
           npm ci --no-audit --prefer-offline
+          
+      - name: "Install wait-on utility"
+        run: npm install -g wait-on
 
       - name: "Install system dependencies for Playwright"
         run: |
@@ -75,6 +78,12 @@ jobs:
           cd e2e-tests
           npx playwright install --with-deps chromium firefox webkit
 
+      - name: "Start application"
+        run: |
+          npm start &
+          echo "Waiting for application to be available..."
+          npx wait-on http://localhost:3000 --timeout 60000
+
       - name: "Run Playwright tests (Run ${{ matrix.run-number }})"
         run: |
           cd e2e-tests
@@ -82,6 +91,7 @@ jobs:
           npm run test:headless
         env:
           CI: true
+          BASE_URL: http://localhost:3000
 
       - name: "Upload test results"
         if: always()
