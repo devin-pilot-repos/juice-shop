@@ -1,0 +1,160 @@
+name: "Playwright E2E Tests"
+on:
+  push:
+    branches:
+      - master
+      - main
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - 'monitoring/grafana-dashboard.json'
+      - 'screenshots/**'
+  pull_request:
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - 'data/static/i18n/*.json'
+      - 'frontend/src/assets/i18n/*.json'
+
+env:
+  NODE_DEFAULT_VERSION: 20
+  NODE_OPTIONS: "--max_old_space_size=4096"
+  HEADLESS: true
+  WORKERS: 4
+  RETRIES: 2
+  TIMEOUT: 120000
+
+jobs:
+  playwright-tests:
+    name: Playwright Tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        run-number: [1, 2, 3] # Run the tests three times
+    steps:
+      - name: "Check out Git repository"
+        uses: actions/checkout@v4
+
+      - name: "Set up Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_DEFAULT_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: e2e-tests/package-lock.json
+
+      - name: "Install dependencies"
+        run: |
+          cd e2e-tests
+          npm ci
+
+      - name: "Install Playwright browsers"
+        run: |
+          cd e2e-tests
+          npx playwright install --with-deps
+
+      - name: "Run Playwright tests (Run ${{ matrix.run-number }})"
+        run: |
+          cd e2e-tests
+          npm run test:headless
+        env:
+          CI: true
+
+      - name: "Upload test results"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-run-${{ matrix.run-number }}
+          path: e2e-tests/test-results
+          retention-days: 5
+
+  check-pass-rate:
+    name: Check Pass Rate
+    runs-on: ubuntu-latest
+    needs: playwright-tests
+    if: always()
+    steps:
+      - name: "Check out Git repository"
+        uses: actions/checkout@v4
+
+      - name: "Set up Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_DEFAULT_VERSION }}
+
+      - name: "Download test results"
+        uses: actions/download-artifact@v4
+        with:
+          path: test-results
+          pattern: playwright-report-run-*
+          merge-multiple: true
+
+      - name: "Check pass rate across runs"
+        run: |
+          echo "Checking pass rate across 3 runs..."
+          
+          # Create directory for scripts
+          mkdir -p scripts
+          
+          # Create script to analyze test results
+          cat > scripts/check-pass-rate.js << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          
+          const resultsDir = 'test-results';
+          const runDirs = fs.readdirSync(resultsDir)
+            .filter(file => file.startsWith('playwright-report-run-'));
+          
+          let totalTests = 0;
+          let totalPassed = 0;
+          
+          runDirs.forEach(runDir => {
+            const jsonFile = path.join(resultsDir, runDir, 'test-results.json');
+            if (fs.existsSync(jsonFile)) {
+              try {
+                const results = JSON.parse(fs.readFileSync(jsonFile, 'utf8'));
+                const tests = results.suites.flatMap(suite => 
+                  suite.specs.flatMap(spec => spec.tests)
+                );
+                
+                totalTests += tests.length;
+                totalPassed += tests.filter(test => test.status === 'passed').length;
+              } catch (error) {
+                console.error(`Error parsing ${jsonFile}:`, error);
+              }
+            }
+          });
+          
+          const passRate = totalTests > 0 ? (totalPassed / totalTests) * 100 : 0;
+          console.log(`Pass rate: ${passRate.toFixed(2)}% (${totalPassed}/${totalTests})`);
+          
+          // Check if pass rate is at least 80%
+          const minPassRate = 80;
+          if (passRate >= minPassRate) {
+            console.log(`✅ Pass rate is at least ${minPassRate}%`);
+            process.exit(0);
+          } else {
+            console.error(`❌ Pass rate is below ${minPassRate}%`);
+            process.exit(1);
+          }
+          EOF
+          
+          # Make script executable
+          chmod +x scripts/check-pass-rate.js
+          
+          # Run the pass rate check
+          node scripts/check-pass-rate.js
+
+  notify-slack:
+    if: always() && github.repository == 'devin-pilot-repos/juice-shop'
+    needs: check-pass-rate
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Playwright test results notification"
+        if: ${{ env.SLACK_WEBHOOK_URL != '' }}
+        uses: Gamesight/slack-workflow-status@v1.3.0
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          name: "Playwright E2E Tests"
+          icon_emoji: ":playwright:"
