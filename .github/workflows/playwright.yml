@@ -91,6 +91,7 @@ jobs:
           npm run test:headless
         env:
           CI: true
+          ENV: local
           BASE_URL: http://localhost:3000
 
       - name: "Upload test results"
