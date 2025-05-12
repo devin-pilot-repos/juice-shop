@@ -62,6 +62,13 @@ jobs:
           cd e2e-tests
           npm ci --no-audit --prefer-offline
 
+      - name: "Install system dependencies for Playwright"
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-4-dev libgraphene-1.0-dev libxslt1-dev libwoff-dev libvpx-dev libevent-dev libopus-dev \
+          libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-bad1.0-dev \
+          libwebp-dev libavif-dev libharfbuzz-icu0 libenchant-2-dev libsecret-1-dev libhyphen-dev libmanette-0.2-dev libgles2-mesa-dev
+
       - name: "Install Playwright browsers"
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: |
