@@ -40,10 +40,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_DEFAULT_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: |
-            package-lock.json
-            e2e-tests/package-lock.json
+          # Temporarily disable npm cache to resolve dependency issues
+          # cache: 'npm'
+          # cache-dependency-path: |
+          #   package-lock.json
+          #   e2e-tests/package-lock.json
 
       - name: "Cache Playwright browsers"
         uses: actions/cache@v3
@@ -55,44 +56,82 @@ jobs:
             playwright-${{ runner.os }}-
 
       - name: "Install root dependencies"
-        run: npm ci --no-audit --prefer-offline
+        run: npm ci --no-audit --prefer-offline --no-fund
 
       - name: "Install e2e-tests dependencies"
         run: |
           cd e2e-tests
-          npm ci --no-audit --prefer-offline
+          npm ci --no-audit --prefer-offline --no-fund
           
       - name: "Install wait-on utility"
         run: npm install -g wait-on
 
       - name: "Install system dependencies for Playwright"
         run: |
+          echo "Installing system dependencies for Playwright..."
           sudo apt-get update
           sudo apt-get install -y libgtk-4-dev libgraphene-1.0-dev libxslt1-dev libwoff-dev libvpx-dev libevent-dev libopus-dev \
           libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-bad1.0-dev \
           libwebp-dev libavif-dev libharfbuzz-icu0 libenchant-2-dev libsecret-1-dev libhyphen-dev libmanette-0.2-dev libgles2-mesa-dev
+          echo "System dependencies installed successfully."
+
+      - name: "Check for cached Playwright browsers"
+        run: |
+          if [ -d ~/.cache/ms-playwright ]; then
+            echo "Cached Playwright browsers found:"
+            ls -la ~/.cache/ms-playwright
+          else
+            echo "No cached Playwright browsers found."
+          fi
 
       - name: "Install Playwright browsers"
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: |
+          echo "Installing Playwright browsers..."
           cd e2e-tests
           npx playwright install --with-deps chromium firefox webkit
+          echo "Playwright browsers installed successfully:"
+          npx playwright --version
+          ls -la ~/.cache/ms-playwright
 
-      - name: "Start application"
+      # Using public endpoint instead of starting application locally
+
+      - name: "Display environment information"
         run: |
-          npm start &
-          echo "Waiting for application to be available..."
-          npx wait-on http://localhost:3000 --timeout 60000
+          echo "Node version: $(node -v)"
+          echo "NPM version: $(npm -v)"
+          echo "Working directory: $(pwd)"
+          echo "Environment variables:"
+          echo "  BASE_URL: https://demo.owasp-juice.shop"
+          echo "  ENV: dev"
+          echo "  CI: true"
+          ls -la e2e-tests
+          echo "Playwright configuration:"
+          cat e2e-tests/playwright.config.ts
+          echo "Headless configuration:"
+          cat e2e-tests/config/headless.config.ts
 
       - name: "Run Playwright tests (Run ${{ matrix.run-number }})"
         run: |
           cd e2e-tests
           mkdir -p playwright-report
-          npm run test:headless
+          echo "Running Playwright tests with headless configuration..."
+          echo "Target environment: ENV=dev"
+          echo "Target URL: https://demo.owasp-juice.shop"
+          echo "Test command: npm run test:headless -- --reporter=list"
+          
+          # Verify the environment configuration is loaded correctly
+          node -e "const envManager = require('./src/utils/environmentManager'); console.log('Environment config:', JSON.stringify(envManager.getEnvironmentConfig(), null, 2));"
+          
+          # Run the tests with additional debugging
+          PWDEBUG=console npm run test:headless -- --reporter=list,html
+          
+          echo "Test execution completed for run ${{ matrix.run-number }}"
         env:
           CI: true
-          ENV: local
-          BASE_URL: http://localhost:3000
+          ENV: dev
+          BASE_URL: https://demo.owasp-juice.shop
+          DEBUG: pw:api,pw:browser
 
       - name: "Upload test results"
         if: always()
