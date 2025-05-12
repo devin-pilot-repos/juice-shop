@@ -56,12 +56,17 @@ jobs:
             playwright-${{ runner.os }}-
 
       - name: "Install root dependencies"
-        run: npm ci --no-audit --prefer-offline --no-fund
+        run: |
+          echo "Installing root dependencies with --ignore-scripts to skip postinstall script..."
+          npm ci --no-audit --prefer-offline --no-fund --ignore-scripts
+          echo "Root dependencies installed successfully."
 
       - name: "Install e2e-tests dependencies"
         run: |
           cd e2e-tests
-          npm ci --no-audit --prefer-offline --no-fund
+          echo "Installing e2e-tests dependencies..."
+          npm ci --no-audit --prefer-offline --no-fund --ignore-scripts
+          echo "E2E tests dependencies installed successfully."
           
       - name: "Install wait-on utility"
         run: npm install -g wait-on
