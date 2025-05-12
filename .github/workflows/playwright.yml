@@ -41,17 +41,29 @@ jobs:
         with:
           node-version: ${{ env.NODE_DEFAULT_VERSION }}
           cache: 'npm'
-          cache-dependency-path: '**/package-lock.json'
+          cache-dependency-path: |
+            package-lock.json
+            e2e-tests/package-lock.json
+
+      - name: "Cache Playwright browsers"
+        uses: actions/cache@v3
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('e2e-tests/package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
 
       - name: "Install root dependencies"
-        run: npm ci
+        run: npm ci --no-audit --prefer-offline
 
       - name: "Install e2e-tests dependencies"
         run: |
           cd e2e-tests
-          npm ci
+          npm ci --no-audit --prefer-offline
 
       - name: "Install Playwright browsers"
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: |
           cd e2e-tests
           npx playwright install --with-deps chromium firefox webkit
