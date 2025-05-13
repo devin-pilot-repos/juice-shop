@@ -7,7 +7,7 @@ import { ClipboardModule } from 'ngx-clipboard'
 import { ServerStartedNotificationComponent } from './server-started-notification/server-started-notification.component'
 import { TranslateModule, TranslateService } from '@ngx-translate/core'
 import { provideHttpClientTesting } from '@angular/common/http/testing'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { TestBed, waitForAsync } from '@angular/core/testing'
 import { AppComponent } from './app.component'
 import { NavbarComponent } from './navbar/navbar.component'
@@ -41,7 +41,7 @@ describe('AppComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule,
+      imports: [
         MatToolbarModule,
         CookieModule.forRoot(),
         TranslateModule.forRoot(),
@@ -68,7 +68,7 @@ describe('AppComponent', () => {
         ServerStartedNotificationComponent,
         MatSearchBarComponent,
         AppComponent],
-      providers: [TranslateService, LoginGuard, provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
+      providers: [TranslateService, LoginGuard, provideRouter([]), provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
     }).compileComponents()
   }))
 

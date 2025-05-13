@@ -9,7 +9,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing'
 import { type ComponentFixture, fakeAsync, TestBed, waitForAsync } from '@angular/core/testing'
 import { AccountingComponent } from './accounting.component'
 import { ProductService } from '../Services/product.service'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { MatGridListModule } from '@angular/material/grid-list'
 import { MatCardModule } from '@angular/material/card'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
@@ -48,7 +48,7 @@ describe('AccountingComponent', () => {
     snackBar.open.and.returnValue(null)
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule,
+      imports: [
         TranslateModule.forRoot(),
         BrowserAnimationsModule,
         MatTableModule,
@@ -66,6 +66,7 @@ describe('AccountingComponent', () => {
         { provide: QuantityService, useValue: quantityService },
         { provide: OrderHistoryService, useValue: orderHistoryService },
         { provide: MatSnackBar, useValue: snackBar },
+        provideRouter([]),
         provideHttpClient(withInterceptorsFromDi()),
         provideHttpClientTesting()
       ]

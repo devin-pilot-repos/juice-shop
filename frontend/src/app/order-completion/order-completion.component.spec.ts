@@ -7,7 +7,7 @@ import { TranslateModule } from '@ngx-translate/core'
 import { MatDividerModule } from '@angular/material/divider'
 import { provideHttpClientTesting } from '@angular/common/http/testing'
 import { type ComponentFixture, fakeAsync, TestBed, waitForAsync } from '@angular/core/testing'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { MatGridListModule } from '@angular/material/grid-list'
 import { MatCardModule } from '@angular/material/card'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
@@ -50,7 +50,7 @@ describe('OrderCompletionComponent', () => {
     addressService.getById.and.returnValue(of([]))
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule,
+      imports: [
         TranslateModule.forRoot(),
         BrowserAnimationsModule,
         MatTableModule,
@@ -63,6 +63,7 @@ describe('OrderCompletionComponent', () => {
         MatTooltipModule,
         OrderCompletionComponent],
       providers: [
+        provideRouter([]),
         { provide: TrackOrderService, useValue: trackOrderService },
         { provide: ActivatedRoute, useValue: activatedRoute },
         { provide: BasketService, useValue: basketService },

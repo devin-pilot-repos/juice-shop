@@ -12,7 +12,7 @@ import { MatCardModule } from '@angular/material/card'
 import { MatInputModule } from '@angular/material/input'
 
 import { provideHttpClientTesting } from '@angular/common/http/testing'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 
 import { OAuthComponent } from './oauth.component'
 import { LoginComponent } from '../login/login.component'
@@ -38,9 +38,7 @@ describe('OAuthComponent', () => {
     userService.isLoggedIn.next.and.returnValue({})
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
-        { path: 'login', component: LoginComponent }
-      ]),
+      imports: [
       ReactiveFormsModule,
       CookieModule.forRoot(),
       TranslateModule.forRoot(),

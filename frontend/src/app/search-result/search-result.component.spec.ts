@@ -9,7 +9,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing'
 import { type ComponentFixture, fakeAsync, TestBed, waitForAsync } from '@angular/core/testing'
 import { SearchResultComponent } from './search-result.component'
 import { ProductService } from '../Services/product.service'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { MatGridListModule } from '@angular/material/grid-list'
 import { MatCardModule } from '@angular/material/card'
 import { MatSnackBar } from '@angular/material/snack-bar'
@@ -95,7 +95,7 @@ describe('SearchResultComponent', () => {
     deluxeGuard.isDeluxe.and.returnValue(of(false))
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule,
+      imports: [
         TranslateModule.forRoot(),
         BrowserAnimationsModule,
         MatTableModule,
@@ -106,6 +106,7 @@ describe('SearchResultComponent', () => {
         MatCardModule,
         SearchResultComponent],
       providers: [
+        provideRouter([]),
         { provide: TranslateService, useValue: translateService },
         { provide: MatDialog, useValue: dialog },
         { provide: MatSnackBar, useValue: snackBar },
