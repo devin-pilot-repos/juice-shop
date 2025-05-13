@@ -20,9 +20,9 @@ env:
   NODE_DEFAULT_VERSION: 20
   NODE_OPTIONS: "--max_old_space_size=4096"
   HEADLESS: true
-  WORKERS: 4
-  RETRIES: 2
-  TIMEOUT: 120000
+  WORKERS: 2
+  RETRIES: 3
+  TIMEOUT: 300000
 
 jobs:
   playwright-tests:
@@ -120,16 +120,16 @@ jobs:
         run: |
           cd e2e-tests
           mkdir -p playwright-report
-          echo "Running Playwright tests with headless configuration..."
+          echo "Running Playwright tests with environment configuration..."
           echo "Target environment: ENV=dev"
           echo "Target URL: https://demo.owasp-juice.shop"
-          echo "Test command: npm run test:headless -- --reporter=list"
+          echo "Test command: npx playwright test --config=config/env.config.ts --reporter=list,html"
           
           # Verify the environment configuration is loaded correctly
           node -e "const envManager = require('./src/utils/environmentManager'); console.log('Environment config:', JSON.stringify(envManager.getEnvironmentConfig(), null, 2));"
           
           # Run the tests with additional debugging
-          PWDEBUG=console npm run test:headless -- --reporter=list,html
+          PWDEBUG=console npx playwright test --config=config/env.config.ts --reporter=list,html
           
           echo "Test execution completed for run ${{ matrix.run-number }}"
         env:
