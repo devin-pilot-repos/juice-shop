@@ -67,8 +67,8 @@ describe('basketItems', () => {
 
     it('should add basket item for authenticated user with matching basket ID', async () => {
       // Setup user with matching basket ID
-      const user = { id: 1, bid: 1 }
-      from.withArgs(req).returns(user)
+      const authenticatedUser = { id: 1, bid: 1 }
+      from.withArgs(req).returns(authenticatedUser)
 
       const addBasketItemFunc = basketItems.addBasketItem()
       addBasketItemFunc(req, res, next)

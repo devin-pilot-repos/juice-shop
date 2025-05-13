@@ -27,7 +27,7 @@ describe('antiCheat', () => {
   })
 
   describe('calculateCheatScore', () => {
-    it('should calculate cheat score based on time elapsed and difficulty', () => {
+    it('should calculate cheat score based on time elapsed and difficulty when hints are disabled', () => {
       const configStub = sandbox.stub(config, 'get')
       configStub.withArgs('challenges.showHints').returns(false)
 
@@ -81,11 +81,12 @@ describe('antiCheat', () => {
   describe('calculateFindItCheatScore', () => {
     it('should return 0 if no code snippet exists', async () => {
       const challenge = { key: 'testChallenge' } as unknown as Challenge
-      sandbox.stub(antiCheat, 'calculateFindItCheatScore').resolves(0)
+      const vulnCodeSnippet = require('../../routes/vulnCodeSnippet')
+      const retrieveCodeSnippetStub = sandbox.stub(vulnCodeSnippet, 'retrieveCodeSnippet').resolves(null)
 
       const result = await antiCheat.calculateFindItCheatScore(challenge)
-
       expect(result).to.equal(0)
+      expect(retrieveCodeSnippetStub).to.have.been.calledOnceWith(challenge.key)
     })
 
     it('should calculate cheat score based on snippet length and time elapsed', async () => {
@@ -99,21 +100,20 @@ describe('antiCheat', () => {
       }
       retrieveCodeSnippetStub.resolves(codeSnippet)
 
-      sandbox.restore()
-
-      sandbox.stub(logger, 'info')
-
       const result = await antiCheat.calculateFindItCheatScore(challenge)
 
       expect(result).to.be.a('number')
+      expect(result).to.be.greaterThan(0)
+      expect(retrieveCodeSnippetStub).to.have.been.calledOnceWith(challenge.key)
     })
   })
 
   describe('totalCheatScore', () => {
-    it('should return a number', () => {
+    it('should return the accumulated cheat score as a number', () => {
       const result = antiCheat.totalCheatScore()
 
       expect(result).to.be.a('number')
+      expect(result).to.be.greaterThanOrEqual(0)
     })
   })
 })

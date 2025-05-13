@@ -17,26 +17,27 @@ describe('noUpdate', () => {
   describe('makeKeyNonUpdatable', () => {
     let model: any
     let addHookStub: sinon.SinonStub
-    let hookCallback: (instance: any, options: any) => void
+    let beforeValidateCallback: (instance: any, options: any) => void
 
     beforeEach(() => {
       addHookStub = sinon.stub()
       model = {
         addHook: addHookStub
       }
-
       // Call the function being tested
       makeKeyNonUpdatable(model, 'email')
 
-      // Extract the callback function
-      hookCallback = addHookStub.args[0][1]
+      // Extract the callback function more safely
+      sinon.assert.calledOnce(addHookStub)
+      expect(addHookStub.firstCall.args[0]).to.equal('beforeValidate')
+      beforeValidateCallback = addHookStub.firstCall.args[1]
     })
 
     it('should add a beforeValidate hook to the model', () => {
       expect(addHookStub).to.have.been.calledOnceWith('beforeValidate', sinon.match.func)
     })
 
-    it('should pass validation if validate option is false', () => {
+    it('should pass validation when validate option is explicitly set to false', () => {
       // Create a mock instance
       const instance = {
         isNewRecord: false,
@@ -47,7 +48,7 @@ describe('noUpdate', () => {
 
       // No error should be thrown
       const callFunction = () => {
-        hookCallback(instance, { validate: false })
+        beforeValidateCallback(instance, { validate: false })
       }
 
       expect(callFunction).to.not.throw()
@@ -64,7 +65,7 @@ describe('noUpdate', () => {
 
       // No error should be thrown
       const callFunction = () => {
-        hookCallback(instance, { validate: true })
+        beforeValidateCallback(instance, { validate: true })
       }
 
       expect(callFunction).to.not.throw()
@@ -81,7 +82,7 @@ describe('noUpdate', () => {
 
       // No error should be thrown
       const callFunction = () => {
-        hookCallback(instance, { validate: true })
+        beforeValidateCallback(instance, { validate: true })
       }
 
       expect(callFunction).to.not.throw()
@@ -98,7 +99,7 @@ describe('noUpdate', () => {
 
       // Should throw ValidationError
       expect(() => {
-        hookCallback(instance, { validate: true })
+        beforeValidateCallback(instance, { validate: true })
       }).to.throw(ValidationError)
     })
   })
