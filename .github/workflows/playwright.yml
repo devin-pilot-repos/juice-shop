@@ -99,7 +99,14 @@ jobs:
           npx playwright --version
           ls -la ~/.cache/ms-playwright
 
-      # Using public endpoint instead of starting application locally
+      # Start application locally instead of using public endpoint
+      - name: "Start application"
+        run: |
+          echo "Starting Juice Shop application..."
+          npm start &
+          echo "Waiting for application to be ready..."
+          npx wait-on http://localhost:3000 --timeout 60000
+          echo "Application is ready!"
 
       - name: "Display environment information"
         run: |
@@ -107,8 +114,8 @@ jobs:
           echo "NPM version: $(npm -v)"
           echo "Working directory: $(pwd)"
           echo "Environment variables:"
-          echo "  BASE_URL: https://demo.owasp-juice.shop"
-          echo "  ENV: dev"
+          echo "  BASE_URL: http://localhost:3000"
+          echo "  ENV: local"
           echo "  CI: true"
           ls -la e2e-tests
           echo "Playwright configuration:"
@@ -133,8 +140,8 @@ jobs:
           cd e2e-tests
           mkdir -p playwright-report
           echo "Running Playwright tests with environment configuration..."
-          echo "Target environment: ENV=dev"
-          echo "Target URL: https://demo.owasp-juice.shop"
+          echo "Target environment: ENV=local"
+          echo "Target URL: http://localhost:3000"
           echo "Test command: npx playwright test --config=config/env.config.ts --reporter=list,html"
           
           # Verify the environment configuration is loaded correctly
@@ -146,8 +153,8 @@ jobs:
           echo "Test execution completed for run ${{ matrix.run-number }}"
         env:
           CI: true
-          ENV: dev
-          BASE_URL: https://demo.owasp-juice.shop
+          ENV: local
+          BASE_URL: http://localhost:3000
           DEBUG: pw:api,pw:browser
 
       - name: "Upload test results"
