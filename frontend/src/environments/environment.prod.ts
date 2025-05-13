@@ -5,5 +5,7 @@
 
 export const environment = {
   production: true,
-  hostServer: '.'
+  hostServer: '.',
+  vaultServer: process.env.VAULT_ADDR || 'http://vault:8200',
+  vaultToken: process.env.VAULT_TOKEN || ''
 }
