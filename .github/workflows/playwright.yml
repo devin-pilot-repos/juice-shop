@@ -57,8 +57,8 @@ jobs:
 
       - name: "Install root dependencies"
         run: |
-          echo "Installing root dependencies with --ignore-scripts to skip postinstall script..."
-          npm ci --no-audit --prefer-offline --no-fund --ignore-scripts
+          echo "Installing root dependencies..."
+          npm ci --no-audit --prefer-offline --no-fund
           echo "Root dependencies installed successfully."
 
       - name: "Install e2e-tests dependencies"
