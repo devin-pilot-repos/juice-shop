@@ -2,7 +2,8 @@ import { Component, ChangeDetectorRef } from '@angular/core'
 import { KeysService } from '../Services/keys.service'
 import { SnackBarHelperService } from '../Services/snack-bar-helper.service'
 import { web3WalletABI } from '../../assets/public/ContractABIs'
-import { getDefaultProvider, ethers } from 'ethers'
+import { ethers } from 'ethers'
+import { Web3ProviderService } from '../Services/web3-provider.service'
 import {
   createClient,
   connect,
@@ -20,11 +21,6 @@ import { MatButtonModule } from '@angular/material/button'
 import { MatCardModule } from '@angular/material/card'
 const { ethereum } = window
 const BankAddress = '0x413744D59d31AFDC2889aeE602636177805Bd7b0'
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const client = createClient({
-  autoConnect: true,
-  provider: getDefaultProvider()
-})
 
 @Component({
   selector: 'app-wallet-web3',
@@ -33,11 +29,23 @@ const client = createClient({
   imports: [MatCardModule, MatButtonModule, NgIf, TranslateModule, MatFormFieldModule, MatLabel, MatInputModule, FormsModule, MatIconModule]
 })
 export class WalletWeb3Component {
+  private client: any
+
   constructor (
     private readonly keysService: KeysService,
     private readonly snackBarHelperService: SnackBarHelperService,
-    private readonly changeDetectorRef: ChangeDetectorRef
+    private readonly changeDetectorRef: ChangeDetectorRef,
+    private readonly web3ProviderService: Web3ProviderService
   ) {}
+
+  initializeClient (): void {
+    this.web3ProviderService.getProvider().subscribe(provider => {
+      this.client = createClient({
+        autoConnect: true,
+        provider
+      })
+    })
+  }
 
   userData: object
   session = false
@@ -50,6 +58,7 @@ export class WalletWeb3Component {
   errorMessage = ''
   metamaskAddress = ''
   ngOnInit (): void {
+    this.initializeClient()
     this.handleAuth()
     window.ethereum.on('chainChanged', this.handleChainChanged.bind(this))
   }

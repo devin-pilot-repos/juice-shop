@@ -1,7 +1,8 @@
 import { Component, ChangeDetectorRef } from '@angular/core'
 import { KeysService } from '../Services/keys.service'
 import { SnackBarHelperService } from '../Services/snack-bar-helper.service'
-import { getDefaultProvider, ethers } from 'ethers'
+import { ethers } from 'ethers'
+import { Web3ProviderService } from '../Services/web3-provider.service'
 import {
   createClient,
   connect,
@@ -21,11 +22,6 @@ import { FormsModule } from '@angular/forms'
 import { CodemirrorModule } from '@ctrl/ngx-codemirror'
 import { MatIconModule } from '@angular/material/icon'
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const client = createClient({
-  autoConnect: true,
-  provider: getDefaultProvider()
-})
 const { ethereum } = window
 const compilerReleases = {
   '0.8.21': 'soljson-v0.8.21+commit.d9974bed.js',
@@ -45,13 +41,26 @@ const compilerReleases = {
   imports: [CodemirrorModule, FormsModule, MatButtonModule, MatIconModule, NgIf, TranslateModule, MatFormFieldModule, MatLabel, MatInputModule, NgFor]
 })
 export class Web3SandboxComponent {
+  private client: any
+
   constructor (
     private readonly keysService: KeysService,
     private readonly snackBarHelperService: SnackBarHelperService,
-    private readonly changeDetectorRef: ChangeDetectorRef
+    private readonly changeDetectorRef: ChangeDetectorRef,
+    private readonly web3ProviderService: Web3ProviderService
   ) {}
 
+  initializeClient (): void {
+    this.web3ProviderService.getProvider().subscribe(provider => {
+      this.client = createClient({
+        autoConnect: true,
+        provider
+      })
+    })
+  }
+
   ngOnInit (): void {
+    this.initializeClient()
     this.handleAuth()
     window.ethereum.on('chainChanged', this.handleChainChanged.bind(this))
   }
