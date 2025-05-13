@@ -15,7 +15,7 @@ import { ReactiveFormsModule } from '@angular/forms'
 import { MatButtonToggleModule } from '@angular/material/button-toggle'
 import { OrderSummaryComponent } from './order-summary.component'
 import { PurchaseBasketComponent } from '../purchase-basket/purchase-basket.component'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { BasketService } from '../Services/basket.service'
 import { AddressService } from '../Services/address.service'
 import { of } from 'rxjs/internal/observable/of'
@@ -55,9 +55,7 @@ describe('OrderSummaryComponent', () => {
     snackBar = jasmine.createSpyObj('MatSnackBar', ['open'])
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
-        { path: 'order-completion', component: OrderCompletionComponent }
-      ]),
+      imports: [
       TranslateModule.forRoot(),
       BrowserAnimationsModule,
       ReactiveFormsModule,

@@ -47,26 +47,16 @@ mat-form-field {
   width: 80%;
 }
 
+@import '../_shared-styles.scss';
+
 #chat-window {
   flex: 1;
   overflow-y: auto;
   padding: 20px;
-
-  ::-webkit-scrollbar {
-    background: none;
-    width: 20px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: none;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: #f00;
-    border-radius: 10px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
+  
+  @include custom-scrollbar(transparent, #f00);
+  
+  &::-webkit-scrollbar-thumb:hover {
     background: #b30000;
   }
 }

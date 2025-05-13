@@ -13,7 +13,7 @@ import { ReactiveFormsModule } from '@angular/forms'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
 
 import { of } from 'rxjs'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { DeluxeUserComponent } from './deluxe-user.component'
 import { UserService } from '../Services/user.service'
 import { CookieService } from 'ngy-cookie'
@@ -50,9 +50,7 @@ describe('DeluxeUserComponent', () => {
     cookieService = jasmine.createSpyObj('CookieService', ['remove'])
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
-        { path: 'login', component: LoginComponent }
-      ]),
+      imports: [
       TranslateModule.forRoot(),
       ReactiveFormsModule,
       BrowserAnimationsModule,

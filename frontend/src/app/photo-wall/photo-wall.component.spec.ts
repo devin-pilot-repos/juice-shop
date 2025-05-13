@@ -7,7 +7,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core'
 import { MatDividerModule } from '@angular/material/divider'
 import { provideHttpClientTesting } from '@angular/common/http/testing'
 import { type ComponentFixture, fakeAsync, TestBed, waitForAsync } from '@angular/core/testing'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { MatGridListModule } from '@angular/material/grid-list'
 import { MatCardModule } from '@angular/material/card'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
@@ -51,7 +51,7 @@ describe('PhotoWallComponent', () => {
     snackBar = jasmine.createSpyObj('MatSnackBar', ['open'])
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule,
+      imports: [
         TranslateModule.forRoot(),
         BrowserAnimationsModule,
         MatTableModule,
@@ -69,6 +69,7 @@ describe('PhotoWallComponent', () => {
         MatInputModule,
         PhotoWallComponent],
       providers: [
+        provideRouter([]),
         { provide: PhotoWallService, useValue: photoWallService },
         { provide: ConfigurationService, useValue: configurationService },
         { provide: TranslateService, useValue: translateService },

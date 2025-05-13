@@ -13,7 +13,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
 import { provideHttpClientTesting } from '@angular/common/http/testing'
 import { ReactiveFormsModule } from '@angular/forms'
 import { MatButtonToggleModule } from '@angular/material/button-toggle'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { AddressService } from '../Services/address.service'
 import { of } from 'rxjs/internal/observable/of'
 import { throwError } from 'rxjs'
@@ -41,9 +41,7 @@ describe('DeliveryMethodComponent', () => {
     deliveryService.get.and.returnValue(of([]))
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
-        { path: 'payment/shop', component: PaymentComponent }
-      ]),
+      imports: [
       TranslateModule.forRoot(),
       BrowserAnimationsModule,
       ReactiveFormsModule,

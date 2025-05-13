@@ -11,7 +11,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing'
 import { type ComponentFixture, fakeAsync, flush, TestBed, tick, waitForAsync } from '@angular/core/testing'
 import { RegisterComponent } from './register.component'
 import { ReactiveFormsModule } from '@angular/forms'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { Location } from '@angular/common'
 import { TranslateModule } from '@ngx-translate/core'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
@@ -44,9 +44,7 @@ describe('RegisterComponent', () => {
     userService = jasmine.createSpyObj('UserService', ['save'])
     userService.save.and.returnValue(of({}))
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
-        { path: 'login', component: LoginComponent }
-      ]),
+      imports: [
       TranslateModule.forRoot(),
       ReactiveFormsModule,
       BrowserAnimationsModule,

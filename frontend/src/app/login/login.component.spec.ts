@@ -9,7 +9,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing'
 import { UserService } from '../Services/user.service'
 import { type ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing'
 import { LoginComponent } from './login.component'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { ReactiveFormsModule } from '@angular/forms'
 
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
@@ -43,9 +43,7 @@ describe('LoginComponent', () => {
     userService.isLoggedIn.next.and.returnValue({})
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
-        { path: 'search', component: SearchResultComponent }
-      ]),
+      imports: [
       ReactiveFormsModule,
       CookieModule.forRoot(),
       TranslateModule.forRoot(),
@@ -66,6 +64,9 @@ describe('LoginComponent', () => {
         { provide: UserService, useValue: userService },
         WindowRefService,
         CookieService,
+        provideRouter([
+          { path: 'search', component: SearchResultComponent }
+        ]),
         provideHttpClient(withInterceptorsFromDi()),
         provideHttpClientTesting()
       ]

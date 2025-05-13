@@ -14,7 +14,7 @@ import { ReactiveFormsModule } from '@angular/forms'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
 
 import { of, throwError } from 'rxjs'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { AddressService } from '../Services/address.service'
 import { MatGridListModule } from '@angular/material/grid-list'
 import { EventEmitter } from '@angular/core'
@@ -43,7 +43,7 @@ describe('AddressCreateComponent', () => {
     snackBar.open.and.returnValue(null)
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule,
+      imports: [
         TranslateModule.forRoot(),
         ReactiveFormsModule,
         BrowserAnimationsModule,
@@ -55,6 +55,7 @@ describe('AddressCreateComponent', () => {
         MatSnackBarModule,
         AddressCreateComponent],
       providers: [
+        provideRouter([]),
         { provide: AddressService, useValue: addressService },
         { provide: TranslateService, useValue: translateService },
         { provide: MatSnackBar, useValue: snackBar },
