@@ -13,6 +13,7 @@
     "test:staging": "ENV=staging playwright test --config=config/env.config.ts",
     "test:prod": "ENV=production playwright test --config=config/env.config.ts",
     "report": "playwright show-report",
+    "coverage": "ts-node coverage/run-coverage.ts",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "verify": "npm run lint && npm test"

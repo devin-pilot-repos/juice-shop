@@ -40,7 +40,7 @@ export default defineConfig({
   /* Configure parallel test execution */
   workers: process.env.WORKERS ? parseInt(process.env.WORKERS) : process.env.CI ? 4 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
+  reporter: [['html'], ['json', { outputFile: 'playwright-report/results.json' }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
