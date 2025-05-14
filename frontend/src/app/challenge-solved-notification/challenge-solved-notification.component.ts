@@ -15,6 +15,7 @@ import { MatIconModule } from '@angular/material/icon'
 import { MatButtonModule } from '@angular/material/button'
 import { MatCardModule } from '@angular/material/card'
 import { NgIf, LowerCasePipe } from '@angular/common'
+import { firstValueFrom } from 'rxjs'
 
 interface ChallengeSolvedMessage {
   challenge: string
@@ -107,22 +108,23 @@ export class ChallengeSolvedNotificationComponent implements OnInit {
     this.ref.detectChanges()
   }
 
-  showNotification (challenge: ChallengeSolvedMessage) {
-    this.translate.get('CHALLENGE_SOLVED', { challenge: challenge.challenge }).toPromise().then((challengeSolved) => challengeSolved,
-      (translationId) => translationId).then((message) => {
-      let country
-      if (this.showCtfCountryDetailsInNotifications && this.showCtfCountryDetailsInNotifications !== 'none') {
-        country = this.countryMap[challenge.key]
-      }
-      this.notifications.push({
-        message,
-        key: challenge.key,
-        flag: challenge.flag,
-        country,
-        copied: false
-      })
-      this.ref.detectChanges()
+  async showNotification (challenge: ChallengeSolvedMessage) {
+    const message = await firstValueFrom(
+      this.translate.get('CHALLENGE_SOLVED', { challenge: challenge.challenge })
+    ).catch((translationId) => translationId)
+    
+    let country
+    if (this.showCtfCountryDetailsInNotifications && this.showCtfCountryDetailsInNotifications !== 'none') {
+      country = this.countryMap[challenge.key]
+    }
+    this.notifications.push({
+      message,
+      key: challenge.key,
+      flag: challenge.flag,
+      country,
+      copied: false
     })
+    this.ref.detectChanges()
   }
 
   saveProgress () {
