@@ -23,7 +23,9 @@ describe('DataSubjectService', () => {
   it('should pass the erasure request directly to the rest API', inject([DataSubjectService, HttpTestingController],
     fakeAsync((service: DataSubjectService, httpMock: HttpTestingController) => {
       let res: any
-      service.erase({}).subscribe((data) => (res = data))
+      service.erase({}).subscribe({
+        next: (data) => (res = data)
+      })
       const req = httpMock.expectOne('http://localhost:3000/rest/user/erasure-request')
       req.flush('apiResponse')
 
@@ -38,7 +40,9 @@ describe('DataSubjectService', () => {
   it('should request data export directly from the rest api', inject([DataSubjectService, HttpTestingController],
     fakeAsync((service: DataSubjectService, httpMock: HttpTestingController) => {
       let res: any
-      service.dataExport(1).subscribe((data) => (res = data))
+      service.dataExport(1).subscribe({
+        next: (data) => (res = data)
+      })
       const req = httpMock.expectOne('http://localhost:3000/rest/user/data-export')
       req.flush('apiResponse')
 
