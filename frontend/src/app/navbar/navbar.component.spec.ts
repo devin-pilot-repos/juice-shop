@@ -20,12 +20,13 @@ import { MatIconModule } from '@angular/material/icon'
 import { MatToolbarModule } from '@angular/material/toolbar'
 import { MatButtonModule } from '@angular/material/button'
 import { AdministrationService } from '../Services/administration.service'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { MatMenuModule } from '@angular/material/menu'
 import { MatTooltipModule } from '@angular/material/tooltip'
 import { CookieModule, CookieService } from 'ngy-cookie'
 import { SocketIoService } from '../Services/socket-io.service'
-import { of, throwError } from 'rxjs'
+import { of } from 'rxjs'
+import { throwError } from 'rxjs'
 import { MatCardModule } from '@angular/material/card'
 import { MatInputModule } from '@angular/material/input'
 import { MatTableModule } from '@angular/material/table'
@@ -80,7 +81,7 @@ describe('NavbarComponent', () => {
     loginGuard.tokenDecode.and.returnValue(of(true))
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
+      imports: [provideRouter([
         { path: 'search', component: SearchResultComponent }
       ]),
       CookieModule.forRoot(),
@@ -146,13 +147,13 @@ describe('NavbarComponent', () => {
   })
 
   it('should show nothing on error retrieving application version', fakeAsync(() => {
-    administrationService.getApplicationVersion.and.returnValue(throwError('Error'))
+    administrationService.getApplicationVersion.and.returnValue(throwError(() => 'Error'))
     component.ngOnInit()
     expect(component.version).toBe('')
   }))
 
   it('should log errors directly to browser console', fakeAsync(() => {
-    administrationService.getApplicationVersion.and.returnValue(throwError('Error'))
+    administrationService.getApplicationVersion.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     expect(console.log).toHaveBeenCalledWith('Error')
@@ -186,7 +187,7 @@ describe('NavbarComponent', () => {
   })
 
   it('should log errors directly to browser console when getting user failed', fakeAsync(() => {
-    userService.whoAmI.and.returnValue(throwError('Error'))
+    userService.whoAmI.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     expect(console.log).toHaveBeenCalledWith('Error')
@@ -205,7 +206,7 @@ describe('NavbarComponent', () => {
   })
 
   it('should log error while getting application configuration from backend API directly to browser console', fakeAsync(() => {
-    configurationService.getApplicationConfiguration.and.returnValue(throwError('Error'))
+    configurationService.getApplicationConfiguration.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     expect(console.log).toHaveBeenCalledWith('Error')
