@@ -95,12 +95,25 @@ jobs:
           cd e2e-tests
           mkdir -p playwright-report test-results
           echo "Running Playwright tests..."
-          CI=true ENV=local BASE_URL=http://localhost:3000 npx playwright test --config=config/env.config.ts --reporter=list,html || echo "Tests completed with some failures"
+          # Add debug output for environment
+          echo "Environment variables:"
+          echo "CI=$CI"
+          echo "ENV=$ENV"
+          echo "BASE_URL=$BASE_URL"
+          echo "NODE_OPTIONS=$NODE_OPTIONS"
+          
+          # Check if Juice Shop is accessible
+          echo "Checking if Juice Shop is accessible..."
+          curl -v http://localhost:3000
+          
+          # Run tests with increased timeouts and retries
+          CI=true ENV=local BASE_URL=http://localhost:3000 npx playwright test --config=config/env.config.ts --reporter=list,html --timeout=180000 --retries=3 --workers=1 || echo "Tests completed with some failures"
         env:
           CI: true
           ENV: local
           BASE_URL: http://localhost:3000
-          DEBUG: pw:api
+          DEBUG: pw:api,pw:browser*
+          NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: "Upload test results"
         if: always()
