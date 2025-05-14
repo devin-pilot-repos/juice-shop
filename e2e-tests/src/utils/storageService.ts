@@ -33,72 +33,34 @@ export class StorageService {
   private async detectHeadlessMode(): Promise<void> {
     if (!this.page) return;
 
-    if (process.env.HEADLESS === 'true') {
+    if (process.env.HEADLESS === 'true' || process.env.CI === 'true') {
       this.headlessMode = true;
-      console.log('Detected headless mode from environment variable, using memory storage fallback');
+      console.log('Detected headless mode from environment variables, using memory storage fallback');
       return;
     }
 
-    if (process.env.CI === 'true') {
-      this.headlessMode = true;
-      console.log('CI environment detected, using memory storage fallback for safety');
-      return;
-    }
-
+    this.headlessMode = true; // Default to memory storage
+    
     try {
-      const isHeadlessBrowser = await this.page.evaluate(() => {
-        const ua = navigator.userAgent.toLowerCase();
-        return ua.includes('headless') || 
-               (ua.includes('chrome') && !(window as any).chrome) ||
-               !!navigator.webdriver;
-      }).catch(() => true); // Default to headless if evaluation fails
-      
-      if (isHeadlessBrowser) {
-        this.headlessMode = true;
-        console.log('Headless browser detected via user agent, using memory storage fallback');
-        return;
-      }
-      
-      try {
-        const hasLocalStorage = await this.page.evaluate(() => {
-          try {
-            return typeof window.localStorage !== 'undefined';
-          } catch (e) {
+      const canUseLocalStorage = await this.page.evaluate(() => {
+        try {
+          if (typeof window.localStorage === 'undefined') {
             return false;
           }
-        });
-        
-        if (!hasLocalStorage) {
-          this.headlessMode = true;
-          console.log('localStorage not available, using memory storage fallback');
-          return;
+          return true;
+        } catch (e) {
+          return false;
         }
-        
-        const canUseLocalStorage = await this.page.evaluate(() => {
-          try {
-            const testKey = '__storage_test__';
-            window.localStorage.setItem(testKey, testKey);
-            window.localStorage.removeItem(testKey);
-            return true;
-          } catch (e) {
-            return false;
-          }
-        });
-        
-        this.headlessMode = !canUseLocalStorage;
-        
-        if (this.headlessMode) {
-          console.log('localStorage access denied, using memory storage fallback');
-        } else {
-          console.log('Browser is running in non-headless mode, using real localStorage');
-        }
-      } catch (innerError) {
-        this.headlessMode = true;
-        console.log('Error testing localStorage access, using memory storage fallback:', innerError);
+      }).catch(() => false); // Default to false if evaluation fails
+      
+      if (canUseLocalStorage) {
+        console.log('Browser appears to support localStorage, will attempt to use it');
+        this.headlessMode = false;
+      } else {
+        console.log('localStorage not available, using memory storage fallback');
       }
     } catch (error) {
-      this.headlessMode = true;
-      console.log('Error detecting browser environment, using memory storage fallback:', error);
+      console.log('Error detecting localStorage availability, using memory storage fallback:', error);
     }
   }
 
