@@ -94,7 +94,7 @@ export class BasketManipulation {
       // First approach: Use StorageService
       try {
         const storageService = StorageService.getInstance();
-        storageService.initialize(page);
+        await storageService.initialize(page);
         
         const basketItem = {
           id: productId,
@@ -257,7 +257,7 @@ export class BasketManipulation {
       // First approach: Use StorageService
       try {
         const storageService = StorageService.getInstance();
-        storageService.initialize(page);
+        await storageService.initialize(page);
         
         await storageService.setItem('basket', '[]');
         
@@ -392,7 +392,7 @@ export class BasketManipulation {
       // First approach: Use StorageService
       try {
         const storageService = StorageService.getInstance();
-        storageService.initialize(page);
+        await storageService.initialize(page);
         
         // Get basket from storage
         const basketJson = await storageService.getItem('basket') || '[]';
@@ -489,7 +489,7 @@ export class BasketManipulation {
       // First approach: Use StorageService
       try {
         const storageService = StorageService.getInstance();
-        storageService.initialize(page);
+        await storageService.initialize(page);
         
         // Get basket from storage
         const basketJson = await storageService.getItem('basket') || '[]';

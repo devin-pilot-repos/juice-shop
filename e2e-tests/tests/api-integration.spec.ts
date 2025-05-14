@@ -18,7 +18,7 @@ test.describe('API Integration', () => {
     await Auth.loginAsCustomer(page);
     
     const storageService = StorageService.getInstance();
-    storageService.initialize(page);
+    await storageService.initialize(page);
     authToken = await storageService.getItem('token');
     
     apiContext = await request.newContext({

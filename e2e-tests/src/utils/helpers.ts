@@ -79,7 +79,7 @@ export class Helpers {
    */
   static async getLocalStorageItem(page: Page, key: string): Promise<string | null> {
     const storageService = StorageService.getInstance();
-    storageService.initialize(page);
+    await storageService.initialize(page);
     return await storageService.getItem(key);
   }
 
@@ -92,7 +92,7 @@ export class Helpers {
    */
   static async setLocalStorageItem(page: Page, key: string, value: string): Promise<void> {
     const storageService = StorageService.getInstance();
-    storageService.initialize(page);
+    await storageService.initialize(page);
     await storageService.setItem(key, value);
   }
 
@@ -103,7 +103,7 @@ export class Helpers {
    */
   static async clearLocalStorage(page: Page): Promise<void> {
     const storageService = StorageService.getInstance();
-    storageService.initialize(page);
+    await storageService.initialize(page);
     await storageService.clear();
   }
 }

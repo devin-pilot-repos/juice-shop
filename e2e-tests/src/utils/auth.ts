@@ -108,7 +108,7 @@ export class Auth {
       console.log('Setting up local auth token');
       
       const storageService = StorageService.getInstance();
-      storageService.initialize(page);
+      await storageService.initialize(page);
       
       await storageService.setItems({
         'continueCode': 'yesplease',

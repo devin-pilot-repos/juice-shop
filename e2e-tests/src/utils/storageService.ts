@@ -22,9 +22,9 @@ export class StorageService {
   /**
    * Initialize the storage service with a page context
    */
-  public initialize(page: Page): void {
+  public async initialize(page: Page): Promise<void> {
     this.page = page;
-    this.detectHeadlessMode();
+    await this.detectHeadlessMode();
   }
 
   /**
@@ -39,43 +39,66 @@ export class StorageService {
       return;
     }
 
+    if (process.env.CI === 'true') {
+      this.headlessMode = true;
+      console.log('CI environment detected, using memory storage fallback for safety');
+      return;
+    }
+
     try {
-      const hasLocalStorage = await this.page.evaluate(() => {
-        try {
-          return typeof window.localStorage !== 'undefined';
-        } catch (e) {
-          console.log('localStorage detection error:', e);
-          return false;
-        }
-      });
+      const isHeadlessBrowser = await this.page.evaluate(() => {
+        const ua = navigator.userAgent.toLowerCase();
+        return ua.includes('headless') || 
+               (ua.includes('chrome') && !(window as any).chrome) ||
+               !!navigator.webdriver;
+      }).catch(() => true); // Default to headless if evaluation fails
       
-      if (!hasLocalStorage) {
+      if (isHeadlessBrowser) {
         this.headlessMode = true;
-        console.log('localStorage not available, using memory storage fallback');
+        console.log('Headless browser detected via user agent, using memory storage fallback');
         return;
       }
       
-      const canUseLocalStorage = await this.page.evaluate(() => {
-        try {
-          const testKey = '__storage_test__';
-          window.localStorage.setItem(testKey, testKey);
-          window.localStorage.removeItem(testKey);
-          return true;
-        } catch (e) {
-          return false;
+      try {
+        const hasLocalStorage = await this.page.evaluate(() => {
+          try {
+            return typeof window.localStorage !== 'undefined';
+          } catch (e) {
+            return false;
+          }
+        });
+        
+        if (!hasLocalStorage) {
+          this.headlessMode = true;
+          console.log('localStorage not available, using memory storage fallback');
+          return;
         }
-      });
-      
-      this.headlessMode = !canUseLocalStorage;
-      
-      if (this.headlessMode) {
-        console.log('localStorage access denied, using memory storage fallback');
-      } else {
-        console.log('Browser is running in non-headless mode, using real localStorage');
+        
+        const canUseLocalStorage = await this.page.evaluate(() => {
+          try {
+            const testKey = '__storage_test__';
+            window.localStorage.setItem(testKey, testKey);
+            window.localStorage.removeItem(testKey);
+            return true;
+          } catch (e) {
+            return false;
+          }
+        });
+        
+        this.headlessMode = !canUseLocalStorage;
+        
+        if (this.headlessMode) {
+          console.log('localStorage access denied, using memory storage fallback');
+        } else {
+          console.log('Browser is running in non-headless mode, using real localStorage');
+        }
+      } catch (innerError) {
+        this.headlessMode = true;
+        console.log('Error testing localStorage access, using memory storage fallback:', innerError);
       }
     } catch (error) {
       this.headlessMode = true;
-      console.log('Error detecting localStorage availability, using memory storage fallback:', error);
+      console.log('Error detecting browser environment, using memory storage fallback:', error);
     }
   }
 

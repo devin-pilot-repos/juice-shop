@@ -36,7 +36,7 @@ test.describe('Environment-specific tests', () => {
     await EnvironmentManager.setupEnvironment(page);
     
     const storageService = StorageService.getInstance();
-    storageService.initialize(page);
+    await storageService.initialize(page);
     const environment = await storageService.getItem('environment');
     
     expect(environment).toBe(EnvironmentManager.getEnvironment().name.toLowerCase());

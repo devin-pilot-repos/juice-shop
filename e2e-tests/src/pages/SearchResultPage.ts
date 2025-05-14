@@ -150,7 +150,7 @@ export class SearchResultPage extends BasePage {
       
       try {
         const storageService = StorageService.getInstance();
-        storageService.initialize(this.page);
+        await storageService.initialize(this.page);
         
         const dataAttr = await this.page.evaluate(() => {
           return document.body.getAttribute('data-last-search') || '';

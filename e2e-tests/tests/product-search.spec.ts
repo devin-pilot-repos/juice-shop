@@ -100,7 +100,7 @@ test.describe('Product Search', () => {
       
       try {
         const storageService = StorageService.getInstance();
-        storageService.initialize(page);
+        await storageService.initialize(page);
         await storageService.setItem('lastSearchTerm', searchTerm);
       } catch (e) {
         console.log('Could not store in storage service:', e);
@@ -176,7 +176,7 @@ test.describe('Product Search', () => {
       });
       
       const storageService = StorageService.getInstance();
-      storageService.initialize(page);
+      await storageService.initialize(page);
       const localStorageTerm = await storageService.getItem('lastSearchTerm') || '';
       
       console.log(`Data attribute: ${dataAttr}, storage: ${localStorageTerm}`);
