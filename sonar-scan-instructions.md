@@ -77,25 +77,27 @@ sonar.host.url=https://stg.sonarqube.dso.bcg.com
    export SONAR_TOKEN=your_sonarqube_token_here
    ```
 
-4. Run the scan with the token from the environment variable:
+4. Run the scan with the token from the environment variable and specify the branch name:
 ```bash
-sonar-scanner -Dsonar.login=$SONAR_TOKEN
+sonar-scanner -Dsonar.login=$SONAR_TOKEN -Dsonar.branch.name=sonarqube-scan-setup
 ```
 
    **For Windows Command Prompt:**
    ```cmd
-   sonar-scanner -Dsonar.login=%SONAR_TOKEN%
+   sonar-scanner -Dsonar.login=%SONAR_TOKEN% -Dsonar.branch.name=sonarqube-scan-setup
    ```
 
    **For Windows PowerShell:**
    ```powershell
-   sonar-scanner -Dsonar.login=$env:SONAR_TOKEN
+   sonar-scanner -Dsonar.login=$env:SONAR_TOKEN -Dsonar.branch.name=sonarqube-scan-setup
    ```
 
 5. If you need more detailed logs for troubleshooting, add the `-X` flag:
 ```bash
-sonar-scanner -Dsonar.login=$SONAR_TOKEN -X
+sonar-scanner -Dsonar.login=$SONAR_TOKEN -Dsonar.branch.name=sonarqube-scan-setup -X
 ```
+
+> **Note:** Explicitly specifying the branch name with `-Dsonar.branch.name=sonarqube-scan-setup` is important to ensure SonarQube correctly identifies the branch being scanned. Without this parameter, SonarQube might default to showing results under the "main" branch.
 
 ## Viewing Results
 
