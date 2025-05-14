@@ -205,5 +205,35 @@ export const TEST_WORKFLOW_MAPPING: TestMapping[] = [
     testFile: 'product-reviews.spec.ts',
     testName: 'should add a product review',
     workflowIds: ['product-reviews']
+  },
+  {
+    testFile: 'registration.spec.ts',
+    testName: 'should validate registration form fields',
+    workflowIds: ['user-registration']
+  },
+  {
+    testFile: 'login-logout.spec.ts',
+    testName: 'should navigate to password reset page',
+    workflowIds: ['user-login']
+  },
+  {
+    testFile: 'product-search.spec.ts',
+    testName: 'should filter products by price range',
+    workflowIds: ['product-search']
+  },
+  {
+    testFile: 'basket-checkout.spec.ts',
+    testName: 'should update product quantity in basket',
+    workflowIds: ['basket-management']
+  },
+  {
+    testFile: 'basket-checkout.spec.ts',
+    testName: 'should apply coupon to basket',
+    workflowIds: ['basket-management']
+  },
+  {
+    testFile: 'checkout-process.spec.ts',
+    testName: 'should process checkout with different payment methods',
+    workflowIds: ['checkout-process']
   }
 ];
