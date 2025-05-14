@@ -72,8 +72,6 @@ export class AdministrationComponent implements OnInit {
     this.feedbackService.find().subscribe({
       next: (feedbacks) => {
         this.feedbackDataSource = feedbacks
-        for (const feedback of this.feedbackDataSource) {
-        }
         this.feedbackDataSource = new MatTableDataSource(this.feedbackDataSource)
         this.feedbackDataSource.paginator = this.paginatorFeedb
         this.resultsLengthFeedback = feedbacks.length
