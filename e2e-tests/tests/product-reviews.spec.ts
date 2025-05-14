@@ -52,7 +52,12 @@ test.describe('Product Reviews', () => {
       }
     } catch (error) {
       console.log('Error in product review test:', error);
-      await page.screenshot({ path: `product-review-error-${Date.now()}.png` });
+      try {
+        await page.screenshot({ path: `product-review-error-${Date.now()}.png` })
+          .catch(screenshotError => console.log('Failed to take screenshot:', screenshotError));
+      } catch (screenshotError) {
+        console.log('Failed to take screenshot:', screenshotError);
+      }
       
       const isHeadless = process.env.HEADLESS === 'true' || process.env.CI === 'true';
       if (isHeadless) {
@@ -101,7 +106,12 @@ test.describe('Product Reviews', () => {
       }
     } catch (error) {
       console.log('Error in review validation test:', error);
-      await page.screenshot({ path: `review-validation-error-${Date.now()}.png` });
+      try {
+        await page.screenshot({ path: `review-validation-error-${Date.now()}.png` })
+          .catch(screenshotError => console.log('Failed to take screenshot:', screenshotError));
+      } catch (screenshotError) {
+        console.log('Failed to take screenshot:', screenshotError);
+      }
       
       const isHeadless = process.env.HEADLESS === 'true' || process.env.CI === 'true';
       if (isHeadless) {
@@ -160,7 +170,12 @@ test.describe('Product Reviews', () => {
       }
     } catch (error) {
       console.log('Error in display reviews test:', error);
-      await page.screenshot({ path: `display-reviews-error-${Date.now()}.png` });
+      try {
+        await page.screenshot({ path: `display-reviews-error-${Date.now()}.png` })
+          .catch(screenshotError => console.log('Failed to take screenshot:', screenshotError));
+      } catch (screenshotError) {
+        console.log('Failed to take screenshot:', screenshotError);
+      }
       
       const isHeadless = process.env.HEADLESS === 'true' || process.env.CI === 'true';
       if (isHeadless) {
@@ -209,7 +224,12 @@ test.describe('Product Reviews', () => {
       }
     } catch (error) {
       console.log('Error in special characters review test:', error);
-      await page.screenshot({ path: `special-chars-review-error-${Date.now()}.png` });
+      try {
+        await page.screenshot({ path: `special-chars-review-error-${Date.now()}.png` })
+          .catch(screenshotError => console.log('Failed to take screenshot:', screenshotError));
+      } catch (screenshotError) {
+        console.log('Failed to take screenshot:', screenshotError);
+      }
       
       const isHeadless = process.env.HEADLESS === 'true' || process.env.CI === 'true';
       if (isHeadless) {
