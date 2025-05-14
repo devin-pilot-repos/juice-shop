@@ -12,7 +12,7 @@ import { MatCardModule } from '@angular/material/card'
 import { MatInputModule } from '@angular/material/input'
 
 import { provideHttpClientTesting } from '@angular/common/http/testing'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 
 import { OAuthComponent } from './oauth.component'
 import { LoginComponent } from '../login/login.component'
@@ -38,7 +38,7 @@ describe('OAuthComponent', () => {
     userService.isLoggedIn.next.and.returnValue({})
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
+      imports: [provideRouter([
         { path: 'login', component: LoginComponent }
       ]),
       ReactiveFormsModule,
@@ -72,7 +72,7 @@ describe('OAuthComponent', () => {
   })
 
   it('removes authentication token and basket id on failed OAuth login attempt', fakeAsync(() => {
-    userService.oauthLogin.and.returnValue(throwError({ error: 'Error' }))
+    userService.oauthLogin.and.returnValue(throwError(() => ({ error: 'Error' })))
     component.ngOnInit()
     expect(localStorage.getItem('token')).toBeNull()
     expect(sessionStorage.getItem('bid')).toBeNull()
@@ -86,13 +86,13 @@ describe('OAuthComponent', () => {
 
   it('logs in user even after failed account creation as account might already have existed from previous OAuth login', fakeAsync(() => {
     userService.oauthLogin.and.returnValue(of({ email: 'test@test.com' }))
-    userService.save.and.returnValue(throwError({ error: 'Account already exists' }))
+    userService.save.and.returnValue(throwError(() => ({ error: 'Account already exists' })))
     component.ngOnInit()
     expect(userService.login).toHaveBeenCalledWith({ email: 'test@test.com', password: 'bW9jLnRzZXRAdHNldA==', oauth: true })
   }))
 
   it('removes authentication token and basket id on failed subsequent regular login attempt', fakeAsync(() => {
-    userService.login.and.returnValue(throwError({ error: 'Error' }))
+    userService.login.and.returnValue(throwError(() => ({ error: 'Error' })))
     component.login({ email: '' })
     expect(localStorage.getItem('token')).toBeNull()
     expect(sessionStorage.getItem('bid')).toBeNull()
