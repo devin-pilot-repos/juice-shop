@@ -8,7 +8,7 @@ import { MatDividerModule } from '@angular/material/divider'
 import { provideHttpClientTesting } from '@angular/common/http/testing'
 import { type ComponentFixture, fakeAsync, TestBed, waitForAsync } from '@angular/core/testing'
 import { ProductService } from '../Services/product.service'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { MatGridListModule } from '@angular/material/grid-list'
 import { MatCardModule } from '@angular/material/card'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
@@ -43,7 +43,7 @@ describe('AccountingComponent', () => {
     orderHistoryService.get.and.returnValue(of([]))
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule,
+      imports: [provideRouter([]),
         TranslateModule.forRoot(),
         BrowserAnimationsModule,
         MatTableModule,
@@ -93,7 +93,7 @@ describe('AccountingComponent', () => {
   })
 
   it('should log error from get order history API call directly to browser console', fakeAsync(() => {
-    orderHistoryService.get.and.returnValue(throwError('Error'))
+    orderHistoryService.get.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     fixture.detectChanges()
@@ -101,7 +101,7 @@ describe('AccountingComponent', () => {
   }))
 
   it('should log error from get product API call directly to browser console', fakeAsync(() => {
-    productService.get.and.returnValue(throwError('Error'))
+    productService.get.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.showDetail(1)
     fixture.detectChanges()
