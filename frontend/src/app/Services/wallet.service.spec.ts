@@ -23,7 +23,9 @@ describe('WalletService', () => {
   it('should get wallet balance directly from the api', inject([WalletService, HttpTestingController],
     fakeAsync((service: WalletService, httpMock: HttpTestingController) => {
       let res
-      service.get().subscribe((data) => (res = data))
+      service.get().subscribe({
+        next: (data) => (res = data)
+      })
       const req = httpMock.expectOne('http://localhost:3000/rest/wallet/balance')
       req.flush({ data: 'apiResponse' })
       tick()
@@ -36,7 +38,9 @@ describe('WalletService', () => {
   it('should update wallet balance directly from the api', inject([WalletService, HttpTestingController],
     fakeAsync((service: WalletService, httpMock: HttpTestingController) => {
       let res
-      service.put(1).subscribe((data) => (res = data))
+      service.put(1).subscribe({
+        next: (data) => (res = data)
+      })
       const req = httpMock.expectOne('http://localhost:3000/rest/wallet/balance')
       req.flush({ data: 'apiResponse' })
       tick()
