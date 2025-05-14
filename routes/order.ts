@@ -30,7 +30,7 @@ interface Product {
   bonus: number
 }
 
-function updateProductQuantity(productId: number, quantity: number, next: NextFunction) {
+function updateProductQuantity (productId: number, quantity: number, next: NextFunction) {
   QuantityModel.findOne({ where: { ProductId: productId } })
     .then((product: any) => {
       if (product) {
@@ -48,14 +48,14 @@ function updateProductQuantity(productId: number, quantity: number, next: NextFu
     })
 }
 
-function decrementWalletBalance(userId: number, amount: number, next: NextFunction) {
+function decrementWalletBalance (userId: number, amount: number, next: NextFunction) {
   WalletModel.decrement({ balance: amount }, { where: { UserId: userId } })
     .catch((error: unknown) => {
       next(error)
     })
 }
 
-function incrementWalletBalance(userId: number, amount: number, next: NextFunction) {
+function incrementWalletBalance (userId: number, amount: number, next: NextFunction) {
   WalletModel.increment({ balance: amount }, { where: { UserId: userId } })
     .catch((error: unknown) => {
       next(error)
