@@ -40,6 +40,15 @@ export class EnvironmentManager {
     }
     return this.activeBaseUrl;
   }
+  
+  /**
+   * Check if the current environment is using the demo site
+   * @returns boolean indicating if we're using the demo site
+   */
+  static isDemoSite(): boolean {
+    const baseUrl = this.getBaseUrl();
+    return baseUrl.includes('demo.owasp-juice.shop');
+  }
 
   /**
    * Set the active base URL
@@ -95,7 +104,7 @@ export class EnvironmentManager {
       try {
         console.log(`Attempting to connect to: ${url}`);
         await page.goto(url, { 
-          timeout: 30000,
+          timeout: process.env.CI === 'true' ? 60000 : 30000, // 60 seconds for CI, 30 seconds for local
           waitUntil: 'domcontentloaded' 
         });
         
