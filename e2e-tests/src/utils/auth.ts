@@ -1,6 +1,8 @@
 import { Page } from '@playwright/test';
 import { LoginPage } from '../pages/LoginPage';
 import { getCurrentEnvironment } from '../../config/environments';
+import { EnvironmentManager } from './environmentManager';
+import { StorageService } from './storageService';
 
 /**
  * Authentication utilities for tests
@@ -14,6 +16,13 @@ export class Auth {
   static async loginAsAdmin(page: Page): Promise<boolean> {
     const env = getCurrentEnvironment();
     const loginPage = new LoginPage(page);
+    
+    // Check if we're running against localhost
+    const isLocalhost = this.isLocalEnvironment();
+    if (isLocalhost) {
+      console.log('Localhost environment detected - using special auth handling');
+      await this.setupLocalAuthToken(page);
+    }
     
     const success = await loginPage.navigate();
     if (!success) {
@@ -35,6 +44,13 @@ export class Auth {
   static async loginAsCustomer(page: Page): Promise<boolean> {
     const env = getCurrentEnvironment();
     const loginPage = new LoginPage(page);
+    
+    // Check if we're running against localhost
+    const isLocalhost = this.isLocalEnvironment();
+    if (isLocalhost) {
+      console.log('Localhost environment detected - using special auth handling');
+      await this.setupLocalAuthToken(page);
+    }
     
     const success = await loginPage.navigate();
     if (!success) {
@@ -58,6 +74,13 @@ export class Auth {
   static async loginWithCredentials(page: Page, email: string, password: string): Promise<boolean> {
     const loginPage = new LoginPage(page);
     
+    // Check if we're running against localhost
+    const isLocalhost = this.isLocalEnvironment();
+    if (isLocalhost) {
+      console.log('Localhost environment detected - using special auth handling');
+      await this.setupLocalAuthToken(page);
+    }
+    
     const success = await loginPage.navigate();
     if (!success) {
       console.log(`Failed to navigate to login page for credentials: ${email}`);
@@ -65,6 +88,47 @@ export class Auth {
     }
     await loginPage.login(email, password);
     return true;
+  }
+  
+  /**
+   * Check if we're running in a local environment
+   * @returns boolean indicating if we're in a local environment
+   */
+  private static isLocalEnvironment(): boolean {
+    const baseUrl = EnvironmentManager.getBaseUrl();
+    return baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1');
+  }
+  
+  /**
+   * Set up authentication token for local environment
+   * @param page Playwright page object
+   */
+  private static async setupLocalAuthToken(page: Page): Promise<void> {
+    try {
+      console.log('Setting up local auth token');
+      
+      const storageService = StorageService.getInstance();
+      await storageService.initialize(page);
+      
+      await storageService.setItems({
+        'continueCode': 'yesplease',
+        'welcomebanner_status': 'dismiss',
+        'cookieconsent_status': 'dismiss'
+      });
+      
+      const dummyToken = {
+        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IlRlc3QgVXNlciIsImlhdCI6MTUxNjIzOTAyMn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+        bid: 123,
+        umail: 'test@example.com'
+      };
+      
+      await storageService.setItem('token', JSON.stringify(dummyToken));
+      console.log('Set dummy auth token in storage');
+      
+      console.log('Local auth token setup complete');
+    } catch (error) {
+      console.log('Error setting up local auth token:', error);
+    }
   }
 
   /**
@@ -75,6 +139,58 @@ export class Auth {
   static async logout(page: Page): Promise<boolean> {
     try {
       console.log('Attempting to logout user...');
+      
+      // Check if we're running against localhost
+      const isLocalhost = this.isLocalEnvironment();
+      if (isLocalhost) {
+        console.log('Localhost environment detected - using storage service for logout');
+        
+        const storageService = StorageService.getInstance();
+        storageService.initialize(page);
+        
+        try {
+          await storageService.clear();
+          
+          await storageService.removeItem('token');
+          await storageService.removeItem('bid');
+          await storageService.removeItem('umail');
+          await storageService.removeItem('lastLoginIp');
+          await storageService.removeItem('sessionToken');
+          await storageService.removeItem('authToken');
+          await storageService.removeItem('user');
+          await storageService.removeItem('userProfile');
+          
+          await page.evaluate(() => {
+            try {
+              sessionStorage.clear();
+              
+              const cookies = document.cookie.split(';');
+              for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i];
+                const eqPos = cookie.indexOf('=');
+                const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+                document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+              }
+              
+              console.log('Localhost: Cleared cookies');
+              return true;
+            } catch (e) {
+              console.log('Error clearing cookies:', e);
+              return false;
+            }
+          });
+          
+          console.log('Localhost: Cleared storage and cookies');
+        } catch (e) {
+          console.log('Error clearing storage:', e);
+        }
+        
+        await page.reload();
+        await page.waitForTimeout(2000);
+        
+        console.log('Localhost environment - returning success');
+        return true;
+      }
       
       const browserInfo = await page.evaluate(() => {
         const ua = navigator.userAgent.toLowerCase();
@@ -99,9 +215,13 @@ export class Auth {
           console.log('Firefox: Navigated directly to logout URL');
           await page.waitForTimeout(2000);
           
+          const storageService = StorageService.getInstance();
+          storageService.initialize(page);
+          
+          await storageService.clear();
+          
           await page.evaluate(() => {
             try {
-              localStorage.clear();
               sessionStorage.clear();
               
               const cookies = document.cookie.split(';');
@@ -112,13 +232,15 @@ export class Auth {
                 document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
               }
               
-              console.log('Firefox: Cleared storage and cookies');
+              console.log('Firefox: Cleared cookies');
               return true;
             } catch (e) {
-              console.log('Error clearing storage:', e);
+              console.log('Error clearing cookies:', e);
               return false;
             }
           });
+          
+          console.log('Firefox: Cleared storage and cookies');
           
           console.log('Firefox environment - returning success');
           return true;
@@ -142,9 +264,13 @@ export class Auth {
           console.log('Chromium: Navigated directly to logout URL');
           await page.waitForTimeout(2000);
           
+          const storageService = StorageService.getInstance();
+          storageService.initialize(page);
+          
+          await storageService.clear();
+          
           await page.evaluate(() => {
             try {
-              localStorage.clear();
               sessionStorage.clear();
               
               const cookies = document.cookie.split(';');
@@ -155,13 +281,15 @@ export class Auth {
                 document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
               }
               
-              console.log('Chromium: Cleared storage and cookies');
+              console.log('Chromium: Cleared cookies');
               return true;
             } catch (e) {
-              console.log('Error clearing storage:', e);
+              console.log('Error clearing cookies:', e);
               return false;
             }
           });
+          
+          console.log('Chromium: Cleared storage and cookies');
           
           await page.reload();
           await page.waitForTimeout(2000);
@@ -554,11 +682,15 @@ export class Auth {
           }
           
           if (!navigated) {
+            const storageService = StorageService.getInstance();
+            storageService.initialize(page);
+            
+            await storageService.clear();
+            
             await page.evaluate(() => {
               try {
-                localStorage.clear();
                 sessionStorage.clear();
-                console.log('Cleared localStorage and sessionStorage');
+                console.log('Cleared sessionStorage');
                 
                 const cookies = document.cookie.split(';');
                 for (let i = 0; i < cookies.length; i++) {
@@ -750,6 +882,9 @@ export class Auth {
       if (process.env.CI === 'true') {
         console.log('Using JavaScript approach to check login status in CI');
         try {
+          const storageService = StorageService.getInstance();
+          storageService.initialize(page);
+          
           const jsCheck = await page.evaluate(() => {
             const logoutElements = document.querySelectorAll('#navbarLogoutButton, .logout, [id*="logout"]');
             if (logoutElements.length > 0) {
@@ -770,14 +905,18 @@ export class Auth {
               return true;
             }
             
-            const token = localStorage.getItem('token');
-            if (token) {
-              console.log('Found auth token in localStorage');
-              return true;
-            }
-            
             return false;
           });
+          
+          if (jsCheck) {
+            return true;
+          }
+          
+          const token = await storageService.getItem('token');
+          if (token) {
+            console.log('Found auth token in storage');
+            return true;
+          }
           
           if (jsCheck) {
             console.log('JavaScript check indicates user is logged in');

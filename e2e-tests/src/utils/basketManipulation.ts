@@ -1,6 +1,7 @@
 import { Page, Browser, BrowserContext } from '@playwright/test';
 import { Navigation } from './navigation';
 import { EnvironmentManager } from './environmentManager';
+import { StorageService } from './storageService';
 
 /**
  * Utility functions for direct basket manipulation
@@ -90,34 +91,58 @@ export class BasketManipulation {
       
       let added = false;
       
-      // First approach: Use localStorage
+      // First approach: Use StorageService
       try {
-        added = await page.evaluate(({ id, name, price }) => {
-          try {
-            const basketItem = {
-              id: id,
-              name: name,
-              price: price,
-              quantity: 1
-            };
-            
-            let basket = JSON.parse(localStorage.getItem('basket') || '[]');
-            basket.push(basketItem);
-            localStorage.setItem('basket', JSON.stringify(basket));
-            
+        const storageService = StorageService.getInstance();
+        await storageService.initialize(page);
+        
+        const basketItem = {
+          id: productId,
+          name: productName,
+          price: productPrice,
+          quantity: 1
+        };
+        
+        const basketJson = await storageService.getItem('basket') || '[]';
+        let basket = JSON.parse(basketJson);
+        
+        basket.push(basketItem);
+        
+        await storageService.setItem('basket', JSON.stringify(basket));
+        
+        try {
+          await page.evaluate((basketData) => {
             try {
-              const event = new CustomEvent('basket-updated', { detail: basket });
-              document.dispatchEvent(event);
+              const events = [
+                new CustomEvent('basket-updated', { detail: basketData }),
+                new CustomEvent('basket-change', { detail: basketData }),
+                new CustomEvent('add-to-basket', { detail: basketData[basketData.length - 1] })
+              ];
+              
+              for (const event of events) {
+                document.dispatchEvent(event);
+                console.log(`Dispatched ${event.type} event`);
+              }
+              
+              const win = window as any;
+              if (win.basketService && typeof win.basketService.updateBasket === 'function') {
+                win.basketService.updateBasket(basketData);
+                console.log('Updated basketService directly');
+              }
+              
+              return true;
             } catch (eventError) {
-              console.error('Error dispatching basket-updated event:', eventError);
+              console.error('Error dispatching basket events:', eventError);
+              return false;
             }
-            
-            return true;
-          } catch (error) {
-            console.error('Error in direct basket manipulation:', error);
-            return false;
-          }
-        }, { id: productId, name: productName, price: productPrice });
+          }, basket);
+          
+          console.log('Successfully dispatched basket events');
+        } catch (eventError) {
+          console.log('Error dispatching basket events:', eventError);
+        }
+        
+        added = true;
       } catch (evalError) {
         console.log('Error evaluating localStorage manipulation:', evalError);
         added = false;
@@ -246,25 +271,46 @@ export class BasketManipulation {
       
       let cleared = false;
       
-      // First approach: Use localStorage
+      // First approach: Use StorageService
       try {
-        cleared = await page.evaluate(() => {
-          try {
-            localStorage.setItem('basket', '[]');
-            
+        const storageService = StorageService.getInstance();
+        await storageService.initialize(page);
+        
+        await storageService.setItem('basket', '[]');
+        
+        try {
+          await page.evaluate(() => {
             try {
-              const event = new CustomEvent('basket-updated', { detail: [] });
-              document.dispatchEvent(event);
+              const events = [
+                new CustomEvent('basket-updated', { detail: [] }),
+                new CustomEvent('basket-change', { detail: [] }),
+                new CustomEvent('basket-cleared', { detail: null })
+              ];
+              
+              for (const event of events) {
+                document.dispatchEvent(event);
+                console.log(`Dispatched ${event.type} event`);
+              }
+              
+              const win = window as any;
+              if (win.basketService && typeof win.basketService.updateBasket === 'function') {
+                win.basketService.updateBasket([]);
+                console.log('Updated basketService directly with empty basket');
+              }
+              
+              return true;
             } catch (eventError) {
-              console.error('Error dispatching basket-updated event:', eventError);
+              console.error('Error dispatching basket cleared events:', eventError);
+              return false;
             }
-            
-            return true;
-          } catch (error) {
-            console.error('Error in direct basket clearing:', error);
-            return false;
-          }
-        });
+          });
+          
+          console.log('Successfully dispatched basket cleared events');
+        } catch (eventError) {
+          console.log('Error dispatching basket cleared events:', eventError);
+        }
+        
+        cleared = true;
       } catch (evalError) {
         console.log('Error evaluating localStorage clearing:', evalError);
         cleared = false;
@@ -377,17 +423,16 @@ export class BasketManipulation {
       
       let hasItems = false;
       
-      // First approach: Use localStorage
+      // First approach: Use StorageService
       try {
-        hasItems = await page.evaluate(() => {
-          try {
-            const basket = JSON.parse(localStorage.getItem('basket') || '[]');
-            return basket.length > 0;
-          } catch (error) {
-            console.error('Error checking basket items directly:', error);
-            return false;
-          }
-        });
+        const storageService = StorageService.getInstance();
+        await storageService.initialize(page);
+        
+        // Get basket from storage
+        const basketJson = await storageService.getItem('basket') || '[]';
+        const basket = JSON.parse(basketJson);
+        
+        hasItems = basket.length > 0;
       } catch (evalError) {
         console.log('Error evaluating localStorage check:', evalError);
         hasItems = false;
@@ -396,15 +441,30 @@ export class BasketManipulation {
       if (!hasItems) {
         try {
           console.log('Trying sessionStorage for basket check');
-          hasItems = await page.evaluate(() => {
+          
+          // Try to get basket from sessionStorage
+          const sessionBasketJson = await page.evaluate(() => {
             try {
-              const basket = JSON.parse(sessionStorage.getItem('basket') || '[]');
-              return basket.length > 0;
+              return sessionStorage.getItem('basket') || '[]';
             } catch (error) {
-              console.error('Error in sessionStorage basket check:', error);
-              return false;
+              console.error('Error accessing sessionStorage:', error);
+              return '[]';
             }
-          });
+          }).catch(() => '[]');
+          
+          if (sessionBasketJson !== '[]') {
+            const storageService = StorageService.getInstance();
+            await storageService.initialize(page);
+            await storageService.setItem('session_basket', sessionBasketJson);
+            console.log('Saved sessionStorage basket to StorageService');
+          }
+          
+          const sessionBasket = JSON.parse(sessionBasketJson);
+          hasItems = sessionBasket.length > 0;
+          
+          if (hasItems) {
+            console.log(`Found ${sessionBasket.length} items in sessionStorage`);
+          }
         } catch (sessionError) {
           console.log('Error evaluating sessionStorage check:', sessionError);
           hasItems = false;
@@ -475,17 +535,16 @@ export class BasketManipulation {
       
       let itemCount = 0;
       
-      // First approach: Use localStorage
+      // First approach: Use StorageService
       try {
-        itemCount = await page.evaluate(() => {
-          try {
-            const basket = JSON.parse(localStorage.getItem('basket') || '[]');
-            return basket.length;
-          } catch (error) {
-            console.error('Error getting basket item count directly:', error);
-            return 0;
-          }
-        });
+        const storageService = StorageService.getInstance();
+        await storageService.initialize(page);
+        
+        // Get basket from storage
+        const basketJson = await storageService.getItem('basket') || '[]';
+        const basket = JSON.parse(basketJson);
+        
+        itemCount = basket.length;
       } catch (evalError) {
         console.log('Error evaluating localStorage item count:', evalError);
         itemCount = 0;
@@ -494,15 +553,31 @@ export class BasketManipulation {
       if (itemCount === 0) {
         try {
           console.log('Trying sessionStorage for basket item count');
-          itemCount = await page.evaluate(() => {
+          
+          // Try to get basket from sessionStorage using StorageService
+          const storageService = StorageService.getInstance();
+          await storageService.initialize(page);
+          
+          const sessionBasketJson = await page.evaluate(() => {
             try {
-              const basket = JSON.parse(sessionStorage.getItem('basket') || '[]');
-              return basket.length;
+              return sessionStorage.getItem('basket') || '[]';
             } catch (error) {
-              console.error('Error in sessionStorage basket item count:', error);
-              return 0;
+              console.error('Error accessing sessionStorage:', error);
+              return '[]';
             }
-          });
+          }).catch(() => '[]');
+          
+          if (sessionBasketJson !== '[]') {
+            await storageService.setItem('session_basket', sessionBasketJson);
+            console.log('Saved sessionStorage basket to StorageService');
+          }
+          
+          const sessionBasket = JSON.parse(sessionBasketJson);
+          itemCount = sessionBasket.length;
+          
+          if (itemCount > 0) {
+            console.log(`Found ${itemCount} items in sessionStorage`);
+          }
         } catch (sessionError) {
           console.log('Error evaluating sessionStorage item count:', sessionError);
           itemCount = 0;

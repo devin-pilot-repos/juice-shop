@@ -1,5 +1,6 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './BasePage';
+import { StorageService } from '../utils/storageService';
 
 /**
  * Page Object for the Product page
@@ -169,37 +170,45 @@ export class ProductPage extends BasePage {
         
         console.log(`Adding product programmatically - ID: ${productId}, Name: ${productTitle}, Price: ${productPrice}`);
         
-        // Use JavaScript to directly add the product to the basket
-        const added = await this.page.evaluate(({ id, name, price }) => {
-          try {
-            const basketItem = {
-              id: id,
-              name: name,
-              price: parseFloat(price.replace(/[^0-9.]/g, '')),
-              quantity: 1
-            };
-            
-            const basketService = (window as any)['basketService'];
-            if (basketService) {
-              basketService.addToBasket(basketItem);
-              console.log('Added item using basketService');
+        // Use StorageService to add the product to the basket
+        const storageService = StorageService.getInstance();
+        await storageService.initialize(this.page);
+        
+        let added = false;
+        try {
+          const basketJson = await storageService.getItem('basket') || '[]';
+          let basket = JSON.parse(basketJson);
+          
+          const basketItem = {
+            id: productId,
+            name: productTitle,
+            price: parseFloat(productPrice.replace(/[^0-9.]/g, '')),
+            quantity: 1
+          };
+          
+          // Add item to basket
+          basket.push(basketItem);
+          
+          await storageService.setItem('basket', JSON.stringify(basket));
+          console.log('Added item to basket via StorageService');
+          
+          // Dispatch event via JavaScript
+          await this.page.evaluate((item) => {
+            try {
+              const event = new CustomEvent('add-to-basket', { detail: item });
+              document.dispatchEvent(event);
               return true;
+            } catch (error) {
+              console.error('Error dispatching basket event:', error);
+              return false;
             }
-            
-            let basket = JSON.parse(localStorage.getItem('basket') || '[]');
-            basket.push(basketItem);
-            localStorage.setItem('basket', JSON.stringify(basket));
-            console.log('Added item to basket via localStorage');
-            
-            const event = new CustomEvent('add-to-basket', { detail: basketItem });
-            document.dispatchEvent(event);
-            
-            return true;
-          } catch (error) {
-            console.error('Error adding item programmatically:', error);
-            return false;
-          }
-        }, { id: productId, name: productTitle, price: productPrice });
+          }, basketItem);
+          
+          added = true;
+        } catch (error) {
+          console.log('Error adding item to basket via StorageService:', error);
+          added = false;
+        }
         
         if (added) {
           console.log('Successfully added product programmatically');

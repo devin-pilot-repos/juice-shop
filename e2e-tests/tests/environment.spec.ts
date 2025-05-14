@@ -3,6 +3,7 @@ import { EnvironmentManager } from '../src/utils/environmentManager';
 import { LoginPage } from '../src/pages/LoginPage';
 import { HomePage } from '../src/pages/HomePage';
 import { Auth } from '../src/utils/auth';
+import { StorageService } from '../src/utils/storageService';
 
 test.describe('Environment-specific tests', () => {
   test.beforeEach(async () => {
@@ -34,7 +35,9 @@ test.describe('Environment-specific tests', () => {
   test('should use environment-specific storage settings', async ({ page }) => {
     await EnvironmentManager.setupEnvironment(page);
     
-    const environment = await page.evaluate(() => localStorage.getItem('environment'));
+    const storageService = StorageService.getInstance();
+    await storageService.initialize(page);
+    const environment = await storageService.getItem('environment');
     
     expect(environment).toBe(EnvironmentManager.getEnvironment().name.toLowerCase());
   });
