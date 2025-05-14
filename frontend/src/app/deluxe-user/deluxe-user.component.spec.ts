@@ -13,7 +13,7 @@ import { ReactiveFormsModule } from '@angular/forms'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
 
 import { of } from 'rxjs'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { DeluxeUserComponent } from './deluxe-user.component'
 import { UserService } from '../Services/user.service'
 import { CookieService } from 'ngy-cookie'
@@ -50,7 +50,7 @@ describe('DeluxeUserComponent', () => {
     cookieService = jasmine.createSpyObj('CookieService', ['remove'])
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
+      imports: [provideRouter([
         { path: 'login', component: LoginComponent }
       ]),
       TranslateModule.forRoot(),
@@ -112,7 +112,7 @@ describe('DeluxeUserComponent', () => {
   })
 
   it('should log error on failure in retrieving configuration from backend', fakeAsync(() => {
-    configurationService.getApplicationConfiguration.and.returnValue(throwError('Error'))
+    configurationService.getApplicationConfiguration.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     expect(console.log).toHaveBeenCalledWith('Error')

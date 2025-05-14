@@ -13,7 +13,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
 import { provideHttpClientTesting } from '@angular/common/http/testing'
 import { ReactiveFormsModule } from '@angular/forms'
 import { MatButtonToggleModule } from '@angular/material/button-toggle'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { AddressService } from '../Services/address.service'
 import { of } from 'rxjs/internal/observable/of'
 import { throwError } from 'rxjs'
@@ -41,7 +41,7 @@ describe('DeliveryMethodComponent', () => {
     deliveryService.get.and.returnValue(of([]))
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
+      imports: [provideRouter([
         { path: 'payment/shop', component: PaymentComponent }
       ]),
       TranslateModule.forRoot(),
@@ -79,14 +79,14 @@ describe('DeliveryMethodComponent', () => {
   })
 
   it('should log errors from address service directly to browser console', fakeAsync(() => {
-    addressService.getById.and.returnValue(throwError('Error'))
+    addressService.getById.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     expect(console.log).toHaveBeenCalledWith('Error')
   }))
 
   it('should log errors from delivery service directly to browser console', fakeAsync(() => {
-    deliveryService.get.and.returnValue(throwError('Error'))
+    deliveryService.get.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     expect(console.log).toHaveBeenCalledWith('Error')

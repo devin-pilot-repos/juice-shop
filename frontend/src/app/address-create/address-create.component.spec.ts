@@ -14,7 +14,7 @@ import { ReactiveFormsModule } from '@angular/forms'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
 
 import { of, throwError } from 'rxjs'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { AddressService } from '../Services/address.service'
 import { MatGridListModule } from '@angular/material/grid-list'
 import { EventEmitter } from '@angular/core'
@@ -43,7 +43,7 @@ describe('AddressCreateComponent', () => {
     snackBar.open.and.returnValue(null)
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule,
+      imports: [provideRouter([]),
         TranslateModule.forRoot(),
         ReactiveFormsModule,
         BrowserAnimationsModule,
@@ -201,7 +201,7 @@ describe('AddressCreateComponent', () => {
   })
 
   it('should clear the form and display error if saving address fails', fakeAsync(() => {
-    addressService.save.and.returnValue(throwError({ error: 'Error' }))
+    addressService.save.and.returnValue(throwError(() => ({ error: 'Error' })))
     spyOn(component, 'resetForm')
     component.save()
     expect(component.resetForm).toHaveBeenCalled()
@@ -209,7 +209,7 @@ describe('AddressCreateComponent', () => {
   }))
 
   it('should clear the form and display error if updating address fails', fakeAsync(() => {
-    addressService.put.and.returnValue(throwError({ error: 'Error' }))
+    addressService.put.and.returnValue(throwError(() => ({ error: 'Error' })))
     component.mode = 'edit'
     spyOn(component, 'resetForm')
     component.save()

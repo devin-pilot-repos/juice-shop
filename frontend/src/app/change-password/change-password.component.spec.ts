@@ -106,7 +106,7 @@ describe('ChangePasswordComponent', () => {
   })
 
   it('should clear form and gracefully handle error on password change', fakeAsync(() => {
-    userService.changePassword.and.returnValue(throwError('Error'))
+    userService.changePassword.and.returnValue(throwError(() => 'Error'))
     spyOn(component, 'resetPasswords')
     console.log = jasmine.createSpy('log')
     component.passwordControl.setValue('old')

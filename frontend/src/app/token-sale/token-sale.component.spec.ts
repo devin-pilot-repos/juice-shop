@@ -50,7 +50,7 @@ describe('TokenSaleComponent', () => {
   })
 
   it('should log error on failure in retrieving configuration from backend', fakeAsync(() => {
-    configurationService.getApplicationConfiguration.and.returnValue(throwError('Error'))
+    configurationService.getApplicationConfiguration.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     expect(console.log).toHaveBeenCalledWith('Error')

@@ -19,7 +19,7 @@ import { MatRadioModule } from '@angular/material/radio'
 import { MatDialogModule } from '@angular/material/dialog'
 import { AddressComponent } from '../address/address.component'
 import { AddressSelectComponent } from './address-select.component'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { DeliveryMethodComponent } from '../delivery-method/delivery-method.component'
 import { MatIconModule } from '@angular/material/icon'
 import { MatTooltipModule } from '@angular/material/tooltip'
@@ -45,7 +45,7 @@ describe('AddressSelectComponent', () => {
     snackBar.open.and.returnValue(null)
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
+      imports: [provideRouter([
         { path: 'delivery-method', component: DeliveryMethodComponent }
       ]),
       TranslateModule.forRoot(),

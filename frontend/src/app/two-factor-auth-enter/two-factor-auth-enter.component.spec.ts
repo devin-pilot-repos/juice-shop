@@ -12,7 +12,7 @@ import { WindowRefService } from '../Services/window-ref.service'
 
 import { ReactiveFormsModule } from '@angular/forms'
 import { provideHttpClientTesting } from '@angular/common/http/testing'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
 
 import { TranslateModule } from '@ngx-translate/core'
@@ -52,7 +52,7 @@ describe('TwoFactorAuthEnterComponent', () => {
     twoFactorAuthService.verify.and.returnValue(of({ }))
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
+      imports: [provideRouter([
         { path: 'search', component: SearchResultComponent }
       ]),
       ReactiveFormsModule,

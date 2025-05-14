@@ -86,7 +86,7 @@ describe('ProductReviewEditComponent', () => {
   it('should log errors directly to browser console', fakeAsync(() => {
     component.data = { reviewData: { _id: '42', message: 'Review', author: 'Horst' } }
     console.log = jasmine.createSpy('log')
-    productReviewService.patch.and.returnValue(throwError('Error'))
+    productReviewService.patch.and.returnValue(throwError(() => 'Error'))
     component.ngOnInit()
     component.editReview()
     expect(console.log).toHaveBeenCalledWith('Error')
