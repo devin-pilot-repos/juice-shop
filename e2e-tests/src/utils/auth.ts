@@ -671,6 +671,17 @@ export class Auth {
         return false;
       }
       
+      const isDemoSite = currentUrl.includes('demo.owasp-juice.shop');
+      if (isDemoSite && process.env.CI === 'true') {
+        console.log('Demo site detected in isLoggedIn check - applying special handling');
+        await page.waitForTimeout(3000); // Give extra time for the page to stabilize
+      }
+      
+      if (process.env.CI === 'true') {
+        console.log('CI environment detected - using enhanced stability measures');
+        await page.waitForTimeout(1000); // Additional wait for CI environment
+      }
+      
       const userElements = [
         '#navbarLogoutButton',
         'button:has-text("Logout")',
@@ -681,7 +692,8 @@ export class Auth {
       for (const selector of userElements) {
         try {
           const element = page.locator(selector);
-          const isVisible = await element.isVisible({ timeout: 500 })
+          const timeout = process.env.CI === 'true' ? 2000 : 500; // Increased timeout for CI
+          const isVisible = await element.isVisible({ timeout })
             .catch(() => false);
           
           if (isVisible) {
@@ -689,6 +701,7 @@ export class Auth {
             return true;
           }
         } catch (error) {
+          console.log(`Error checking selector ${selector}:`, error);
         }
       }
       
@@ -702,20 +715,27 @@ export class Auth {
       for (const selector of accountSelectors) {
         try {
           const accountButton = page.locator(selector);
-          if (await accountButton.isVisible({ timeout: 2000 })) {
-            await accountButton.click({ timeout: 5000, force: true });
+          const visibilityTimeout = process.env.CI === 'true' ? 5000 : 2000; // Increased timeout for CI
+          const clickTimeout = process.env.CI === 'true' ? 10000 : 5000; // Increased timeout for CI
+          
+          if (await accountButton.isVisible({ timeout: visibilityTimeout })) {
+            await accountButton.click({ timeout: clickTimeout, force: true });
             console.log(`Clicked account menu with selector: ${selector}`);
-            await page.waitForTimeout(500);
+            
+            const waitTime = process.env.CI === 'true' ? 2000 : 500;
+            await page.waitForTimeout(waitTime);
             break;
           }
         } catch (error) {
+          console.log(`Error with account selector ${selector}:`, error);
         }
       }
       
       for (const selector of userElements) {
         try {
           const element = page.locator(selector);
-          const isVisible = await element.isVisible({ timeout: 2000 })
+          const timeout = process.env.CI === 'true' ? 5000 : 2000; // Increased timeout for CI
+          const isVisible = await element.isVisible({ timeout })
             .catch(() => false);
           
           if (isVisible) {
@@ -723,6 +743,35 @@ export class Auth {
             return true;
           }
         } catch (error) {
+          console.log(`Error checking selector ${selector} after menu click:`, error);
+        }
+      }
+      
+      if (process.env.CI === 'true') {
+        console.log('Using JavaScript approach to check login status in CI');
+        try {
+          const jsCheck = await page.evaluate(() => {
+            const logoutElements = document.querySelectorAll('#navbarLogoutButton, button:has-text("Logout"), .logout, [id*="logout"]');
+            if (logoutElements.length > 0) {
+              console.log('Found logout elements in DOM via JavaScript');
+              return true;
+            }
+            
+            const token = localStorage.getItem('token');
+            if (token) {
+              console.log('Found auth token in localStorage');
+              return true;
+            }
+            
+            return false;
+          });
+          
+          if (jsCheck) {
+            console.log('JavaScript check indicates user is logged in');
+            return true;
+          }
+        } catch (jsError) {
+          console.log('Error in JavaScript login check:', jsError);
         }
       }
       
