@@ -18,12 +18,12 @@ export class SecurityQuestionService {
   constructor (private readonly http: HttpClient) { }
 
   find (params: any) {
-    return this.http.get(this.host + '/', { params }).pipe(map((response: any) => response.data), catchError((err) => { throw err }))
+    return this.http.get<any>(this.host + '/', { params }).pipe(map(response => response.data), catchError((err) => { throw err }))
   }
 
   findBy (email: string) {
-    return this.http.get(this.hostServer + '/' + 'rest/user/security-question?email=' + email).pipe(
-      map((response: any) => response.question),
+    return this.http.get<any>(this.hostServer + '/' + 'rest/user/security-question?email=' + email).pipe(
+      map(response => response.question),
       catchError((error) => { throw error })
     )
   }
