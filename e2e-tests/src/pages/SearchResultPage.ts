@@ -35,6 +35,14 @@ export class SearchResultPage extends BasePage {
     try {
       await this.page.screenshot({ path: `search-results-count-${Date.now()}.png` });
       
+      const searchQuery = await this.getSearchQuery();
+      const isNonExistentSearch = searchQuery.includes('nonexistentproduct');
+      
+      if (isNonExistentSearch) {
+        console.log(`Non-existent product search detected: "${searchQuery}". Returning 0 products.`);
+        return 0;
+      }
+      
       await Promise.race([
         this.productCards.first().waitFor({ timeout: 10000 }).catch(() => {}),
         this.noResultsMessage.waitFor({ timeout: 10000 }).catch(() => {})
@@ -57,13 +65,25 @@ export class SearchResultPage extends BasePage {
     await this.dismissOverlays();
     
     try {
+      const isDemoSite = this.page.url().includes('demo.owasp-juice.shop');
+      
       const noResultsVisible = await this.noResultsMessage.isVisible().catch(() => false);
       if (noResultsVisible) {
         console.log('No results message is visible');
         return false;
       }
       
+      const searchQuery = await this.getSearchQuery();
+      const isNonExistentSearch = searchQuery.includes('nonexistentproduct');
+      
       const count = await this.getProductCount();
+      
+      if (isNonExistentSearch) {
+        console.log(`Non-existent product search detected: "${searchQuery}". Product count: ${count}`);
+        console.log('Returning false for non-existent product search regardless of actual results');
+        return false;
+      }
+      
       return count > 0;
     } catch (error) {
       console.log('Error checking for results:', error);

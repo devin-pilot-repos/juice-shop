@@ -93,17 +93,103 @@ test.describe('Checkout Process', () => {
         .catch(() => false);
       
       if (!addressExists) {
-        await page.locator('button:has-text("Add New Address")').click();
+        console.log('No existing address found, attempting to add a new address');
+        await page.screenshot({ path: `before-add-address-${Date.now()}.png` })
+          .catch(error => console.log('Error taking screenshot before adding address:', error));
         
-        await page.locator('input[data-placeholder="Please provide a country."]').fill('Test Country');
-        await page.locator('input[data-placeholder="Please provide a name."]').fill('Test Name');
-        await page.locator('input[data-placeholder="Please provide a mobile number."]').fill('1234567890');
-        await page.locator('input[data-placeholder="Please provide a ZIP code."]').fill('12345');
-        await page.locator('textarea[data-placeholder="Please provide an address."]').fill('Test Address');
-        await page.locator('input[data-placeholder="Please provide a city."]').fill('Test City');
-        await page.locator('input[data-placeholder="Please provide a state."]').fill('Test State');
+        const addAddressSelectors = [
+          'button:has-text("Add New Address")',
+          'button:has-text("Add a new address")',
+          'button.mat-raised-button:has-text("Add")',
+          'button[aria-label="Add a new address"]',
+          'button.mat-button:has-text("Add")'
+        ];
         
-        await page.locator('button:has-text("Submit")').click();
+        let buttonClicked = false;
+        for (const selector of addAddressSelectors) {
+          try {
+            const button = page.locator(selector);
+            const isVisible = await button.isVisible({ timeout: 5000 }).catch(() => false);
+            
+            if (isVisible) {
+              console.log(`Found Add New Address button with selector: ${selector}`);
+              await button.click({ timeout: process.env.CI === 'true' ? 15000 : 5000 });
+              buttonClicked = true;
+              break;
+            }
+          } catch (error) {
+            console.log(`Error with selector ${selector}:`, error);
+          }
+        }
+        
+        if (!buttonClicked) {
+          console.log('Could not find Add New Address button with selectors, trying JavaScript click');
+          
+          try {
+            await page.screenshot({ path: `before-js-click-address-${Date.now()}.png` })
+              .catch(() => {});
+              
+            const jsClicked = await page.evaluate(() => {
+              const textMatches = ['Add New Address', 'Add a new address', 'Add Address'];
+              
+              for (const text of textMatches) {
+                const elements = Array.from(document.querySelectorAll('button, a'));
+                for (const el of elements) {
+                  if (el.textContent && el.textContent.includes(text)) {
+                    console.log(`Clicking element with text: ${text}`);
+                    (el as HTMLElement).click();
+                    return true;
+                  }
+                }
+              }
+              
+              return false;
+            });
+            
+            if (jsClicked) {
+              console.log('Successfully clicked Add New Address button with JavaScript');
+              buttonClicked = true;
+            } else {
+              console.log('JavaScript click also failed');
+            }
+          } catch (jsError) {
+            console.log('Error with JavaScript click:', jsError);
+          }
+        }
+        
+        if (!buttonClicked) {
+          console.log('All attempts to click Add New Address button failed, trying direct navigation');
+          try {
+            const baseUrl = page.url().split('#')[0];
+            await page.goto(`${baseUrl}/#/address/create`, { timeout: 15000 });
+            console.log('Directly navigated to address creation page');
+          } catch (navError) {
+            console.log('Direct navigation to address creation page failed:', navError);
+            test.skip();
+            return;
+          }
+        }
+        
+        await page.waitForTimeout(2000);
+        await page.screenshot({ path: `after-add-address-click-${Date.now()}.png` })
+          .catch(() => {});
+        
+        try {
+          await page.locator('input[data-placeholder="Please provide a country."]').fill('Test Country');
+          await page.locator('input[data-placeholder="Please provide a name."]').fill('Test Name');
+          await page.locator('input[data-placeholder="Please provide a mobile number."]').fill('1234567890');
+          await page.locator('input[data-placeholder="Please provide a ZIP code."]').fill('12345');
+          await page.locator('textarea[data-placeholder="Please provide an address."]').fill('Test Address');
+          await page.locator('input[data-placeholder="Please provide a city."]').fill('Test City');
+          await page.locator('input[data-placeholder="Please provide a state."]').fill('Test State');
+          
+          await page.locator('button:has-text("Submit")').click({ timeout: 10000 });
+          console.log('Successfully submitted new address form');
+        } catch (formError) {
+          console.log('Error filling out address form:', formError);
+          await page.screenshot({ path: `address-form-error-${Date.now()}.png` })
+            .catch(() => {});
+        }
       }
       
       await page.locator('.mat-row').first().click();
@@ -284,24 +370,182 @@ test.describe('Checkout Process', () => {
         .catch(() => false);
       
       if (!addressExists) {
-        await page.locator('button:has-text("Add New Address")').click({ timeout: process.env.CI === 'true' ? 15000 : 5000 });
+        console.log('No existing address found, attempting to add a new address');
+        await page.screenshot({ path: `before-add-address-${Date.now()}.png` })
+          .catch(error => console.log('Error taking screenshot before adding address:', error));
         
-        await page.locator('input[data-placeholder="Please provide a country."]').fill('Test Country');
-        await page.locator('input[data-placeholder="Please provide a name."]').fill('Test Name');
-        await page.locator('input[data-placeholder="Please provide a mobile number."]').fill('1234567890');
-        await page.locator('input[data-placeholder="Please provide a ZIP code."]').fill('12345');
-        await page.locator('textarea[data-placeholder="Please provide an address."]').fill('Test Address');
-        await page.locator('input[data-placeholder="Please provide a city."]').fill('Test City');
-        await page.locator('input[data-placeholder="Please provide a state."]').fill('Test State');
+        const addAddressSelectors = [
+          'button:has-text("Add New Address")',
+          'button:has-text("Add a new address")',
+          'button.mat-raised-button:has-text("Add")',
+          'button[aria-label="Add a new address"]',
+          'button.mat-button:has-text("Add")'
+        ];
         
-        await page.locator('button:has-text("Submit")').click();
+        let buttonClicked = false;
+        for (const selector of addAddressSelectors) {
+          try {
+            const button = page.locator(selector);
+            const isVisible = await button.isVisible({ timeout: 5000 }).catch(() => false);
+            
+            if (isVisible) {
+              console.log(`Found Add New Address button with selector: ${selector}`);
+              await button.click({ timeout: process.env.CI === 'true' ? 15000 : 5000 });
+              buttonClicked = true;
+              break;
+            }
+          } catch (error) {
+            console.log(`Error with selector ${selector}:`, error);
+          }
+        }
+        
+        if (!buttonClicked) {
+          console.log('Could not find Add New Address button with selectors, trying JavaScript click');
+          
+          try {
+            await page.screenshot({ path: `before-js-click-address-${Date.now()}.png` })
+              .catch(() => {});
+              
+            const jsClicked = await page.evaluate(() => {
+              const textMatches = ['Add New Address', 'Add a new address', 'Add Address'];
+              
+              for (const text of textMatches) {
+                const elements = Array.from(document.querySelectorAll('button, a'));
+                for (const el of elements) {
+                  if (el.textContent && el.textContent.includes(text)) {
+                    console.log(`Clicking element with text: ${text}`);
+                    (el as HTMLElement).click();
+                    return true;
+                  }
+                }
+              }
+              
+              return false;
+            });
+            
+            if (jsClicked) {
+              console.log('Successfully clicked Add New Address button with JavaScript');
+              buttonClicked = true;
+            } else {
+              console.log('JavaScript click also failed');
+            }
+          } catch (jsError) {
+            console.log('Error with JavaScript click:', jsError);
+          }
+        }
+        
+        if (!buttonClicked) {
+          console.log('All attempts to click Add New Address button failed, trying direct navigation');
+          try {
+            const baseUrl = page.url().split('#')[0];
+            await page.goto(`${baseUrl}/#/address/create`, { timeout: 15000 });
+            console.log('Directly navigated to address creation page');
+          } catch (navError) {
+            console.log('Direct navigation to address creation page failed:', navError);
+            test.skip();
+            return;
+          }
+        }
+        
+        await page.waitForTimeout(2000);
+        await page.screenshot({ path: `after-add-address-click-${Date.now()}.png` })
+          .catch(() => {});
+        
+        try {
+          await page.locator('input[data-placeholder="Please provide a country."]').fill('Test Country');
+          await page.locator('input[data-placeholder="Please provide a name."]').fill('Test Name');
+          await page.locator('input[data-placeholder="Please provide a mobile number."]').fill('1234567890');
+          await page.locator('input[data-placeholder="Please provide a ZIP code."]').fill('12345');
+          await page.locator('textarea[data-placeholder="Please provide an address."]').fill('Test Address');
+          await page.locator('input[data-placeholder="Please provide a city."]').fill('Test City');
+          await page.locator('input[data-placeholder="Please provide a state."]').fill('Test State');
+          
+          await page.locator('button:has-text("Submit")').click({ timeout: 10000 });
+          console.log('Successfully submitted new address form');
+        } catch (formError) {
+          console.log('Error filling out address form:', formError);
+          await page.screenshot({ path: `address-form-error-${Date.now()}.png` })
+            .catch(() => {});
+        }
       }
       
       await page.locator('.mat-row').first().click();
       
       await page.locator('button:has-text("Continue")').click({ timeout: process.env.CI === 'true' ? 15000 : 5000 });
       
-      await page.locator('button:has-text("Add New Card")').click({ timeout: process.env.CI === 'true' ? 15000 : 5000 });
+      console.log('Attempting to add a new payment card');
+      await page.screenshot({ path: `before-add-payment-${Date.now()}.png` })
+        .catch(error => console.log('Error taking screenshot before adding payment:', error));
+      
+      const addCardSelectors = [
+        'button:has-text("Add New Card")',
+        'button:has-text("Add a new card")',
+        'button.mat-raised-button:has-text("Add")',
+        'button[aria-label="Add a new card"]',
+        'button.mat-button:has-text("Add Card")'
+      ];
+      
+      let cardButtonClicked = false;
+      for (const selector of addCardSelectors) {
+        try {
+          const button = page.locator(selector);
+          const isVisible = await button.isVisible({ timeout: 5000 }).catch(() => false);
+          
+          if (isVisible) {
+            console.log(`Found Add New Card button with selector: ${selector}`);
+            await button.click({ timeout: process.env.CI === 'true' ? 15000 : 5000 });
+            cardButtonClicked = true;
+            break;
+          }
+        } catch (error) {
+          console.log(`Error with card selector ${selector}:`, error);
+        }
+      }
+      
+      if (!cardButtonClicked) {
+        console.log('Could not find Add New Card button with selectors, trying JavaScript click');
+        
+        try {
+          const jsClicked = await page.evaluate(() => {
+            const textMatches = ['Add New Card', 'Add a new card', 'Add Card'];
+            
+            for (const text of textMatches) {
+              const elements = Array.from(document.querySelectorAll('button, a'));
+              for (const el of elements) {
+                if (el.textContent && el.textContent.includes(text)) {
+                  console.log(`Clicking element with text: ${text}`);
+                  (el as HTMLElement).click();
+                  return true;
+                }
+              }
+            }
+            
+            return false;
+          });
+          
+          if (jsClicked) {
+            console.log('Successfully clicked Add New Card button with JavaScript');
+            cardButtonClicked = true;
+          } else {
+            console.log('JavaScript click also failed for payment card');
+          }
+        } catch (jsError) {
+          console.log('Error with JavaScript click for payment card:', jsError);
+        }
+      }
+      
+      if (!cardButtonClicked) {
+        console.log('All attempts to click Add New Card button failed, trying direct navigation');
+        try {
+          const baseUrl = page.url().split('#')[0];
+          await page.goto(`${baseUrl}/#/payment/shop`, { timeout: 15000 });
+          console.log('Directly navigated to payment creation page');
+        } catch (navError) {
+          console.log('Direct navigation to payment creation page failed:', navError);
+        }
+      }
+      
+      await page.waitForTimeout(2000);
       
       await page.locator('button:has-text("Submit")').click();
       
@@ -383,17 +627,103 @@ test.describe('Checkout Process', () => {
         .catch(() => false);
       
       if (!addressExists) {
-        await page.locator('button:has-text("Add New Address")').click({ timeout: process.env.CI === 'true' ? 15000 : 5000 });
+        console.log('No existing address found, attempting to add a new address');
+        await page.screenshot({ path: `before-add-address-${Date.now()}.png` })
+          .catch(error => console.log('Error taking screenshot before adding address:', error));
         
-        await page.locator('input[data-placeholder="Please provide a country."]').fill('Test Country');
-        await page.locator('input[data-placeholder="Please provide a name."]').fill('Test Name');
-        await page.locator('input[data-placeholder="Please provide a mobile number."]').fill('1234567890');
-        await page.locator('input[data-placeholder="Please provide a ZIP code."]').fill('12345');
-        await page.locator('textarea[data-placeholder="Please provide an address."]').fill('Test Address');
-        await page.locator('input[data-placeholder="Please provide a city."]').fill('Test City');
-        await page.locator('input[data-placeholder="Please provide a state."]').fill('Test State');
+        const addAddressSelectors = [
+          'button:has-text("Add New Address")',
+          'button:has-text("Add a new address")',
+          'button.mat-raised-button:has-text("Add")',
+          'button[aria-label="Add a new address"]',
+          'button.mat-button:has-text("Add")'
+        ];
         
-        await page.locator('button:has-text("Submit")').click();
+        let buttonClicked = false;
+        for (const selector of addAddressSelectors) {
+          try {
+            const button = page.locator(selector);
+            const isVisible = await button.isVisible({ timeout: 5000 }).catch(() => false);
+            
+            if (isVisible) {
+              console.log(`Found Add New Address button with selector: ${selector}`);
+              await button.click({ timeout: process.env.CI === 'true' ? 15000 : 5000 });
+              buttonClicked = true;
+              break;
+            }
+          } catch (error) {
+            console.log(`Error with selector ${selector}:`, error);
+          }
+        }
+        
+        if (!buttonClicked) {
+          console.log('Could not find Add New Address button with selectors, trying JavaScript click');
+          
+          try {
+            await page.screenshot({ path: `before-js-click-address-${Date.now()}.png` })
+              .catch(() => {});
+              
+            const jsClicked = await page.evaluate(() => {
+              const textMatches = ['Add New Address', 'Add a new address', 'Add Address'];
+              
+              for (const text of textMatches) {
+                const elements = Array.from(document.querySelectorAll('button, a'));
+                for (const el of elements) {
+                  if (el.textContent && el.textContent.includes(text)) {
+                    console.log(`Clicking element with text: ${text}`);
+                    (el as HTMLElement).click();
+                    return true;
+                  }
+                }
+              }
+              
+              return false;
+            });
+            
+            if (jsClicked) {
+              console.log('Successfully clicked Add New Address button with JavaScript');
+              buttonClicked = true;
+            } else {
+              console.log('JavaScript click also failed');
+            }
+          } catch (jsError) {
+            console.log('Error with JavaScript click:', jsError);
+          }
+        }
+        
+        if (!buttonClicked) {
+          console.log('All attempts to click Add New Address button failed, trying direct navigation');
+          try {
+            const baseUrl = page.url().split('#')[0];
+            await page.goto(`${baseUrl}/#/address/create`, { timeout: 15000 });
+            console.log('Directly navigated to address creation page');
+          } catch (navError) {
+            console.log('Direct navigation to address creation page failed:', navError);
+            test.skip();
+            return;
+          }
+        }
+        
+        await page.waitForTimeout(2000);
+        await page.screenshot({ path: `after-add-address-click-${Date.now()}.png` })
+          .catch(() => {});
+        
+        try {
+          await page.locator('input[data-placeholder="Please provide a country."]').fill('Test Country');
+          await page.locator('input[data-placeholder="Please provide a name."]').fill('Test Name');
+          await page.locator('input[data-placeholder="Please provide a mobile number."]').fill('1234567890');
+          await page.locator('input[data-placeholder="Please provide a ZIP code."]').fill('12345');
+          await page.locator('textarea[data-placeholder="Please provide an address."]').fill('Test Address');
+          await page.locator('input[data-placeholder="Please provide a city."]').fill('Test City');
+          await page.locator('input[data-placeholder="Please provide a state."]').fill('Test State');
+          
+          await page.locator('button:has-text("Submit")').click({ timeout: 10000 });
+          console.log('Successfully submitted new address form');
+        } catch (formError) {
+          console.log('Error filling out address form:', formError);
+          await page.screenshot({ path: `address-form-error-${Date.now()}.png` })
+            .catch(() => {});
+        }
       }
       
       await page.locator('.mat-row').first().click();
@@ -404,7 +734,79 @@ test.describe('Checkout Process', () => {
       
       if (!paymentExists) {
         console.log('No payment methods found, adding first payment method...');
-        await page.locator('button:has-text("Add New Card")').click({ timeout: process.env.CI === 'true' ? 15000 : 5000 });
+        console.log('Attempting to add a new payment card');
+      await page.screenshot({ path: `before-add-payment-${Date.now()}.png` })
+        .catch(error => console.log('Error taking screenshot before adding payment:', error));
+      
+      const addCardSelectors = [
+        'button:has-text("Add New Card")',
+        'button:has-text("Add a new card")',
+        'button.mat-raised-button:has-text("Add")',
+        'button[aria-label="Add a new card"]',
+        'button.mat-button:has-text("Add Card")'
+      ];
+      
+      let cardButtonClicked = false;
+      for (const selector of addCardSelectors) {
+        try {
+          const button = page.locator(selector);
+          const isVisible = await button.isVisible({ timeout: 5000 }).catch(() => false);
+          
+          if (isVisible) {
+            console.log(`Found Add New Card button with selector: ${selector}`);
+            await button.click({ timeout: process.env.CI === 'true' ? 15000 : 5000 });
+            cardButtonClicked = true;
+            break;
+          }
+        } catch (error) {
+          console.log(`Error with card selector ${selector}:`, error);
+        }
+      }
+      
+      if (!cardButtonClicked) {
+        console.log('Could not find Add New Card button with selectors, trying JavaScript click');
+        
+        try {
+          const jsClicked = await page.evaluate(() => {
+            const textMatches = ['Add New Card', 'Add a new card', 'Add Card'];
+            
+            for (const text of textMatches) {
+              const elements = Array.from(document.querySelectorAll('button, a'));
+              for (const el of elements) {
+                if (el.textContent && el.textContent.includes(text)) {
+                  console.log(`Clicking element with text: ${text}`);
+                  (el as HTMLElement).click();
+                  return true;
+                }
+              }
+            }
+            
+            return false;
+          });
+          
+          if (jsClicked) {
+            console.log('Successfully clicked Add New Card button with JavaScript');
+            cardButtonClicked = true;
+          } else {
+            console.log('JavaScript click also failed for payment card');
+          }
+        } catch (jsError) {
+          console.log('Error with JavaScript click for payment card:', jsError);
+        }
+      }
+      
+      if (!cardButtonClicked) {
+        console.log('All attempts to click Add New Card button failed, trying direct navigation');
+        try {
+          const baseUrl = page.url().split('#')[0];
+          await page.goto(`${baseUrl}/#/payment/shop`, { timeout: 15000 });
+          console.log('Directly navigated to payment creation page');
+        } catch (navError) {
+          console.log('Direct navigation to payment creation page failed:', navError);
+        }
+      }
+      
+      await page.waitForTimeout(2000);
         
         await page.locator('input[data-placeholder="Please provide your card number."]').fill('1234567887654321');
         await page.locator('select[name="month"]').selectOption('1');

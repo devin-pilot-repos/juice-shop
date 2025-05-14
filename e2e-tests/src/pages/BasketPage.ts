@@ -69,6 +69,10 @@ export class BasketPage extends BasePage {
         return 0;
       }
       
+      await this.page.screenshot({ path: `basket-item-count-start-${Date.now()}.png` })
+        .catch(() => {});
+      
+      // First check if the empty basket message is visible
       const isEmptyVisible = await this.emptyBasketMessage.isVisible({ timeout: 3000 })
         .catch(error => {
           console.log('Error checking empty basket visibility:', error);
@@ -76,6 +80,7 @@ export class BasketPage extends BasePage {
         });
       
       if (isEmptyVisible) {
+        console.log('Empty basket message is visible, returning 0 items');
         return 0;
       }
       
@@ -85,7 +90,25 @@ export class BasketPage extends BasePage {
           return 0;
         });
       
-      return count;
+      if (count > 0) {
+        console.log(`Found ${count} basket items in the UI`);
+        return count;
+      }
+      
+      try {
+        const { BasketManipulation } = await import('../utils/basketManipulation.js');
+        const storageCount = await BasketManipulation.getBasketItemCountDirectly(this.page);
+        
+        if (storageCount > 0) {
+          console.log(`Found ${storageCount} basket items in storage`);
+          return storageCount;
+        }
+      } catch (storageError) {
+        console.log('Error getting basket count from storage:', storageError);
+      }
+      
+      console.log('No basket items found in UI or storage');
+      return 0;
     } catch (error) {
       console.log('Error getting basket item count:', error);
       await this.page.screenshot({ path: `basket-item-count-error-${Date.now()}.png` })
@@ -384,16 +407,32 @@ export class BasketPage extends BasePage {
           
           try {
             const baseUrl = this.page.url().split('#')[0];
-            await this.page.goto(`${baseUrl}/#/address/select`, { timeout: 10000 });
-            console.log('Direct navigation to checkout address page');
+            console.log(`Attempting direct navigation to checkout address page from ${baseUrl}`);
+            
+            await this.page.screenshot({ path: `before-direct-navigation-${Date.now()}.png` })
+              .catch(() => {});
+            
+            const timeout = process.env.CI === 'true' ? 30000 : 15000;
+            await this.page.goto(`${baseUrl}/#/address/select`, { timeout });
+            
+            await this.page.waitForTimeout(3000);
             
             const url = this.page.url();
+            console.log(`After direct navigation, current URL: ${url}`);
+            
+            await this.page.screenshot({ path: `after-direct-navigation-${Date.now()}.png` })
+              .catch(() => {});
+            
             if (url.includes('/address/select')) {
               console.log('Successfully navigated to checkout address page via direct URL');
               return true;
+            } else {
+              console.log('URL does not contain /address/select after navigation');
             }
           } catch (navError) {
             console.log('Direct navigation failed:', navError);
+            await this.page.screenshot({ path: `direct-navigation-error-${Date.now()}.png` })
+              .catch(() => {});
             return false;
           }
         }
@@ -416,11 +455,33 @@ export class BasketPage extends BasePage {
         
         try {
           const baseUrl = url.split('#')[0];
-          await this.page.goto(`${baseUrl}/#/address/select`, { timeout: 10000 });
-          console.log('Direct navigation to checkout address page after failed checkout');
-          return true;
+          console.log(`Attempting final direct navigation to checkout address page from ${baseUrl}`);
+          
+          await this.page.screenshot({ path: `before-final-navigation-${Date.now()}.png` })
+            .catch(() => {});
+          
+          const timeout = process.env.CI === 'true' ? 30000 : 15000;
+          await this.page.goto(`${baseUrl}/#/address/select`, { timeout });
+          
+          await this.page.waitForTimeout(3000);
+          
+          const finalUrl = this.page.url();
+          console.log(`After final direct navigation, current URL: ${finalUrl}`);
+          
+          await this.page.screenshot({ path: `after-final-navigation-${Date.now()}.png` })
+            .catch(() => {});
+          
+          if (finalUrl.includes('/address/select')) {
+            console.log('Successfully navigated to checkout address page via final direct URL');
+            return true;
+          } else {
+            console.log('URL does not contain /address/select after final navigation');
+            return false;
+          }
         } catch (finalError) {
           console.log('Final direct navigation failed:', finalError);
+          await this.page.screenshot({ path: `final-navigation-error-${Date.now()}.png` })
+            .catch(() => {});
           return false;
         }
       }

@@ -40,11 +40,57 @@ export class StorageService {
     }
 
     try {
-      // Only attempt to access localStorage in non-headless mode
-      console.log('Browser is running in non-headless mode, using real localStorage');
-      this.headlessMode = false;
+      const isSecureContext = await this.page.evaluate(() => {
+        return window.isSecureContext;
+      }).catch(() => false);
+
+      if (!isSecureContext) {
+        console.log('Not in a secure context, using memory storage fallback');
+        this.headlessMode = true;
+        return;
+      }
+
+      const isHeadless = await this.page.evaluate(() => {
+        const userAgent = navigator.userAgent.toLowerCase();
+        const hasHeadlessIndicators = 
+          userAgent.includes('headless') || 
+          navigator.webdriver || 
+          !navigator.plugins.length || 
+          !navigator.languages || 
+          !navigator.languages.length;
+        
+        return hasHeadlessIndicators;
+      }).catch(() => true);
+
+      if (isHeadless) {
+        console.log('Detected headless browser characteristics, using memory storage fallback');
+        this.headlessMode = true;
+        return;
+      }
+
+      const canAccessStorage = await this.page.evaluate(() => {
+        try {
+          localStorage.setItem('__storage_test__', 'test');
+          localStorage.removeItem('__storage_test__');
+          return true;
+        } catch (e) {
+          console.error('Cannot access localStorage:', e);
+          return false;
+        }
+      }).catch((error) => {
+        console.error('Error evaluating localStorage access:', error);
+        return false;
+      });
+
+      if (canAccessStorage) {
+        console.log('Browser can access localStorage, using real localStorage');
+        this.headlessMode = false;
+      } else {
+        console.log('Browser cannot access localStorage, using memory storage fallback');
+        this.headlessMode = true;
+      }
     } catch (error) {
-      console.log('Error in non-headless mode, using memory storage fallback:', error);
+      console.log('Error testing localStorage access, using memory storage fallback:', error);
       this.headlessMode = true;
     }
   }
