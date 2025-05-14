@@ -13,7 +13,7 @@ import { ReactiveFormsModule } from '@angular/forms'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
 
 import { of, throwError } from 'rxjs'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { AddressService } from '../Services/address.service'
 import { AddressCreateComponent } from '../address-create/address-create.component'
 import { MatTableModule } from '@angular/material/table'
@@ -49,9 +49,10 @@ describe('AddressComponent', () => {
     snackBar.open.and.returnValue(null)
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
-        { path: 'delivery-method', component: DeliveryMethodComponent }
-      ]),
+      imports: [
+        provideRouter([
+          { path: 'delivery-method', component: DeliveryMethodComponent }
+        ]),
       TranslateModule.forRoot(),
       ReactiveFormsModule,
       BrowserAnimationsModule,
@@ -88,14 +89,14 @@ describe('AddressComponent', () => {
   })
 
   it('should hold no addresses when get API call fails', () => {
-    addressService.get.and.returnValue(throwError('Error'))
+    addressService.get.and.returnValue(throwError(() => 'Error'))
     component.ngOnInit()
     fixture.detectChanges()
     expect(component.storedAddresses).toEqual([])
   })
 
   it('should log error from get address API call directly to browser console', fakeAsync(() => {
-    addressService.get.and.returnValue(throwError('Error'))
+    addressService.get.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     fixture.detectChanges()
@@ -103,7 +104,7 @@ describe('AddressComponent', () => {
   }))
 
   it('should log error from delete address API call directly to browser console', fakeAsync(() => {
-    addressService.del.and.returnValue(throwError('Error'))
+    addressService.del.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.deleteAddress(1)
     fixture.detectChanges()
