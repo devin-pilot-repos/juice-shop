@@ -26,31 +26,31 @@ export class BasketService {
   constructor (private readonly http: HttpClient) { }
 
   find (id?: number) {
-    return this.http.get(`${this.hostServer}/rest/basket/${id}`).pipe(map((response: any) => response.data), catchError((error) => { throw error }))
+    return this.http.get<any>(`${this.hostServer}/rest/basket/${id}`).pipe(map(response => response.data), catchError((error) => { throw error }))
   }
 
   get (id: number) {
-    return this.http.get(`${this.host}/${id}`).pipe(map((response: any) => response.data), catchError((error) => { throw error }))
+    return this.http.get<any>(`${this.host}/${id}`).pipe(map(response => response.data), catchError((error) => { throw error }))
   }
 
   put (id: number, params: any) {
-    return this.http.put(`${this.host}/${id}`, params).pipe(map((response: any) => response.data), catchError((error) => { throw error }))
+    return this.http.put<any>(`${this.host}/${id}`, params).pipe(map(response => response.data), catchError((error) => { throw error }))
   }
 
   del (id: number) {
-    return this.http.delete(`${this.host}/${id}`).pipe(map((response: any) => response.data), catchError((error) => { throw error }))
+    return this.http.delete<any>(`${this.host}/${id}`).pipe(map(response => response.data), catchError((error) => { throw error }))
   }
 
   save (params?: any) {
-    return this.http.post(this.host + '/', params).pipe(map((response: any) => response.data), catchError((error) => { throw error }))
+    return this.http.post<any>(this.host + '/', params).pipe(map(response => response.data), catchError((error) => { throw error }))
   }
 
   checkout (id?: number, couponData?: string, orderDetails?: OrderDetail) {
-    return this.http.post(`${this.hostServer}/rest/basket/${id}/checkout`, { couponData, orderDetails }).pipe(map((response: any) => response.orderConfirmation), catchError((error) => { throw error }))
+    return this.http.post<any>(`${this.hostServer}/rest/basket/${id}/checkout`, { couponData, orderDetails }).pipe(map(response => response.orderConfirmation), catchError((error) => { throw error }))
   }
 
   applyCoupon (id?: number, coupon?: string) {
-    return this.http.put(`${this.hostServer}/rest/basket/${id}/coupon/${coupon}`, {}).pipe(map((response: any) => response.discount), catchError((error) => { throw error }))
+    return this.http.put<any>(`${this.hostServer}/rest/basket/${id}/coupon/${coupon}`, {}).pipe(map(response => response.discount), catchError((error) => { throw error }))
   }
 
   updateNumberOfCartItems () {
