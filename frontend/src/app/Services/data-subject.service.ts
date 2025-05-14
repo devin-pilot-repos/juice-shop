@@ -19,11 +19,11 @@ export class DataSubjectService {
   constructor (private readonly http: HttpClient) { }
 
   erase (params: any) {
-    return this.http.post(this.host + '/erasure-request', params).pipe(catchError((error: Error) => { throw error })
+    return this.http.post<any>(this.host + '/erasure-request', params).pipe(catchError((error) => { throw error })
     )
   }
 
   dataExport (params: any) {
-    return this.http.post(this.host + '/data-export', params).pipe(catchError((err) => { throw err }))
+    return this.http.post<any>(this.host + '/data-export', params).pipe(catchError((err) => { throw err }))
   }
 }
