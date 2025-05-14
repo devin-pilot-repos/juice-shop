@@ -64,20 +64,25 @@ export class ChatbotComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit (): void {
-    this.chatbotService.getChatbotStatus().subscribe((response) => {
-      this.messages.push({
-        author: MessageSources.bot,
-        body: response.body
-      })
-      if (response.action) {
-        this.currentAction = this.messageActions[response.action]
+    this.chatbotService.getChatbotStatus().subscribe({
+      next: (response) => {
+        this.messages.push({
+          author: MessageSources.bot,
+          body: response.body
+        })
+        if (response.action) {
+          this.currentAction = this.messageActions[response.action]
+        }
       }
     })
 
-    this.userService.whoAmI().subscribe((user: any) => {
-      this.profileImageSrc = user.profileImage
-    }, (err) => {
-      console.log(err)
+    this.userService.whoAmI().subscribe({
+      next: (user: any) => {
+        this.profileImageSrc = user.profileImage
+      },
+      error: (err) => {
+        console.log(err)
+      }
     })
   }
 
@@ -103,22 +108,26 @@ export class ChatbotComponent implements OnInit, OnDestroy {
         body: messageBody
       })
       this.messageControl.setValue('')
-      this.chatbotService.getChatbotStatus().subscribe((response) => {
-        if (!response.status && !response.action) {
-          this.messages.push({
-            author: MessageSources.bot,
-            body: response.body
-          })
-        } else {
-          this.chatbotService.getResponse(this.currentAction, messageBody).subscribe((response) => {
-            this.handleResponse(response)
-          })
+      this.chatbotService.getChatbotStatus().subscribe({
+        next: (response) => {
+          if (!response.status && !response.action) {
+            this.messages.push({
+              author: MessageSources.bot,
+              body: response.body
+            })
+          } else {
+            this.chatbotService.getResponse(this.currentAction, messageBody).subscribe({
+              next: (response) => {
+                this.handleResponse(response)
+              }
+            })
+          }
+          this.chatScrollDownTimeoutId = setTimeout(() => {
+            const chat = document.getElementById('chat-window')
+            chat.scrollTop = chat.scrollHeight
+            this.chatScrollDownTimeoutId = null
+          }, 250)
         }
-        this.chatScrollDownTimeoutId = setTimeout(() => {
-          const chat = document.getElementById('chat-window')
-          chat.scrollTop = chat.scrollHeight
-          this.chatScrollDownTimeoutId = null
-        }, 250)
       })
     }
   }

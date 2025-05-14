@@ -60,17 +60,21 @@ describe('LocalBackupService', () => {
 
   it('should restore language from backup file', waitForAsync(inject([LocalBackupService], (service: LocalBackupService) => {
     cookieService.put('language', 'de')
-    service.restore(new File(['{ "version": 1, "language": "cn" }'], 'test.json')).subscribe(() => {
-      expect(cookieService.get('language')).toBe('cn')
-      expect(snackBar.open).toHaveBeenCalled()
+    service.restore(new File(['{ "version": 1, "language": "cn" }'], 'test.json')).subscribe({
+      next: () => {
+        expect(cookieService.get('language')).toBe('cn')
+        expect(snackBar.open).toHaveBeenCalled()
+      }
     })
   })))
 
   it('should not restore language from an outdated backup version', waitForAsync(inject([LocalBackupService], (service: LocalBackupService) => {
     cookieService.put('language', 'de')
-    service.restore(new File(['{ "version": 0, "language": "cn" }'], 'test.json')).subscribe(() => {
-      expect(cookieService.get('language')).toBe('de')
-      expect(snackBar.open).toHaveBeenCalled()
+    service.restore(new File(['{ "version": 0, "language": "cn" }'], 'test.json')).subscribe({
+      next: () => {
+        expect(cookieService.get('language')).toBe('de')
+        expect(snackBar.open).toHaveBeenCalled()
+      }
     })
   })))
 })
