@@ -65,17 +65,20 @@ export class TwoFactorAuthComponent {
     const status = this.twoFactorAuthService.status()
     const config = this.configurationService.getApplicationConfiguration()
 
-    forkJoin([status, config]).subscribe(([{ setup, email, secret, setupToken }, config]) => {
-      this.setupStatus = setup
-      this.appName = config.application.name
-      if (!setup) {
-        const encodedAppName = encodeURIComponent(this.appName)
-        this.totpUrl = `otpauth://totp/${encodedAppName}:${email}?secret=${secret}&issuer=${encodedAppName}`
-        this.totpSecret = secret
-        this.setupToken = setupToken
+    forkJoin([status, config]).subscribe({
+      next: ([{ setup, email, secret, setupToken }, config]) => {
+        this.setupStatus = setup
+        this.appName = config.application.name
+        if (!setup) {
+          const encodedAppName = encodeURIComponent(this.appName)
+          this.totpUrl = `otpauth://totp/${encodedAppName}:${email}?secret=${secret}&issuer=${encodedAppName}`
+          this.totpSecret = secret
+          this.setupToken = setupToken
+        }
+      },
+      error: () => {
+        console.log('Failed to fetch 2fa status')
       }
-    }, () => {
-      console.log('Failed to fetch 2fa status')
     })
     return status
   }
