@@ -24,7 +24,9 @@ describe('ConfigurationService', () => {
     inject([ConfigurationService, HttpTestingController],
       fakeAsync((service: ConfigurationService, httpMock: HttpTestingController) => {
         let res: any
-        service.getApplicationConfiguration().subscribe(data => { res = data })
+        service.getApplicationConfiguration().subscribe({
+          next: data => { res = data }
+        })
 
         const req = httpMock.expectOne('http://localhost:3000/rest/admin/application-configuration')
         req.flush({
