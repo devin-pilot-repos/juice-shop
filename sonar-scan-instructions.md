@@ -4,7 +4,7 @@ These instructions will guide you through running a SonarQube scan for the OWASP
 
 ## Prerequisites
 
-1. Access to a machine that can connect to your SonarQube instance at `https://stg.sonarqube.dso.bcg.com`
+1. Access to a machine that can connect to your SonarQube instance at `https://api-tooling.dso.preproduction.smp.bcg.com/sonarqube`
 2. Java 11 or higher installed
 3. SonarScanner installed (if not, see installation instructions below)
 4. Git to clone the repository
