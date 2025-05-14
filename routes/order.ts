@@ -68,6 +68,7 @@ export function placeOrder () {
           basket.Products?.forEach(({ BasketItem, price, deluxePrice, name, id }) => {
             if (BasketItem != null) {
               challengeUtils.solveIf(challenges.christmasSpecialChallenge, () => { return BasketItem.ProductId === products.christmasSpecial.id })
+              
               QuantityModel.findOne({ where: { ProductId: BasketItem.ProductId } })
                 .then((product: any) => {
                   if (product) {

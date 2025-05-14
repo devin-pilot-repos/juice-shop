@@ -95,30 +95,36 @@ export class NavbarComponent implements OnInit {
   ngOnInit (): void {
     this.getLanguages()
     this.basketService.getItemTotal().subscribe(x => (this.itemTotal = x))
-    this.administrationService.getApplicationVersion().subscribe((version: any) => {
-      if (version) {
-        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-        this.version = `v${version}`
-      }
-    }, (err) => { console.log(err) })
-
-    this.configurationService.getApplicationConfiguration().subscribe((config: any) => {
-      if (config?.application?.name) {
-        this.applicationName = config.application.name
-      }
-      if (config?.application) {
-        this.showGitHubLink = config.application.showGitHubLinks
-      }
-
-      if (config?.application?.logo) {
-        let logo: string = config.application.logo
-
-        if (logo.substring(0, 4) === 'http') {
-          logo = decodeURIComponent(logo.substring(logo.lastIndexOf('/') + 1))
+    this.administrationService.getApplicationVersion().subscribe({
+      next: (version: any) => {
+        if (version) {
+          // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+          this.version = `v${version}`
         }
-        this.logoSrc = 'assets/public/images/' + logo
-      }
-    }, (err) => { console.log(err) })
+      },
+      error: (err) => { console.log(err) }
+    })
+
+    this.configurationService.getApplicationConfiguration().subscribe({
+      next: (config: any) => {
+        if (config?.application?.name) {
+          this.applicationName = config.application.name
+        }
+        if (config?.application) {
+          this.showGitHubLink = config.application.showGitHubLinks
+        }
+
+        if (config?.application?.logo) {
+          let logo: string = config.application.logo
+
+          if (logo.substring(0, 4) === 'http') {
+            logo = decodeURIComponent(logo.substring(logo.lastIndexOf('/') + 1))
+          }
+          this.logoSrc = 'assets/public/images/' + logo
+        }
+      },
+      error: (err) => { console.log(err) }
+    })
 
     if (localStorage.getItem('token')) {
       this.getUserDetails()
@@ -126,11 +132,13 @@ export class NavbarComponent implements OnInit {
       this.userEmail = ''
     }
 
-    this.userService.getLoggedInState().subscribe((isLoggedIn) => {
-      if (isLoggedIn) {
-        this.getUserDetails()
-      } else {
-        this.userEmail = ''
+    this.userService.getLoggedInState().subscribe({
+      next: (isLoggedIn) => {
+        if (isLoggedIn) {
+          this.getUserDetails()
+        } else {
+          this.userEmail = ''
+        }
       }
     })
 
@@ -195,9 +203,12 @@ export class NavbarComponent implements OnInit {
   }
 
   getUserDetails () {
-    this.userService.whoAmI().subscribe((user: any) => {
-      this.userEmail = user.email
-    }, (err) => { console.log(err) })
+    this.userService.whoAmI().subscribe({
+      next: (user: any) => {
+        this.userEmail = user.email
+      },
+      error: (err) => { console.log(err) }
+    })
   }
 
   isLoggedIn () {
@@ -205,7 +216,10 @@ export class NavbarComponent implements OnInit {
   }
 
   logout () {
-    this.userService.saveLastLoginIp().subscribe((user: any) => { this.noop() }, (err) => { console.log(err) })
+    this.userService.saveLastLoginIp().subscribe({
+      next: (user: any) => { this.noop() },
+      error: (err) => { console.log(err) }
+    })
     localStorage.removeItem('token')
     this.cookieService.remove('token')
     sessionStorage.removeItem('bid')
@@ -227,18 +241,23 @@ export class NavbarComponent implements OnInit {
         duration: 5000,
         panelClass: ['mat-body']
       })
-      snackBarRef.onAction().subscribe(() => {
-        location.reload()
+      snackBarRef.onAction().subscribe({
+        next: () => {
+          location.reload()
+        }
       })
     }
   }
 
   getScoreBoardStatus () {
-    this.challengeService.find({ name: 'Score Board' }).subscribe((challenges: any) => {
-      this.ngZone.run(() => {
-        this.scoreBoardVisible = challenges[0].solved
-      })
-    }, (err) => { console.log(err) })
+    this.challengeService.find({ name: 'Score Board' }).subscribe({
+      next: (challenges: any) => {
+        this.ngZone.run(() => {
+          this.scoreBoardVisible = challenges[0].solved
+        })
+      },
+      error: (err) => { console.log(err) }
+    })
   }
 
   goToProfilePage () {
@@ -257,10 +276,12 @@ export class NavbarComponent implements OnInit {
   noop () { }
 
   getLanguages () {
-    this.langService.getLanguages().subscribe((res: any[]) => {
-      this.languages = res
-      this.filteredLanguages = Array.isArray(res) ? [...res] : []
-      this.checkLanguage()
+    this.langService.getLanguages().subscribe({
+      next: (res: any[]) => {
+        this.languages = res
+        this.filteredLanguages = Array.isArray(res) ? [...res] : []
+        this.checkLanguage()
+      }
     })
   }
 
