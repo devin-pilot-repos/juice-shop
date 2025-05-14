@@ -39,28 +39,13 @@ export class StorageService {
       return;
     }
 
-    this.headlessMode = true; // Default to memory storage
-    
     try {
-      const canUseLocalStorage = await this.page.evaluate(() => {
-        try {
-          if (typeof window.localStorage === 'undefined') {
-            return false;
-          }
-          return true;
-        } catch (e) {
-          return false;
-        }
-      }).catch(() => false); // Default to false if evaluation fails
-      
-      if (canUseLocalStorage) {
-        console.log('Browser appears to support localStorage, will attempt to use it');
-        this.headlessMode = false;
-      } else {
-        console.log('localStorage not available, using memory storage fallback');
-      }
+      // Only attempt to access localStorage in non-headless mode
+      console.log('Browser is running in non-headless mode, using real localStorage');
+      this.headlessMode = false;
     } catch (error) {
-      console.log('Error detecting localStorage availability, using memory storage fallback:', error);
+      console.log('Error in non-headless mode, using memory storage fallback:', error);
+      this.headlessMode = true;
     }
   }
 
