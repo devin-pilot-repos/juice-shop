@@ -56,7 +56,7 @@ describe('ConfigurationService', () => {
           error: (err) => (res = err)
         })
         const req = httpMock.expectOne('http://localhost:3000/rest/admin/application-configuration')
-        req.error(new ErrorEvent('Request failed'), { status: 404, statusText: 'Request failed' })
+        req.error(new ProgressEvent('error'), { status: 404, statusText: 'Request failed' })
         tick()
 
         const error = res
