@@ -18,12 +18,12 @@ export class RecycleService {
   constructor (private readonly http: HttpClient) { }
 
   find (params?: any) {
-    return this.http.get(this.host + '/', {
+    return this.http.get<any>(this.host + '/', {
       params
-    }).pipe(map((response: any) => response.data), catchError((error) => { throw error }))
+    }).pipe(map(response => response.data), catchError((error) => { throw error }))
   }
 
   save (params: any) {
-    return this.http.post(this.host + '/', params).pipe(map((response: any) => response.data), catchError((error) => { throw error }))
+    return this.http.post<any>(this.host + '/', params).pipe(map(response => response.data), catchError((error) => { throw error }))
   }
 }
