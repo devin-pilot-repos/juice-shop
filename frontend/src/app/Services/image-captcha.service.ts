@@ -17,6 +17,6 @@ export class ImageCaptchaService {
   constructor (private readonly http: HttpClient) { }
 
   getCaptcha () {
-    return this.http.get(this.hostServer + '/rest/image-captcha/').pipe(catchError((err) => { throw err }))
+    return this.http.get<any>(this.hostServer + '/rest/image-captcha/').pipe(catchError((err) => { throw err }))
   }
 }
