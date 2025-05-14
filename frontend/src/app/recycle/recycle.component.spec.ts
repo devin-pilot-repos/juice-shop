@@ -20,9 +20,10 @@ import { MatFormFieldModule } from '@angular/material/form-field'
 import { ReactiveFormsModule } from '@angular/forms'
 import { MatCheckboxModule } from '@angular/material/checkbox'
 import { MatNativeDateModule } from '@angular/material/core'
-import { of, throwError } from 'rxjs'
+import { of } from 'rxjs'
+import { throwError } from 'rxjs'
 import { AddressComponent } from '../address/address.component'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { EventEmitter } from '@angular/core'
 import { MatIconModule } from '@angular/material/icon'
 import { MatTableModule } from '@angular/material/table'
@@ -59,7 +60,7 @@ describe('RecycleComponent', () => {
     snackBar = jasmine.createSpyObj('MatSnackBar', ['open'])
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule,
+      imports: [provideRouter([]),
         TranslateModule.forRoot(),
         BrowserAnimationsModule,
         ReactiveFormsModule,
@@ -187,14 +188,14 @@ describe('RecycleComponent', () => {
   })
 
   it('should hold nothing on error from backend API', () => {
-    recycleService.find.and.returnValue(throwError('Error'))
+    recycleService.find.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     expect(console.log).toHaveBeenCalledWith('Error')
   })
 
   it('should log the error on retrieving the user', fakeAsync(() => {
-    userService.whoAmI.and.returnValue(throwError('Error'))
+    userService.whoAmI.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     expect(console.log).toHaveBeenCalledWith('Error')
@@ -213,7 +214,7 @@ describe('RecycleComponent', () => {
   })
 
   it('should show broken top and bottom image on error retrieving configuration', fakeAsync(() => {
-    configurationService.getApplicationConfiguration.and.returnValue(throwError('Error'))
+    configurationService.getApplicationConfiguration.and.returnValue(throwError(() => 'Error'))
     component.ngOnInit()
     expect(component.topImage).toBeUndefined()
     expect(component.bottomImage).toBeUndefined()
