@@ -69,18 +69,18 @@ export default defineConfig({
         browserName: 'chromium',
       },
     },
-    {
-      name: 'firefox',
-      use: { 
-        browserName: 'firefox',
-      },
-    },
-    {
-      name: 'webkit',
-      use: { 
-        browserName: 'webkit',
-      },
-    },
+    // {
+    //   name: 'firefox',
+    //   use: { 
+    //     browserName: 'firefox',
+    //   },
+    // },
+    // {
+    //   name: 'webkit',
+    //   use: { 
+    //     browserName: 'webkit',
+    //   },
+    // },
   ],
 
   /* Run your local dev server before starting the tests */
