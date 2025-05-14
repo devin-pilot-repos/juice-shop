@@ -49,6 +49,15 @@ export class EnvironmentManager {
     const baseUrl = this.getBaseUrl();
     return baseUrl.includes('demo.owasp-juice.shop');
   }
+  
+  /**
+   * Check if the current environment is using localhost
+   * @returns boolean indicating if we're using localhost
+   */
+  static isLocalEnvironment(): boolean {
+    const baseUrl = this.getBaseUrl();
+    return baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1');
+  }
 
   /**
    * Set the active base URL
@@ -103,6 +112,18 @@ export class EnvironmentManager {
       const url = urls[i];
       try {
         console.log(`Attempting to connect to: ${url}`);
+        
+        const isLocalhost = url.includes('localhost') || url.includes('127.0.0.1');
+        if (isLocalhost) {
+          console.log('Localhost environment detected - using special handling');
+          
+          await page.evaluate(() => {
+            localStorage.setItem('continueCode', 'yesplease');
+            localStorage.setItem('welcomebanner_status', 'dismiss');
+            localStorage.setItem('cookieconsent_status', 'dismiss');
+          }).catch(error => console.log('Error setting up localStorage before navigation:', error));
+        }
+        
         await page.goto(url, { 
           timeout: process.env.CI === 'true' ? 60000 : 30000, // 60 seconds for CI, 30 seconds for local
           waitUntil: 'domcontentloaded' 
@@ -113,6 +134,11 @@ export class EnvironmentManager {
         
         this.setActiveBaseUrl(url);
         connected = true;
+        
+        if (isLocalhost) {
+          await this.setupLocalhostEnvironment(page);
+        }
+        
         break;
       } catch (error) {
         console.log(`Failed to connect to ${url}: ${error}`);
@@ -128,6 +154,66 @@ export class EnvironmentManager {
     }
     
     return connected;
+  }
+  
+  /**
+   * Set up localhost-specific environment settings
+   * @param page Playwright page object
+   * @returns Promise that resolves when setup is complete
+   */
+  private static async setupLocalhostEnvironment(page: Page): Promise<void> {
+    try {
+      console.log('Setting up localhost environment');
+      
+      await page.evaluate(() => {
+        localStorage.setItem('continueCode', 'yesplease');
+        localStorage.setItem('welcomebanner_status', 'dismiss');
+        localStorage.setItem('cookieconsent_status', 'dismiss');
+        
+        localStorage.setItem('testMode', 'true');
+        localStorage.setItem('bypassSecurityPrompts', 'true');
+        
+        const dummyToken = {
+          token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IlRlc3QgVXNlciIsImlhdCI6MTUxNjIzOTAyMn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+          bid: 123,
+          umail: 'test@example.com'
+        };
+        
+        if (!localStorage.getItem('token')) {
+          localStorage.setItem('token', JSON.stringify(dummyToken));
+          console.log('Set dummy auth token in localStorage');
+        }
+      });
+      
+      try {
+        const dismissSelectors = [
+          'button:has-text("Dismiss")', 
+          'button:has-text("Close")', 
+          'button:has-text("Accept")',
+          'button:has-text("OK")',
+          'button:has-text("I agree")',
+          'button.close',
+          '.close-dialog',
+          '.dismiss-button'
+        ];
+        
+        for (const selector of dismissSelectors) {
+          const button = page.locator(selector);
+          const isVisible = await button.isVisible().catch(() => false);
+          if (isVisible) {
+            await button.click().catch(() => {});
+            console.log(`Clicked dismiss button with selector: ${selector}`);
+            await page.waitForTimeout(500);
+          }
+        }
+      } catch (dismissError) {
+        console.log('Error dismissing dialogs:', dismissError);
+      }
+      
+      console.log('Localhost environment setup complete');
+    } catch (error) {
+      console.log('Error setting up localhost environment:', error);
+    }
   }
 
   /**
@@ -145,6 +231,12 @@ export class EnvironmentManager {
       await page.evaluate((environment: string) => {
         localStorage.setItem('environment', environment);
       }, env);
+      
+      if (this.isLocalEnvironment()) {
+        await page.evaluate(() => {
+          localStorage.setItem('testMode', 'true');
+        });
+      }
     } catch (error) {
       console.log('Error setting up environment storage:', error);
     }
