@@ -5,15 +5,15 @@ These instructions will guide you through running a SonarQube scan for the OWASP
 ## Prerequisites
 
 1. Access to a machine that can connect to your SonarQube instance at `https://api-tooling.dso.preproduction.smp.bcg.com/sonarqube`
-2. Java 11 or higher installed
-3. SonarScanner installed (if not, see installation instructions below)
+2. Java 17 or higher installed (required for compatibility with the SonarQube server)
+3. SonarScanner 5.0.1 or higher installed (if not, see installation instructions below)
 4. Git to clone the repository
 5. Your SonarQube authentication token
 
 ## SonarScanner Installation (if needed)
 
 ### For Windows:
-1. Download the SonarScanner ZIP from: https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-windows.zip
+1. Download the SonarScanner ZIP from: https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-windows.zip
 2. Extract the ZIP to a directory of your choice
 3. Add the `bin` directory to your PATH environment variable
 
@@ -24,9 +24,9 @@ brew install sonar-scanner
 
 ### For Linux:
 ```bash
-wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip
-unzip sonar-scanner-cli-4.8.0.2856-linux.zip
-export PATH=$PATH:/path/to/sonar-scanner-4.8.0.2856-linux/bin
+wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
+unzip sonar-scanner-cli-5.0.1.3006-linux.zip
+export PATH=$PATH:/path/to/sonar-scanner-5.0.1.3006-linux/bin
 ```
 
 ## Running the Scan
@@ -56,7 +56,7 @@ sonar.javascript.node.maxspace=4096
 sonar.sourceEncoding=UTF-8
 
 # SonarQube server connection
-sonar.host.url=https://stg.sonarqube.dso.bcg.com
+sonar.host.url=https://api-tooling.dso.preproduction.smp.bcg.com/sonarqube
 # Token will be provided via environment variable SONAR_TOKEN
 ```
 
@@ -103,7 +103,7 @@ sonar-scanner -Dsonar.login=$SONAR_TOKEN -Dsonar.branch.name=sonarqube-scan-setu
 
 After the scan completes successfully, you can view the results by:
 
-1. Opening your SonarQube instance in a web browser: `https://stg.sonarqube.dso.bcg.com`
+1. Opening your SonarQube instance in a web browser: `https://api-tooling.dso.preproduction.smp.bcg.com/sonarqube`
 2. Navigating to the project with key `juice-shop`
 
 ## Troubleshooting
