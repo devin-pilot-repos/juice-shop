@@ -18,7 +18,9 @@ describe('VulnLinesService', () => {
   it('should submit solution for "Fit It" phase of coding challenge via the rest api', inject([VulnLinesService, HttpTestingController],
     fakeAsync((service: VulnLinesService, httpMock: HttpTestingController) => {
       let res: any
-      service.check('testChallenge', [1, 2]).subscribe((data) => (res = data))
+      service.check('testChallenge', [1, 2]).subscribe({
+        next: (data) => (res = data)
+      })
       const req = httpMock.expectOne('http://localhost:3000/snippets/verdict')
       req.flush('apiResponse')
 
