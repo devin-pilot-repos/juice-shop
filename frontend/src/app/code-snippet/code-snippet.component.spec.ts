@@ -77,7 +77,7 @@ describe('CodeSnippetComponent', () => {
   })
 
   it('should log the error on retrieving configuration', () => {
-    configurationService.getApplicationConfiguration.and.returnValue(throwError('Error'))
+    configurationService.getApplicationConfiguration.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     expect(console.log).toHaveBeenCalledWith('Error')
@@ -105,13 +105,13 @@ describe('CodeSnippetComponent', () => {
   })
 
   it('should set an error on snippet retrieval as the snippet', () => {
-    codeSnippetService.get.and.returnValue(throwError({ error: 'Error' }))
+    codeSnippetService.get.and.returnValue(throwError(() => ({ error: 'Error' })))
     component.ngOnInit()
     expect(component.snippet).toEqual({ snippet: 'Error' })
   })
 
   it('should set empty fixes on error during fixes retrieval', () => {
-    codeFixesService.get.and.returnValue(throwError('Error'))
+    codeFixesService.get.and.returnValue(throwError(() => 'Error'))
     component.ngOnInit()
     expect(component.fixes).toBeNull()
   })
