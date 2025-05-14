@@ -30,6 +30,38 @@ interface Product {
   bonus: number
 }
 
+function updateProductQuantity(productId: number, quantity: number, next: NextFunction) {
+  QuantityModel.findOne({ where: { ProductId: productId } })
+    .then((product: any) => {
+      if (product) {
+        const newQuantity = product.quantity - quantity
+        QuantityModel.update(
+          { quantity: newQuantity },
+          { where: { ProductId: productId } }
+        ).catch((error: unknown) => {
+          next(error)
+        })
+      }
+    })
+    .catch((error: unknown) => {
+      next(error)
+    })
+}
+
+function decrementWalletBalance(userId: number, amount: number, next: NextFunction) {
+  WalletModel.decrement({ balance: amount }, { where: { UserId: userId } })
+    .catch((error: unknown) => {
+      next(error)
+    })
+}
+
+function incrementWalletBalance(userId: number, amount: number, next: NextFunction) {
+  WalletModel.increment({ balance: amount }, { where: { UserId: userId } })
+    .catch((error: unknown) => {
+      next(error)
+    })
+}
+
 export function placeOrder () {
   return (req: Request, res: Response, next: NextFunction) => {
     const id = req.params.id
@@ -68,21 +100,7 @@ export function placeOrder () {
           basket.Products?.forEach(({ BasketItem, price, deluxePrice, name, id }) => {
             if (BasketItem != null) {
               challengeUtils.solveIf(challenges.christmasSpecialChallenge, () => { return BasketItem.ProductId === products.christmasSpecial.id })
-              QuantityModel.findOne({ where: { ProductId: BasketItem.ProductId } })
-                .then((product: any) => {
-                  if (product) {
-                    const newQuantity = product.quantity - BasketItem.quantity
-                    QuantityModel.update(
-                      { quantity: newQuantity },
-                      { where: { ProductId: BasketItem?.ProductId } }
-                    ).catch((error: unknown) => {
-                      next(error)
-                    })
-                  }
-                })
-                .catch((error: unknown) => {
-                  next(error)
-                })
+              updateProductQuantity(BasketItem.ProductId, BasketItem.quantity, next)
               let itemPrice: number
               if (security.isDeluxe(req)) {
                 itemPrice = deluxePrice
@@ -146,16 +164,12 @@ export function placeOrder () {
             if (req.body.orderDetails && req.body.orderDetails.paymentId === 'wallet') {
               const wallet = await WalletModel.findOne({ where: { UserId: req.body.UserId } })
               if ((wallet != null) && wallet.balance >= totalPrice) {
-                WalletModel.decrement({ balance: totalPrice }, { where: { UserId: req.body.UserId } }).catch((error: unknown) => {
-                  next(error)
-                })
+                decrementWalletBalance(req.body.UserId, totalPrice, next)
               } else {
                 next(new Error('Insufficient wallet balance.'))
               }
             }
-            WalletModel.increment({ balance: totalPoints }, { where: { UserId: req.body.UserId } }).catch((error: unknown) => {
-              next(error)
-            })
+            incrementWalletBalance(req.body.UserId, totalPoints, next)
           }
 
           const sanitizedPaymentId = req.body.orderDetails?.paymentId ? String(req.body.orderDetails.paymentId).replace(/[\r\n]/g, '') : null
