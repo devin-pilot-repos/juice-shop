@@ -131,6 +131,72 @@ async function handleWalletOperations(req: Request, userId: number, totalPrice: 
   incrementWalletBalance(userId, totalPoints, next)
 }
 
+function applyDiscountToPrice(req: Request, doc: PDFKit.PDFDocument, discount: number, totalPrice: number): { discountAmount: string, adjustedPrice: number } {
+  const discountAmount = discount > 0 ? (totalPrice * (discount / 100)).toFixed(2) : '0'
+  let adjustedPrice = totalPrice
+  
+  if (discount > 0) {
+    doc.text(discount + '% discount from coupon: -' + discountAmount + '¤')
+    doc.moveDown()
+    adjustedPrice -= parseFloat(discountAmount)
+  }
+  
+  return { discountAmount, adjustedPrice }
+}
+
+async function getDeliveryMethod(req: Request): Promise<{ deluxePrice: number, price: number, eta: number }> {
+  const deliveryMethod = {
+    deluxePrice: 0,
+    price: 0,
+    eta: 5
+  }
+  
+  if (req.body.orderDetails?.deliveryMethodId) {
+    const deliveryMethodFromModel = await DeliveryModel.findOne({ 
+      where: { id: req.body.orderDetails.deliveryMethodId } 
+    })
+    if (deliveryMethodFromModel != null) {
+      deliveryMethod.deluxePrice = deliveryMethodFromModel.deluxePrice
+      deliveryMethod.price = deliveryMethodFromModel.price
+      deliveryMethod.eta = deliveryMethodFromModel.eta
+    }
+  }
+  
+  return deliveryMethod
+}
+
+function addDeliveryAndFinalizeDocument(req: Request, doc: PDFKit.PDFDocument, deliveryMethod: { deluxePrice: number, price: number, eta: number }, 
+                                        adjustedPrice: number, totalPoints: number): number {
+  const deliveryAmount = security.isDeluxe(req) ? deliveryMethod.deluxePrice : deliveryMethod.price
+  adjustedPrice += deliveryAmount
+  
+  doc.text(`${req.__('Delivery Price')}: ${deliveryAmount.toFixed(2)}¤`)
+  doc.moveDown()
+  doc.font('Helvetica-Bold').fontSize(20).text(`${req.__('Total Price')}: ${adjustedPrice.toFixed(2)}¤`)
+  doc.moveDown()
+  doc.font('Helvetica-Bold').fontSize(15).text(`${req.__('Bonus Points Earned')}: ${totalPoints}`)
+  doc.font('Times-Roman').fontSize(15).text(`(${req.__('The bonus points from this order will be added 1:1 to your wallet ¤-fund for future purchases!')}`)
+  doc.moveDown()
+  doc.moveDown()
+  doc.font('Times-Roman').fontSize(15).text(req.__('Thank you for your order!'))
+  
+  return deliveryAmount
+}
+
+function sanitizeOrderData(req: Request, email: string, deliveryMethod: { eta: number }): { 
+  sanitizedPaymentId: string | null, 
+  sanitizedAddressId: string | null, 
+  sanitizedEmail: string | undefined, 
+  sanitizedEta: string 
+} {
+  const sanitizedPaymentId = req.body.orderDetails?.paymentId ? String(req.body.orderDetails.paymentId).replace(/[\r\n]/g, '') : null
+  const sanitizedAddressId = req.body.orderDetails?.addressId ? String(req.body.orderDetails.addressId).replace(/[\r\n]/g, '') : null
+  const sanitizedEmail = email ? String(email).replace(/[aeiou]/gi, '*').replace(/[\r\n]/g, '') : undefined
+  const sanitizedEta = String(deliveryMethod.eta).replace(/[\r\n]/g, '')
+  
+  return { sanitizedPaymentId, sanitizedAddressId, sanitizedEmail, sanitizedEta }
+}
+
 export function placeOrder () {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -148,53 +214,14 @@ export function placeOrder () {
       const email = customer?.data?.email || ''
       const orderId = security.hash(email).slice(0, 4) + '-' + utils.randomHexString(16)
       
-      const { doc, fileWriter } = createOrderPdf(
-        req, 
-        orderId, 
-        email
-      )
-      
+      const { doc, fileWriter } = createOrderPdf(req, orderId, email)
       const { totalPrice, basketProducts, totalPoints } = processBasketProducts(basket, req, doc, next)
       
       const discount = calculateApplicableDiscount(basket, req) ?? 0
-      const discountAmount = discount > 0 ? (totalPrice * (discount / 100)).toFixed(2) : '0'
-      let adjustedPrice = totalPrice
+      const { discountAmount, adjustedPrice } = applyDiscountToPrice(req, doc, discount, totalPrice)
       
-      if (discount > 0) {
-        doc.text(discount + '% discount from coupon: -' + discountAmount + '¤')
-        doc.moveDown()
-        adjustedPrice -= parseFloat(discountAmount)
-      }
-      
-      const deliveryMethod = {
-        deluxePrice: 0,
-        price: 0,
-        eta: 5
-      }
-      
-      if (req.body.orderDetails?.deliveryMethodId) {
-        const deliveryMethodFromModel = await DeliveryModel.findOne({ 
-          where: { id: req.body.orderDetails.deliveryMethodId } 
-        })
-        if (deliveryMethodFromModel != null) {
-          deliveryMethod.deluxePrice = deliveryMethodFromModel.deluxePrice
-          deliveryMethod.price = deliveryMethodFromModel.price
-          deliveryMethod.eta = deliveryMethodFromModel.eta
-        }
-      }
-      
-      const deliveryAmount = security.isDeluxe(req) ? deliveryMethod.deluxePrice : deliveryMethod.price
-      adjustedPrice += deliveryAmount
-      
-      doc.text(`${req.__('Delivery Price')}: ${deliveryAmount.toFixed(2)}¤`)
-      doc.moveDown()
-      doc.font('Helvetica-Bold').fontSize(20).text(`${req.__('Total Price')}: ${adjustedPrice.toFixed(2)}¤`)
-      doc.moveDown()
-      doc.font('Helvetica-Bold').fontSize(15).text(`${req.__('Bonus Points Earned')}: ${totalPoints}`)
-      doc.font('Times-Roman').fontSize(15).text(`(${req.__('The bonus points from this order will be added 1:1 to your wallet ¤-fund for future purchases!')}`)
-      doc.moveDown()
-      doc.moveDown()
-      doc.font('Times-Roman').fontSize(15).text(req.__('Thank you for your order!'))
+      const deliveryMethod = await getDeliveryMethod(req)
+      const deliveryAmount = addDeliveryAndFinalizeDocument(req, doc, deliveryMethod, adjustedPrice, totalPoints)
       
       challengeUtils.solveIf(challenges.negativeOrderChallenge, () => { return adjustedPrice < 0 })
       
@@ -202,10 +229,8 @@ export function placeOrder () {
         await handleWalletOperations(req, req.body.UserId, adjustedPrice, totalPoints, next)
       }
       
-      const sanitizedPaymentId = req.body.orderDetails?.paymentId ? String(req.body.orderDetails.paymentId).replace(/[\r\n]/g, '') : null
-      const sanitizedAddressId = req.body.orderDetails?.addressId ? String(req.body.orderDetails.addressId).replace(/[\r\n]/g, '') : null
-      const sanitizedEmail = email ? String(email).replace(/[aeiou]/gi, '*').replace(/[\r\n]/g, '') : undefined
-      const sanitizedEta = String(deliveryMethod.eta).replace(/[\r\n]/g, '')
+      const { sanitizedPaymentId, sanitizedAddressId, sanitizedEmail, sanitizedEta } = 
+        sanitizeOrderData(req, email, deliveryMethod)
       
       await db.ordersCollection.insert({
         promotionalAmount: discountAmount,
