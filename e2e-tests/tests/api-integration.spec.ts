@@ -1,11 +1,11 @@
-import { test, expect, request } from '@playwright/test';
+import { test, expect, request, APIRequestContext } from '@playwright/test';
 import { Auth } from '../src/utils/auth';
 import { EnvironmentManager } from '../src/utils/environmentManager';
 
 test.describe('API Integration', () => {
-  let apiContext;
-  let baseUrl;
-  let authToken;
+  let apiContext: APIRequestContext;
+  let baseUrl: string;
+  let authToken: string | null;
 
   test.beforeAll(async ({ browser }) => {
     EnvironmentManager.initialize();
@@ -79,7 +79,7 @@ test.describe('API Integration', () => {
       console.log(`Search for "${searchTerm}" returned ${searchResults.data.length} results via API`);
       
       if (searchResults.data.length > 0) {
-        const containsSearchTerm = searchResults.data.some(product => 
+        const containsSearchTerm = searchResults.data.some((product: { name: string; description: string }) => 
           product.name.toLowerCase().includes(searchTerm) || 
           product.description.toLowerCase().includes(searchTerm)
         );
@@ -121,10 +121,10 @@ test.describe('API Integration', () => {
       const basketItems = await basketItemsResponse.json();
       expect(Array.isArray(basketItems.data)).toBeTruthy();
       
-      const containsProduct = basketItems.data.some(item => item.ProductId === productId);
+      const containsProduct = basketItems.data.some((item: { ProductId: number }) => item.ProductId === productId);
       expect(containsProduct).toBeTruthy();
       
-      for (const item of basketItems.data) {
+      for (const item of basketItems.data as Array<{ id: number }>) {
         const deleteResponse = await apiContext.delete(`/api/BasketItems/${item.id}`);
         expect(deleteResponse.ok()).toBeTruthy();
       }
