@@ -26,13 +26,13 @@ export class CodeFixesService {
   constructor (private readonly http: HttpClient) { }
 
   get (key: string): Observable<Fixes> {
-    return this.http.get(this.host + `/${key}`).pipe(map((response: Fixes) => response), catchError((error: any) => { throw error }))
+    return this.http.get<Fixes>(this.host + `/${key}`).pipe(map(response => response), catchError((error) => { throw error }))
   }
 
   check (key: string, selectedFix: number): any {
-    return this.http.post(this.host, {
+    return this.http.post<result>(this.host, {
       key,
       selectedFix
-    }).pipe(map((response: result) => response), catchError((error: any) => { throw error }))
+    }).pipe(map(response => response), catchError((error) => { throw error }))
   }
 }
