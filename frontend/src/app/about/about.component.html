@@ -43,7 +43,7 @@
                >
                 <ng-container *galleryImageDef="let item; let active = active">
                   <div *ngIf="active" class="item-text">
-                    <div class="caption" [innerHTML]="item?.args"></div>
+                    <div class="caption">{{item?.args}}</div>
                   </div>
                 </ng-container>
       </gallery>

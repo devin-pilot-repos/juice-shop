@@ -79,7 +79,7 @@ export class ScoreBoardComponent implements OnInit, OnDestroy {
           ...challenge,
           tagList: challenge.tags ? challenge.tags.split(',').map((tag) => tag.trim()) : [],
           originalDescription: challenge.description as string,
-          description: this.sanitizer.bypassSecurityTrustHtml(challenge.description as string),
+          description: challenge.description as string,
           hasCodingChallenge: challengeKeysWithCodeChallenges.includes(challenge.key)
         }
       })

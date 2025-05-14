@@ -26,7 +26,9 @@ export const readFixes = (key: string) => {
   let correct: number = -1
   for (const file of files) {
     if (file.startsWith(`${key}_`)) {
-      const fix = fs.readFileSync(`${FixesDir}/${file}`).toString()
+      const path = require('node:path')
+      const safeFilePath = path.resolve(FixesDir, path.basename(file))
+      const fix = fs.readFileSync(safeFilePath).toString()
       const metadata = file.split('_')
       const number = metadata[1]
       fixes.push(fix)

@@ -47,19 +47,25 @@ export class ChangePasswordComponent {
       current: this.passwordControl.value,
       new: this.newPasswordControl.value,
       repeat: this.repeatNewPasswordControl.value
-    }).subscribe((response: any) => {
-      this.error = undefined
-      this.translate.get('PASSWORD_SUCCESSFULLY_CHANGED').subscribe((passwordSuccessfullyChanged) => {
-        this.confirmation = passwordSuccessfullyChanged
-      }, (translationId) => {
-        this.confirmation = { error: translationId }
-      })
-      this.resetForm()
-    }, (error) => {
-      console.log(error)
-      this.error = error
-      this.confirmation = undefined
-      this.resetPasswords()
+    }).subscribe({
+      next: (response: any) => {
+        this.error = undefined
+        this.translate.get('PASSWORD_SUCCESSFULLY_CHANGED').subscribe({
+          next: (passwordSuccessfullyChanged) => {
+            this.confirmation = passwordSuccessfullyChanged
+          },
+          error: (translationId) => {
+            this.confirmation = { error: translationId }
+          }
+        })
+        this.resetForm()
+      },
+      error: (error) => {
+        console.log(error)
+        this.error = error
+        this.confirmation = undefined
+        this.resetPasswords()
+      }
     })
   }
 
