@@ -21,10 +21,10 @@ export class PhotoWallService {
     const postData = new FormData()
     postData.append('image', image, caption)
     postData.append('caption', caption)
-    return this.http.post(this.host, postData).pipe(map((response: any) => response.data), catchError((err) => { throw err }))
+    return this.http.post<any>(this.host, postData).pipe(map(response => response.data), catchError((err) => { throw err }))
   }
 
   get () {
-    return this.http.get(this.host + '/').pipe(map((response: any) => response.data), catchError((err: Error) => { throw err }))
+    return this.http.get<any>(this.host + '/').pipe(map(response => response.data), catchError((err) => { throw err }))
   }
 }
