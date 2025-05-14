@@ -23,7 +23,9 @@ describe('PaymentService', () => {
   it('should get payment cards directly from the api', inject([PaymentService, HttpTestingController],
     fakeAsync((service: PaymentService, httpMock: HttpTestingController) => {
       let res
-      service.get().subscribe((data) => (res = data))
+      service.get().subscribe({
+        next: (data) => (res = data)
+      })
       const req = httpMock.expectOne('http://localhost:3000/api/Cards')
       req.flush({ data: 'apiResponse' })
       tick()
@@ -36,7 +38,9 @@ describe('PaymentService', () => {
   it('should get single payment card directly from the api', inject([PaymentService, HttpTestingController],
     fakeAsync((service: PaymentService, httpMock: HttpTestingController) => {
       let res
-      service.getById(1).subscribe((data) => (res = data))
+      service.getById(1).subscribe({
+        next: (data) => (res = data)
+      })
       const req = httpMock.expectOne('http://localhost:3000/api/Cards/1')
       req.flush({ data: 'apiResponse' })
       tick()
@@ -49,7 +53,9 @@ describe('PaymentService', () => {
   it('should create payment card directly from the api', inject([PaymentService, HttpTestingController],
     fakeAsync((service: PaymentService, httpMock: HttpTestingController) => {
       let res
-      service.save({}).subscribe((data) => (res = data))
+      service.save({}).subscribe({
+        next: (data) => (res = data)
+      })
       const req = httpMock.expectOne('http://localhost:3000/api/Cards/')
       req.flush({ data: 'apiResponse' })
       tick()
@@ -62,7 +68,9 @@ describe('PaymentService', () => {
   it('should delete payment card directly from the api', inject([PaymentService, HttpTestingController],
     fakeAsync((service: PaymentService, httpMock: HttpTestingController) => {
       let res
-      service.del(1).subscribe((data) => (res = data))
+      service.del(1).subscribe({
+        next: (data) => (res = data)
+      })
       const req = httpMock.expectOne('http://localhost:3000/api/Cards/1')
       req.flush({ data: 'apiResponse' })
       tick()
