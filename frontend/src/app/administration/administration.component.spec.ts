@@ -77,7 +77,7 @@ describe('AdministrationComponent', () => {
   })
 
   it('should give an error if UserService fails to find all users', fakeAsync(() => {
-    userService.find.and.returnValue(throwError('Error'))
+    userService.find.and.returnValue(throwError(() => 'Error'))
     component.findAllUsers()
 
     tick()
@@ -93,7 +93,7 @@ describe('AdministrationComponent', () => {
   })
 
   it('should give an error if FeedbackService fails to find all feedbacks', fakeAsync(() => {
-    feedbackService.find.and.returnValue(throwError('Error'))
+    feedbackService.find.and.returnValue(throwError(() => 'Error'))
     component.findAllFeedbacks()
 
     tick()
@@ -109,7 +109,7 @@ describe('AdministrationComponent', () => {
   })
 
   it('should give an error if FeedbackService fails to delete feedback', fakeAsync(() => {
-    feedbackService.del.and.returnValue(throwError('Error'))
+    feedbackService.del.and.returnValue(throwError(() => 'Error'))
     component.deleteFeedback(1)
 
     tick()

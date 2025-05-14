@@ -19,6 +19,6 @@ export class TrackOrderService {
 
   find (params: string) {
     params = encodeURIComponent(params)
-    return this.http.get(`${this.host}/${params}`).pipe(map((response: any) => response), catchError((error) => { throw error }))
+    return this.http.get<any>(`${this.host}/${params}`).pipe(map(response => response), catchError((error) => { throw error }))
   }
 }

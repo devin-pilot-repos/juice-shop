@@ -9,7 +9,7 @@ import { TranslateModule } from '@ngx-translate/core'
 import { Status, TrackResultComponent } from './track-result.component'
 import { MatTableModule } from '@angular/material/table'
 import { MatCardModule } from '@angular/material/card'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { TrackOrderService } from '../Services/track-order.service'
 import { DomSanitizer } from '@angular/platform-browser'
 import { of } from 'rxjs'
@@ -30,7 +30,7 @@ describe('TrackResultComponent', () => {
 
     TestBed.configureTestingModule({
       imports: [TranslateModule.forRoot(),
-        RouterTestingModule,
+        provideRouter([]),
         MatCardModule,
         MatTableModule,
         TrackResultComponent],

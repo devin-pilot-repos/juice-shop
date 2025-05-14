@@ -16,6 +16,6 @@ export class LanguagesService {
   constructor (private readonly http: HttpClient) { }
 
   getLanguages () {
-    return this.http.get(`${this.hostServer}/rest/languages`).pipe(catchError((err) => { throw err }))
+    return this.http.get<any>(`${this.hostServer}/rest/languages`).pipe(catchError((err) => { throw err }))
   }
 }

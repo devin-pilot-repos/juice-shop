@@ -18,14 +18,14 @@ export class OrderHistoryService {
   constructor (private readonly http: HttpClient) { }
 
   get () {
-    return this.http.get(this.host).pipe(map((response: any) => response.data), catchError((err) => { throw err }))
+    return this.http.get<any>(this.host).pipe(map(response => response.data), catchError((err) => { throw err }))
   }
 
   getAll () {
-    return this.http.get(this.host + '/orders').pipe(map((response: any) => response.data), catchError((err) => { throw err }))
+    return this.http.get<any>(this.host + '/orders').pipe(map(response => response.data), catchError((err) => { throw err }))
   }
 
   toggleDeliveryStatus (id: number, params) {
-    return this.http.put(`${this.host}/${id}/delivery-status`, params).pipe(map((response: any) => response.data), catchError((err) => { throw err }))
+    return this.http.put<any>(`${this.host}/${id}/delivery-status`, params).pipe(map(response => response.data), catchError((err) => { throw err }))
   }
 }

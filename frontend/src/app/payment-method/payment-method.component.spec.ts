@@ -86,7 +86,7 @@ describe('PaymentMethodComponent', () => {
   })
 
   it('should hold no cards on error in backend API', fakeAsync(() => {
-    paymentService.get.and.returnValue(throwError('Error'))
+    paymentService.get.and.returnValue(throwError(() => 'Error'))
     component.load()
     expect(component.storedCards.length).toBe(0)
   }))
@@ -98,7 +98,7 @@ describe('PaymentMethodComponent', () => {
   })
 
   it('should log error while getting Cards from backend API directly to browser console', fakeAsync(() => {
-    paymentService.get.and.returnValue(throwError('Error'))
+    paymentService.get.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.load()
     expect(console.log).toHaveBeenCalledWith('Error')
@@ -170,7 +170,7 @@ describe('PaymentMethodComponent', () => {
   })
 
   it('should clear the form and display error if saving card fails', fakeAsync(() => {
-    paymentService.save.and.returnValue(throwError({ error: 'Error' }))
+    paymentService.save.and.returnValue(throwError(() => ({ error: 'Error' })))
     spyOn(component, 'resetForm')
     component.save()
     expect(snackBar.open).toHaveBeenCalled()

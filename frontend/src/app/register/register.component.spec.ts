@@ -11,7 +11,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing'
 import { type ComponentFixture, fakeAsync, flush, TestBed, tick, waitForAsync } from '@angular/core/testing'
 import { RegisterComponent } from './register.component'
 import { ReactiveFormsModule } from '@angular/forms'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { Location } from '@angular/common'
 import { TranslateModule } from '@ngx-translate/core'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
@@ -44,9 +44,10 @@ describe('RegisterComponent', () => {
     userService = jasmine.createSpyObj('UserService', ['save'])
     userService.save.and.returnValue(of({}))
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
-        { path: 'login', component: LoginComponent }
-      ]),
+      imports: [
+        provideRouter([
+          { path: 'login', component: LoginComponent }
+        ]),
       TranslateModule.forRoot(),
       ReactiveFormsModule,
       BrowserAnimationsModule,
@@ -174,14 +175,14 @@ describe('RegisterComponent', () => {
   })
 
   it('should log error from backend API on failing to get security questions', fakeAsync(() => {
-    securityQuestionService.find.and.returnValue(throwError('Error'))
+    securityQuestionService.find.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     expect(console.log).toHaveBeenCalledWith('Error')
   }))
 
   it('should log error on saving user', fakeAsync(() => {
-    userService.save.and.returnValue(throwError('Error'))
+    userService.save.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.save()
     expect(console.log).toHaveBeenCalledWith('Error')

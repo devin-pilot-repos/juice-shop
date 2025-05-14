@@ -111,7 +111,7 @@ describe('ServerStartedNotificationComponent', () => {
 
   it('should log errors during automatic progress restore directly to browser console', fakeAsync(() => {
     spyOn(mockSocket, 'on')
-    challengeService.restoreProgress.and.returnValue(throwError('Error'))
+    challengeService.restoreProgress.and.returnValue(throwError(() => 'Error'))
     cookieService.put('continueCode', 'CODE')
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
@@ -123,7 +123,7 @@ describe('ServerStartedNotificationComponent', () => {
 
   it('should set auto-restore error-message when progress restore failed', fakeAsync(() => {
     spyOn(mockSocket, 'on')
-    challengeService.restoreProgress.and.returnValue(throwError('Error'))
+    challengeService.restoreProgress.and.returnValue(throwError(() => 'Error'))
     translateService.get.and.returnValue(of('AUTO_RESTORE_PROGRESS_FAILED'))
     cookieService.put('continueCode', 'CODE')
     component.ngOnInit()
@@ -135,7 +135,7 @@ describe('ServerStartedNotificationComponent', () => {
 
   it('should translate AUTO_RESTORE_PROGRESS_FAILED message including the returned error', fakeAsync(() => {
     spyOn(mockSocket, 'on')
-    challengeService.restoreProgress.and.returnValue(throwError('Error'))
+    challengeService.restoreProgress.and.returnValue(throwError(() => 'Error'))
     translateService.get.and.returnValue(of('Translation of AUTO_RESTORE_PROGRESS_FAILED: error'))
     cookieService.put('continueCode', 'CODE')
     component.ngOnInit()

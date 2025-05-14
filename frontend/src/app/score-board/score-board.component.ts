@@ -2,7 +2,7 @@ import { Component, NgZone, type OnDestroy, type OnInit } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router'
 import { DomSanitizer } from '@angular/platform-browser'
 import { MatDialog } from '@angular/material/dialog'
-import { type Subscription, combineLatest } from 'rxjs'
+import { type Subscription, combineLatest, firstValueFrom } from 'rxjs'
 
 import { fromQueryParams, toQueryParams } from './filter-settings/query-params-converters'
 import { DEFAULT_FILTER_SETTING, type FilterSetting } from './filter-settings/FilterSetting'
@@ -71,27 +71,37 @@ export class ScoreBoardComponent implements OnInit, OnDestroy {
       this.challengeService.find({ sort: 'name' }),
       this.codeSnippetService.challenges(),
       this.configurationService.getApplicationConfiguration()
-    ]).subscribe(([challenges, challengeKeysWithCodeChallenges, applicationConfiguration]) => {
-      this.applicationConfiguration = applicationConfiguration
+    ]).subscribe({
+      next: ([challenges, challengeKeysWithCodeChallenges, applicationConfiguration]) => {
+        this.applicationConfiguration = applicationConfiguration
 
-      const transformedChallenges = challenges.map((challenge) => {
-        return {
-          ...challenge,
-          tagList: challenge.tags ? challenge.tags.split(',').map((tag) => tag.trim()) : [],
-          originalDescription: challenge.description as string,
-          description: this.sanitizer.bypassSecurityTrustHtml(challenge.description as string),
-          hasCodingChallenge: challengeKeysWithCodeChallenges.includes(challenge.key)
-        }
-      })
-      this.allChallenges = transformedChallenges
-      this.filterAndUpdateChallenges()
-      this.isInitialized = true
+        const transformedChallenges = challenges.map((challenge) => {
+          return {
+            ...challenge,
+            tagList: challenge.tags ? challenge.tags.split(',').map((tag) => tag.trim()) : [],
+            originalDescription: challenge.description as string,
+            description: challenge.description as string,
+            hasCodingChallenge: challengeKeysWithCodeChallenges.includes(challenge.key)
+          }
+        })
+        this.allChallenges = transformedChallenges
+        this.filterAndUpdateChallenges()
+        this.isInitialized = true
+      },
+      error: (err) => {
+        console.log(err)
+      }
     })
     this.subscriptions.push(dataLoaderSubscription)
 
-    const routerSubscription = this.route.queryParams.subscribe((queryParams) => {
-      this.filterSetting = fromQueryParams(queryParams)
-      this.filterAndUpdateChallenges()
+    const routerSubscription = this.route.queryParams.subscribe({
+      next: (queryParams) => {
+        this.filterSetting = fromQueryParams(queryParams)
+        this.filterAndUpdateChallenges()
+      },
+      error: (err) => {
+        console.log(err)
+      }
     })
     this.subscriptions.push(routerSubscription)
 
@@ -188,6 +198,6 @@ export class ScoreBoardComponent implements OnInit, OnDestroy {
 
   async repeatChallengeNotification (challengeKey: string) {
     const challenge = this.allChallenges.find((challenge) => challenge.key === challengeKey)
-    await this.challengeService.repeatNotification(encodeURIComponent(challenge.name)).toPromise()
+    await firstValueFrom(this.challengeService.repeatNotification(encodeURIComponent(challenge.name)))
   }
 }

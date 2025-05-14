@@ -24,7 +24,7 @@ import { BasketService } from '../Services/basket.service'
 import { QrCodeComponent } from '../qr-code/qr-code.component'
 import { MatDialog, MatDialogModule } from '@angular/material/dialog'
 import { PaymentMethodComponent } from '../payment-method/payment-method.component'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { OrderSummaryComponent } from '../order-summary/order-summary.component'
 import { PurchaseBasketComponent } from '../purchase-basket/purchase-basket.component'
 import { CookieService } from 'ngy-cookie'
@@ -80,11 +80,12 @@ describe('PaymentComponent', () => {
     snackBar = jasmine.createSpyObj('MatSnackBar', ['open'])
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
-        { path: 'order-summary', component: OrderSummaryComponent },
-        { path: 'login', component: LoginComponent },
-        { path: 'wallet', component: WalletComponent }
-      ]),
+      imports: [
+        provideRouter([
+          { path: 'order-summary', component: OrderSummaryComponent },
+          { path: 'login', component: LoginComponent },
+          { path: 'wallet', component: WalletComponent }
+        ]),
       TranslateModule.forRoot(),
       ReactiveFormsModule,
       BrowserAnimationsModule,
@@ -152,7 +153,7 @@ describe('PaymentComponent', () => {
   })
 
   it('should log error while getting application configuration from backend API directly to browser console', fakeAsync(() => {
-    configurationService.getApplicationConfiguration.and.returnValue(throwError('Error'))
+    configurationService.getApplicationConfiguration.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     expect(console.log).toHaveBeenCalledWith('Error')
@@ -167,7 +168,7 @@ describe('PaymentComponent', () => {
   })
 
   it('should reject an invalid coupon code', fakeAsync(() => {
-    basketService.applyCoupon.and.returnValue(throwError('Error'))
+    basketService.applyCoupon.and.returnValue(throwError(() => 'Error'))
 
     component.couponControl.setValue('')
     component.couponControl.markAsPristine()
@@ -297,7 +298,7 @@ describe('PaymentComponent', () => {
 
   it('should log error from upgrade to deluxe API call directly to browser console', fakeAsync(() => {
     component.mode = 'deluxe'
-    userService.upgradeToDeluxe.and.returnValue(throwError('Error'))
+    userService.upgradeToDeluxe.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.choosePayment()
     fixture.detectChanges()

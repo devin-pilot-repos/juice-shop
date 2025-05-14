@@ -114,7 +114,7 @@ describe('TwoFactorAuthComponent', () => {
   })
 
   it('should reset and mark form as errored when 2FA setup fails', () => {
-    twoFactorAuthService.setup.and.returnValue(throwError(new Error('Error')))
+    twoFactorAuthService.setup.and.returnValue(throwError(() => new Error('Error')))
     component.setupStatus = false
     component.errored = false
     component.twoFactorSetupForm.get('passwordControl').markAsDirty()
@@ -143,7 +143,7 @@ describe('TwoFactorAuthComponent', () => {
   })
 
   it('should reset and mark form as errored when disabling 2FA fails', () => {
-    twoFactorAuthService.disable.and.returnValue(throwError(new Error('Error')))
+    twoFactorAuthService.disable.and.returnValue(throwError(() => new Error('Error')))
     component.setupStatus = true
     component.errored = false
     component.twoFactorDisableForm.get('passwordControl').markAsDirty()

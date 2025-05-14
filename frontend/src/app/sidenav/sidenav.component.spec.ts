@@ -8,7 +8,7 @@ import { type ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@
 import { SocketIoService } from '../Services/socket-io.service'
 import { ConfigurationService } from '../Services/configuration.service'
 import { TranslateModule, TranslateService } from '@ngx-translate/core'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { of } from 'rxjs'
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { CookieModule, CookieService } from 'ngy-cookie'
@@ -73,7 +73,7 @@ describe('SidenavComponent', () => {
         MatMenuModule,
         MatListModule,
         CookieModule.forRoot(),
-        RouterTestingModule,
+        provideRouter([]),
         SidenavComponent],
       providers: [
         { provide: ConfigurationService, useValue: configurationService },

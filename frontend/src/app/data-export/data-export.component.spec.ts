@@ -108,7 +108,7 @@ describe('DataExportComponent', () => {
   })
 
   it('should clear the form and display error if exporting data fails', fakeAsync(() => {
-    dataSubjectService.dataExport.and.returnValue(throwError({ error: 'Error' }))
+    dataSubjectService.dataExport.and.returnValue(throwError(() => ({ error: 'Error' })))
     spyOn(component, 'resetFormError')
     component.save()
     expect(component.confirmation).toBeNull()

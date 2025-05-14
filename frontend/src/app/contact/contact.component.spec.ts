@@ -135,19 +135,19 @@ describe('ContactComponent', () => {
   })
 
   it('should hold no user id if current user is not logged in', fakeAsync(() => {
-    userService.whoAmI.and.returnValue(throwError('Error'))
+    userService.whoAmI.and.returnValue(throwError(() => 'Error'))
     component.ngOnInit()
     expect(component.userIdControl.value).toBeUndefined()
   }))
 
   it('should miss feedback object if retrieving currently logged in user fails', fakeAsync(() => {
-    userService.whoAmI.and.returnValue(throwError('Error'))
+    userService.whoAmI.and.returnValue(throwError(() => 'Error'))
     component.ngOnInit()
     expect(component.feedback).toBeUndefined()
   }))
 
   it('should log the error if retrieving currently logged in user fails', fakeAsync(() => {
-    userService.whoAmI.and.returnValue(throwError('Error'))
+    userService.whoAmI.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     expect(console.log).toHaveBeenCalledWith('Error')
@@ -196,7 +196,7 @@ describe('ContactComponent', () => {
   })
 
   it('should clear the form display error if saving feedback fails', fakeAsync(() => {
-    feedbackService.save.and.returnValue(throwError({ error: 'Error' }))
+    feedbackService.save.and.returnValue(throwError(() => ({ error: 'Error' })))
     spyOn(component, 'resetCaptcha')
     component.save()
     expect(snackBar.open).toHaveBeenCalled()
@@ -204,7 +204,7 @@ describe('ContactComponent', () => {
   }))
 
   it('should clear the feedback object if saving feedback fails', fakeAsync(() => {
-    feedbackService.save.and.returnValue(throwError({ error: 'Error' }))
+    feedbackService.save.and.returnValue(throwError(() => ({ error: 'Error' })))
     component.save()
     expect(component.feedback).toEqual({})
   }))

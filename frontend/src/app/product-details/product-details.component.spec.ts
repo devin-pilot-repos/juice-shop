@@ -115,7 +115,7 @@ describe('ProductDetailsComponent', () => {
 
   it('should log errors when retrieving user directly to browser console', fakeAsync(() => {
     component.data = { productData: { id: 42 } as Product }
-    userService.whoAmI.and.returnValue(throwError('Error'))
+    userService.whoAmI.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     expect(console.log).toHaveBeenCalledWith('Error')
@@ -124,7 +124,7 @@ describe('ProductDetailsComponent', () => {
   it('should log errors when posting review directly to browser console', fakeAsync(() => {
     component.data = { productData: { id: 42 } as Product }
     userService.whoAmI.and.returnValue(of({}))
-    productReviewService.create.and.returnValue(throwError('Error'))
+    productReviewService.create.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     const textArea: HTMLTextAreaElement = fixture.debugElement.query(By.css('textarea')).nativeElement

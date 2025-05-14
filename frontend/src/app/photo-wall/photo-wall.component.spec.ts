@@ -7,7 +7,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core'
 import { MatDividerModule } from '@angular/material/divider'
 import { provideHttpClientTesting } from '@angular/common/http/testing'
 import { type ComponentFixture, fakeAsync, TestBed, waitForAsync } from '@angular/core/testing'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { MatGridListModule } from '@angular/material/grid-list'
 import { MatCardModule } from '@angular/material/card'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
@@ -15,7 +15,7 @@ import { MatTableModule } from '@angular/material/table'
 import { MatPaginatorModule } from '@angular/material/paginator'
 import { of } from 'rxjs'
 import { MatFormFieldModule } from '@angular/material/form-field'
-import { throwError } from 'rxjs/internal/observable/throwError'
+import { throwError } from 'rxjs'
 import { PhotoWallComponent } from './photo-wall.component'
 import { PhotoWallService } from '../Services/photo-wall.service'
 import { FormsModule, ReactiveFormsModule } from '@angular/forms'
@@ -51,7 +51,7 @@ describe('PhotoWallComponent', () => {
     snackBar = jasmine.createSpyObj('MatSnackBar', ['open'])
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule,
+      imports: [provideRouter([]),
         TranslateModule.forRoot(),
         BrowserAnimationsModule,
         MatTableModule,
@@ -105,7 +105,7 @@ describe('PhotoWallComponent', () => {
   })
 
   it('should log error from get API call directly to browser console', fakeAsync(() => {
-    photoWallService.get.and.returnValue(throwError('Error'))
+    photoWallService.get.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     fixture.detectChanges()
@@ -113,7 +113,7 @@ describe('PhotoWallComponent', () => {
   }))
 
   it('should log error from addMemory API call directly to browser console', fakeAsync(() => {
-    photoWallService.addMemory.and.returnValue(throwError('Error'))
+    photoWallService.addMemory.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.save()
     fixture.detectChanges()
@@ -148,7 +148,7 @@ describe('PhotoWallComponent', () => {
   })
 
   it('should log error while getting application configuration from backend API directly to browser console', fakeAsync(() => {
-    configurationService.getApplicationConfiguration.and.returnValue(throwError('Error'))
+    configurationService.getApplicationConfiguration.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     expect(console.log).toHaveBeenCalledWith('Error')

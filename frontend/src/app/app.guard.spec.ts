@@ -6,16 +6,18 @@
 import { inject, TestBed } from '@angular/core/testing'
 import { AccountingGuard, AdminGuard, DeluxeGuard, LoginGuard } from './app.guard'
 import { provideHttpClientTesting } from '@angular/common/http/testing'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { ErrorPageComponent } from './error-page/error-page.component'
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 
 describe('LoginGuard', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
-        { path: '403', component: ErrorPageComponent }
-      ])],
+      imports: [
+        provideRouter([
+          { path: '403', component: ErrorPageComponent }
+        ])
+      ],
       providers: [LoginGuard, provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
     })
   })
@@ -61,9 +63,11 @@ describe('AdminGuard', () => {
     loginGuard = jasmine.createSpyObj('LoginGuard', ['tokenDecode', 'forbidRoute'])
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
-        { path: '403', component: ErrorPageComponent }
-      ])],
+      imports: [
+        provideRouter([
+          { path: '403', component: ErrorPageComponent }
+        ])
+      ],
       providers: [
         AdminGuard,
         { provide: LoginGuard, useValue: loginGuard },
@@ -108,9 +112,11 @@ describe('AccountingGuard', () => {
     loginGuard = jasmine.createSpyObj('LoginGuard', ['tokenDecode', 'forbidRoute'])
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
-        { path: '403', component: ErrorPageComponent }
-      ])],
+      imports: [
+        provideRouter([
+          { path: '403', component: ErrorPageComponent }
+        ])
+      ],
       providers: [
         AccountingGuard,
         { provide: LoginGuard, useValue: loginGuard },
@@ -155,9 +161,11 @@ describe('DeluxeGuard', () => {
     loginGuard = jasmine.createSpyObj('LoginGuard', ['tokenDecode'])
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
-        { path: '403', component: ErrorPageComponent }
-      ])],
+      imports: [
+        provideRouter([
+          { path: '403', component: ErrorPageComponent }
+        ])
+      ],
       providers: [
         DeluxeGuard,
         { provide: LoginGuard, useValue: loginGuard },

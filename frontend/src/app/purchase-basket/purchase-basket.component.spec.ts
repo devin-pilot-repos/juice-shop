@@ -14,7 +14,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
 import { provideHttpClientTesting } from '@angular/common/http/testing'
 import { ReactiveFormsModule } from '@angular/forms'
 import { of } from 'rxjs'
-import { throwError } from 'rxjs/internal/observable/throwError'
+import { throwError } from 'rxjs'
 import { MatButtonToggleModule } from '@angular/material/button-toggle'
 import { PurchaseBasketComponent } from '../purchase-basket/purchase-basket.component'
 import { UserService } from '../Services/user.service'
@@ -91,7 +91,7 @@ describe('PurchaseBasketComponent', () => {
   })
 
   it('should log an error if userService fails to fetch the user', fakeAsync(() => {
-    userService.whoAmI.and.returnValue(throwError('Error'))
+    userService.whoAmI.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     expect(console.log).toHaveBeenCalledWith('Error')
@@ -128,7 +128,7 @@ describe('PurchaseBasketComponent', () => {
   })
 
   it('should hold no products on error in backend API', fakeAsync(() => {
-    basketService.find.and.returnValue(throwError('Error'))
+    basketService.find.and.returnValue(throwError(() => 'Error'))
     component.load()
     expect(component.dataSource.length).toBe(0)
   }))
@@ -140,7 +140,7 @@ describe('PurchaseBasketComponent', () => {
   })
 
   it('should log error while getting Products from backend API directly to browser console', fakeAsync(() => {
-    basketService.find.and.returnValue(throwError('Error'))
+    basketService.find.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.load()
     expect(console.log).toHaveBeenCalledWith('Error')
@@ -164,7 +164,7 @@ describe('PurchaseBasketComponent', () => {
   })
 
   it('should log error while deleting basket item directly to browser console', fakeAsync(() => {
-    basketService.del.and.returnValue(throwError('Error'))
+    basketService.del.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.delete(1)
     expect(console.log).toHaveBeenCalledWith('Error')
@@ -179,7 +179,7 @@ describe('PurchaseBasketComponent', () => {
   })
 
   it('should not increase quantity on error retrieving basket item and log the error', fakeAsync(() => {
-    basketService.get.and.returnValue(throwError('Error'))
+    basketService.get.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.inc(1)
     expect(console.log).toHaveBeenCalledWith('Error')
@@ -189,7 +189,7 @@ describe('PurchaseBasketComponent', () => {
   it('should not increase quantity on error updating basket item and log the error', fakeAsync(() => {
     basketService.find.and.returnValue(of({ Products: [{ BasketItem: { id: 1, quantity: 1 } }] }))
     basketService.get.and.returnValue(of({ id: 1, quantity: 1 }))
-    basketService.put.and.returnValue(throwError('Error'))
+    basketService.put.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.inc(1)
     expect(console.log).toHaveBeenCalledWith('Error')
@@ -222,7 +222,7 @@ describe('PurchaseBasketComponent', () => {
   })
 
   it('should not decrease quantity on error retrieving basket item and log the error', fakeAsync(() => {
-    basketService.get.and.returnValue(throwError('Error'))
+    basketService.get.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.dec(1)
     expect(console.log).toHaveBeenCalledWith('Error')
@@ -232,7 +232,7 @@ describe('PurchaseBasketComponent', () => {
   it('should not decrease quantity on error updating basket item and log the error', fakeAsync(() => {
     basketService.find.and.returnValue(of({ Products: [{ BasketItem: { id: 1, quantity: 1 } }] }))
     basketService.get.and.returnValue(of({ id: 1, quantity: 1 }))
-    basketService.put.and.returnValue(throwError('Error'))
+    basketService.put.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.dec(1)
     expect(console.log).toHaveBeenCalledWith('Error')

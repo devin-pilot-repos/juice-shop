@@ -135,7 +135,7 @@ describe('ChallengeSolvedNotificationComponent', () => {
   })
 
   it('should log error from continue code API call directly to browser console', fakeAsync(() => {
-    challengeService.continueCode.and.returnValue(throwError('Error'))
+    challengeService.continueCode.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.saveProgress()
     fixture.detectChanges()

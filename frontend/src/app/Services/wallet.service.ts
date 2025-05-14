@@ -18,10 +18,10 @@ export class WalletService {
   constructor (private readonly http: HttpClient) { }
 
   get () {
-    return this.http.get(this.host).pipe(map((response: any) => response.data), catchError((err) => { throw err }))
+    return this.http.get<any>(this.host).pipe(map(response => response.data), catchError((err) => { throw err }))
   }
 
   put (params) {
-    return this.http.put(this.host, params).pipe(map((response: any) => response.data), catchError((err) => { throw err }))
+    return this.http.put<any>(this.host, params).pipe(map(response => response.data), catchError((err) => { throw err }))
   }
 }

@@ -18,6 +18,6 @@ export class CaptchaService {
   constructor (private readonly http: HttpClient) { }
 
   getCaptcha () {
-    return this.http.get(this.host + '/').pipe(catchError((err) => { throw err }))
+    return this.http.get<any>(this.host + '/').pipe(catchError((err) => { throw err }))
   }
 }

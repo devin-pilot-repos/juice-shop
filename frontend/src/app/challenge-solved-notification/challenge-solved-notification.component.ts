@@ -15,6 +15,7 @@ import { MatIconModule } from '@angular/material/icon'
 import { MatButtonModule } from '@angular/material/button'
 import { MatCardModule } from '@angular/material/card'
 import { NgIf, LowerCasePipe } from '@angular/common'
+import { firstValueFrom } from 'rxjs'
 
 interface ChallengeSolvedMessage {
   challenge: string
@@ -67,24 +68,29 @@ export class ChallengeSolvedNotificationComponent implements OnInit {
       })
     })
 
-    this.configurationService.getApplicationConfiguration().subscribe((config) => {
-      if (config?.ctf) {
-        if (config.ctf.showFlagsInNotifications) {
-          this.showCtfFlagsInNotifications = config.ctf.showFlagsInNotifications
-        } else {
-          this.showCtfFlagsInNotifications = false
-        }
-
-        if (config.ctf.showCountryDetailsInNotifications) {
-          this.showCtfCountryDetailsInNotifications = config.ctf.showCountryDetailsInNotifications
-
-          if (config.ctf.showCountryDetailsInNotifications !== 'none') {
-            this.countryMappingService.getCountryMapping().subscribe((countryMap: any) => {
-              this.countryMap = countryMap
-            }, (err) => { console.log(err) })
+    this.configurationService.getApplicationConfiguration().subscribe({
+      next: (config) => {
+        if (config?.ctf) {
+          if (config.ctf.showFlagsInNotifications) {
+            this.showCtfFlagsInNotifications = config.ctf.showFlagsInNotifications
+          } else {
+            this.showCtfFlagsInNotifications = false
           }
-        } else {
-          this.showCtfCountryDetailsInNotifications = 'none'
+
+          if (config.ctf.showCountryDetailsInNotifications) {
+            this.showCtfCountryDetailsInNotifications = config.ctf.showCountryDetailsInNotifications
+
+            if (config.ctf.showCountryDetailsInNotifications !== 'none') {
+              this.countryMappingService.getCountryMapping().subscribe({
+                next: (countryMap: any) => {
+                  this.countryMap = countryMap
+                },
+                error: (err) => { console.log(err) }
+              })
+            }
+          } else {
+            this.showCtfCountryDetailsInNotifications = 'none'
+          }
         }
       }
     })
@@ -102,32 +108,36 @@ export class ChallengeSolvedNotificationComponent implements OnInit {
     this.ref.detectChanges()
   }
 
-  showNotification (challenge: ChallengeSolvedMessage) {
-    this.translate.get('CHALLENGE_SOLVED', { challenge: challenge.challenge }).toPromise().then((challengeSolved) => challengeSolved,
-      (translationId) => translationId).then((message) => {
-      let country
-      if (this.showCtfCountryDetailsInNotifications && this.showCtfCountryDetailsInNotifications !== 'none') {
-        country = this.countryMap[challenge.key]
-      }
-      this.notifications.push({
-        message,
-        key: challenge.key,
-        flag: challenge.flag,
-        country,
-        copied: false
-      })
-      this.ref.detectChanges()
+  async showNotification (challenge: ChallengeSolvedMessage) {
+    const message = await firstValueFrom(
+      this.translate.get('CHALLENGE_SOLVED', { challenge: challenge.challenge })
+    ).catch((translationId) => translationId)
+    
+    let country
+    if (this.showCtfCountryDetailsInNotifications && this.showCtfCountryDetailsInNotifications !== 'none') {
+      country = this.countryMap[challenge.key]
+    }
+    this.notifications.push({
+      message,
+      key: challenge.key,
+      flag: challenge.flag,
+      country,
+      copied: false
     })
+    this.ref.detectChanges()
   }
 
   saveProgress () {
-    this.challengeService.continueCode().subscribe((continueCode) => {
-      if (!continueCode) {
-        throw (new Error('Received invalid continue code from the server!'))
-      }
-      const expires = new Date()
-      expires.setFullYear(expires.getFullYear() + 1)
-      this.cookieService.put('continueCode', continueCode, { expires })
-    }, (err) => { console.log(err) })
+    this.challengeService.continueCode().subscribe({
+      next: (continueCode) => {
+        if (!continueCode) {
+          throw (new Error('Received invalid continue code from the server!'))
+        }
+        const expires = new Date()
+        expires.setFullYear(expires.getFullYear() + 1)
+        this.cookieService.put('continueCode', continueCode, { expires })
+      },
+      error: (err) => { console.log(err) }
+    })
   }
 }

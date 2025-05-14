@@ -9,7 +9,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing'
 import { type ComponentFixture, fakeAsync, TestBed, waitForAsync } from '@angular/core/testing'
 import { SearchResultComponent } from './search-result.component'
 import { ProductService } from '../Services/product.service'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { MatGridListModule } from '@angular/material/grid-list'
 import { MatCardModule } from '@angular/material/card'
 import { MatSnackBar } from '@angular/material/snack-bar'
@@ -20,7 +20,7 @@ import { MatPaginatorModule } from '@angular/material/paginator'
 import { MatDialog, MatDialogModule } from '@angular/material/dialog'
 import { of } from 'rxjs'
 import { DomSanitizer } from '@angular/platform-browser'
-import { throwError } from 'rxjs/internal/observable/throwError'
+import { throwError } from 'rxjs'
 import { ProductDetailsComponent } from 'src/app/product-details/product-details.component'
 import { BasketService } from '../Services/basket.service'
 import { EventEmitter } from '@angular/core'
@@ -95,7 +95,7 @@ describe('SearchResultComponent', () => {
     deluxeGuard.isDeluxe.and.returnValue(of(false))
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule,
+      imports: [provideRouter([]),
         TranslateModule.forRoot(),
         BrowserAnimationsModule,
         MatTableModule,
@@ -142,14 +142,14 @@ describe('SearchResultComponent', () => {
   })
 
   it('should hold no products when product search API call fails', () => {
-    productService.search.and.returnValue(throwError('Error'))
+    productService.search.and.returnValue(throwError(() => 'Error'))
     component.ngAfterViewInit()
     fixture.detectChanges()
     expect(component.tableData).toEqual([])
   })
 
   it('should log error from product search API call directly to browser console', fakeAsync(() => {
-    productService.search.and.returnValue(throwError('Error'))
+    productService.search.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngAfterViewInit()
     fixture.detectChanges()
@@ -157,14 +157,14 @@ describe('SearchResultComponent', () => {
   }))
 
   it('should hold no products when quantity getAll API call fails', () => {
-    quantityService.getAll.and.returnValue(throwError('Error'))
+    quantityService.getAll.and.returnValue(throwError(() => 'Error'))
     component.ngAfterViewInit()
     fixture.detectChanges()
     expect(component.tableData).toEqual([])
   })
 
   it('should log error from quantity getAll API call directly to browser console', fakeAsync(() => {
-    quantityService.getAll.and.returnValue(throwError('Error'))
+    quantityService.getAll.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngAfterViewInit()
     fixture.detectChanges()
@@ -259,14 +259,14 @@ describe('SearchResultComponent', () => {
   })
 
   it('should not add anything to basket on error retrieving basket', fakeAsync(() => {
-    basketService.find.and.returnValue(throwError('Error'))
+    basketService.find.and.returnValue(throwError(() => 'Error'))
     sessionStorage.setItem('bid', '815')
     component.addToBasket(undefined)
     expect(snackBar.open).not.toHaveBeenCalled()
   }))
 
   it('should log errors retrieving basket directly to browser console', fakeAsync(() => {
-    basketService.find.and.returnValue(throwError('Error'))
+    basketService.find.and.returnValue(throwError(() => 'Error'))
     sessionStorage.setItem('bid', '815')
     console.log = jasmine.createSpy('log')
     component.addToBasket(2)
@@ -275,7 +275,7 @@ describe('SearchResultComponent', () => {
 
   it('should not add anything to basket on error retrieving existing basket item', fakeAsync(() => {
     basketService.find.and.returnValue(of({ Products: [{ id: 1 }, { id: 2, name: 'Tomato Juice', BasketItem: { id: 42 } }] }))
-    basketService.get.and.returnValue(throwError('Error'))
+    basketService.get.and.returnValue(throwError(() => 'Error'))
     sessionStorage.setItem('bid', '4711')
     component.addToBasket(2)
     expect(snackBar.open).not.toHaveBeenCalled()
@@ -283,7 +283,7 @@ describe('SearchResultComponent', () => {
 
   it('should log errors retrieving basket item directly to browser console', fakeAsync(() => {
     basketService.find.and.returnValue(of({ Products: [{ id: 1 }, { id: 2, name: 'Tomato Juice', BasketItem: { id: 42 } }] }))
-    basketService.get.and.returnValue(throwError('Error'))
+    basketService.get.and.returnValue(throwError(() => 'Error'))
     sessionStorage.setItem('bid', '4711')
     console.log = jasmine.createSpy('log')
     component.addToBasket(2)
@@ -292,7 +292,7 @@ describe('SearchResultComponent', () => {
 
   it('should log errors updating basket directly to browser console', fakeAsync(() => {
     basketService.find.and.returnValue(of({ Products: [{ id: 1 }, { id: 2, name: 'Tomato Juice', BasketItem: { id: 42 } }] }))
-    basketService.put.and.returnValue(throwError('Error'))
+    basketService.put.and.returnValue(throwError(() => 'Error'))
     sessionStorage.setItem('bid', '4711')
     console.log = jasmine.createSpy('log')
     component.addToBasket(2)
@@ -301,7 +301,7 @@ describe('SearchResultComponent', () => {
 
   it('should not add anything to basket on error retrieving product associated with basket item', fakeAsync(() => {
     basketService.find.and.returnValue(of({ Products: [{ id: 1 }, { id: 2, name: 'Tomato Juice', BasketItem: { id: 42 } }] }))
-    productService.get.and.returnValue(throwError('Error'))
+    productService.get.and.returnValue(throwError(() => 'Error'))
     sessionStorage.setItem('bid', '4711')
     component.addToBasket(2)
     expect(snackBar.open).not.toHaveBeenCalled()
@@ -309,7 +309,7 @@ describe('SearchResultComponent', () => {
 
   it('should log errors retrieving product associated with basket item directly to browser console', fakeAsync(() => {
     basketService.find.and.returnValue(of({ Products: [{ id: 1 }, { id: 2, name: 'Tomato Juice', BasketItem: { id: 42 } }] }))
-    productService.get.and.returnValue(throwError('Error'))
+    productService.get.and.returnValue(throwError(() => 'Error'))
     sessionStorage.setItem('bid', '4711')
     console.log = jasmine.createSpy('log')
     component.addToBasket(2)
@@ -318,7 +318,7 @@ describe('SearchResultComponent', () => {
 
   it('should not add anything on error creating new basket item', fakeAsync(() => {
     basketService.find.and.returnValue(of({ Products: [] }))
-    basketService.save.and.returnValue(throwError('Error'))
+    basketService.save.and.returnValue(throwError(() => 'Error'))
     sessionStorage.setItem('bid', '4711')
     component.addToBasket(2)
     expect(snackBar.open).toHaveBeenCalled()
@@ -326,7 +326,7 @@ describe('SearchResultComponent', () => {
 
   it('should log errors creating new basket item directly to browser console', fakeAsync(() => {
     basketService.find.and.returnValue(of({ Products: [] }))
-    basketService.save.and.returnValue(throwError('Error'))
+    basketService.save.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     sessionStorage.setItem('bid', '4711')
     component.addToBasket(2)
@@ -335,7 +335,7 @@ describe('SearchResultComponent', () => {
 
   it('should not add anything on error retrieving product after creating new basket item', fakeAsync(() => {
     basketService.find.and.returnValue(of({ Products: [] }))
-    productService.get.and.returnValue(throwError('Error'))
+    productService.get.and.returnValue(throwError(() => 'Error'))
     sessionStorage.setItem('bid', '4711')
     component.addToBasket(2)
     expect(snackBar.open).not.toHaveBeenCalled()
@@ -343,7 +343,7 @@ describe('SearchResultComponent', () => {
 
   it('should log errors retrieving product after creating new basket item directly to browser console', fakeAsync(() => {
     basketService.find.and.returnValue(of({ Products: [] }))
-    productService.get.and.returnValue(throwError('Error'))
+    productService.get.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     sessionStorage.setItem('bid', '4711')
     component.addToBasket(2)

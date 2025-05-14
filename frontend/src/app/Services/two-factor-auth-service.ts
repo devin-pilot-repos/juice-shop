@@ -36,12 +36,12 @@ export class TwoFactorAuthService {
     return this.http.post<TwoFactorVerifyResponse>(`${environment.hostServer}/rest/2fa/verify`, {
       tmpToken: localStorage.getItem('totp_tmp_token'),
       totpToken
-    }).pipe(map((response: TwoFactorVerifyResponse) => response.authentication), catchError((error) => { throw error }))
+    }).pipe(map(response => response.authentication), catchError((error) => { throw error }))
   }
 
   status (): Observable<TwoFactorAuthStatusPayload> {
     return this.http.get<TwoFactorAuthStatusPayload>(`${environment.hostServer}/rest/2fa/status`)
-      .pipe(map((response: TwoFactorAuthStatusPayload) => response), catchError((error) => { throw error }))
+      .pipe(map(response => response), catchError((error) => { throw error }))
   }
 
   setup (password: string, initialToken: string, setupToken?: string): Observable<void> {

@@ -21,6 +21,7 @@ export function saveLoginIp () {
       }
       if (utils.isChallengeEnabled(challenges.httpHeaderXssChallenge)) {
         challengeUtils.solveIf(challenges.httpHeaderXssChallenge, () => { return lastLoginIp === '<iframe src="javascript:alert(`xss`)">' })
+        lastLoginIp = String(lastLoginIp ?? '').replace(/[\r\n]/g, '')
       } else {
         lastLoginIp = security.sanitizeSecure(lastLoginIp ?? '')
       }

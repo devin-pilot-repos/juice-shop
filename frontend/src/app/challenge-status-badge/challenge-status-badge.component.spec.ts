@@ -81,7 +81,7 @@ describe('ChallengeStatusBadgeComponent', () => {
   it('should log the error from backend on failing to repeat notification', fakeAsync(() => {
     component.allowRepeatNotifications = true
     component.challenge = { name: 'Challenge #1', solved: true } as Challenge
-    challengeService.repeatNotification.and.returnValue(throwError('Error'))
+    challengeService.repeatNotification.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.repeatNotification()
     expect(console.log).toHaveBeenCalledWith('Error')

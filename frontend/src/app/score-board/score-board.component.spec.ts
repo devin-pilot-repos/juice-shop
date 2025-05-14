@@ -1,7 +1,7 @@
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner'
 import { provideHttpClientTesting } from '@angular/common/http/testing'
 import { type ComponentFixture, TestBed } from '@angular/core/testing'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { MatDialogModule } from '@angular/material/dialog'
 import { MatIconModule } from '@angular/material/icon'
 import { TranslateModule } from '@ngx-translate/core'
@@ -61,7 +61,7 @@ describe('ScoreBoardComponent', () => {
     ])
     await TestBed.configureTestingModule({
       imports: [TranslateModule.forRoot(),
-        RouterTestingModule,
+        provideRouter([]),
         MatProgressSpinnerModule,
         MatDialogModule,
         MatIconModule,
