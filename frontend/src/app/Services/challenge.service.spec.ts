@@ -24,7 +24,9 @@ describe('ChallengeService', () => {
   it('should get all challenges directly from the rest api', inject([ChallengeService, HttpTestingController],
     fakeAsync((service: ChallengeService, httpMock: HttpTestingController) => {
       let res: any
-      service.find().subscribe((data) => (res = data))
+      service.find().subscribe({
+        next: (data) => (res = data)
+      })
 
       const req = httpMock.expectOne('http://localhost:3000/api/Challenges/')
       req.flush({ data: 'apiResponse' })
@@ -39,7 +41,9 @@ describe('ChallengeService', () => {
   it('should get current continue code directly from the rest api', inject([ChallengeService, HttpTestingController],
     fakeAsync((service: ChallengeService, httpMock: HttpTestingController) => {
       let res: any
-      service.continueCode().subscribe((data) => (res = data))
+      service.continueCode().subscribe({
+        next: (data) => (res = data)
+      })
 
       const req = httpMock.expectOne('http://localhost:3000/rest/continue-code')
       req.flush({ continueCode: 'apiResponse' })
@@ -54,7 +58,9 @@ describe('ChallengeService', () => {
   it('should pass continue code for restoring challenge progress on to the rest api', inject([ChallengeService, HttpTestingController],
     fakeAsync((service: ChallengeService, httpMock: HttpTestingController) => {
       let res: any
-      service.restoreProgress('CODE').subscribe((data) => (res = data))
+      service.restoreProgress('CODE').subscribe({
+        next: (data) => (res = data)
+      })
 
       const req = httpMock.expectOne('http://localhost:3000/rest/continue-code/apply/CODE')
       req.flush({ data: 'apiResponse' })
@@ -69,7 +75,9 @@ describe('ChallengeService', () => {
   it('should get current "Find It" coding challenge continue code directly from the rest api', inject([ChallengeService, HttpTestingController],
     fakeAsync((service: ChallengeService, httpMock: HttpTestingController) => {
       let res: any
-      service.continueCodeFindIt().subscribe((data) => (res = data))
+      service.continueCodeFindIt().subscribe({
+        next: (data) => (res = data)
+      })
 
       const req = httpMock.expectOne('http://localhost:3000/rest/continue-code-findIt')
       req.flush({ continueCode: 'apiResponse' })
@@ -84,7 +92,9 @@ describe('ChallengeService', () => {
   it('should pass "Find It" coding challenge continue code for restoring progress on to the rest api', inject([ChallengeService, HttpTestingController],
     fakeAsync((service: ChallengeService, httpMock: HttpTestingController) => {
       let res: any
-      service.restoreProgressFindIt('CODE').subscribe((data) => (res = data))
+      service.restoreProgressFindIt('CODE').subscribe({
+        next: (data) => (res = data)
+      })
 
       const req = httpMock.expectOne('http://localhost:3000/rest/continue-code-findIt/apply/CODE')
       req.flush({ data: 'apiResponse' })
@@ -99,7 +109,9 @@ describe('ChallengeService', () => {
   it('should get current "Fix It" coding challenge continue code directly from the rest api', inject([ChallengeService, HttpTestingController],
     fakeAsync((service: ChallengeService, httpMock: HttpTestingController) => {
       let res: any
-      service.continueCodeFixIt().subscribe((data) => (res = data))
+      service.continueCodeFixIt().subscribe({
+        next: (data) => (res = data)
+      })
 
       const req = httpMock.expectOne('http://localhost:3000/rest/continue-code-fixIt')
       req.flush({ continueCode: 'apiResponse' })
@@ -114,7 +126,9 @@ describe('ChallengeService', () => {
   it('should pass "Fix It" coding challenge continue code for restoring progress on to the rest api', inject([ChallengeService, HttpTestingController],
     fakeAsync((service: ChallengeService, httpMock: HttpTestingController) => {
       let res: any
-      service.restoreProgressFixIt('CODE').subscribe((data) => (res = data))
+      service.restoreProgressFixIt('CODE').subscribe({
+        next: (data) => (res = data)
+      })
 
       const req = httpMock.expectOne('http://localhost:3000/rest/continue-code-fixIt/apply/CODE')
       req.flush({ data: 'apiResponse' })
@@ -129,7 +143,9 @@ describe('ChallengeService', () => {
   it('should repeat notification directly from the rest api', inject([ChallengeService, HttpTestingController],
     fakeAsync((service: ChallengeService, httpMock: HttpTestingController) => {
       let res: any
-      service.repeatNotification('CHALLENGE').subscribe((data) => (res = data))
+      service.repeatNotification('CHALLENGE').subscribe({
+        next: (data) => (res = data)
+      })
 
       const req = httpMock.expectOne(req => req.url === 'http://localhost:3000/rest/repeat-notification')
       req.flush('apiResponse')
