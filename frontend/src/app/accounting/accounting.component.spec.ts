@@ -18,7 +18,7 @@ import { MatPaginatorModule } from '@angular/material/paginator'
 import { of } from 'rxjs'
 import { QuantityService } from '../Services/quantity.service'
 import { MatFormFieldModule } from '@angular/material/form-field'
-import { throwError } from 'rxjs/internal/observable/throwError'
+import { throwError } from 'rxjs'
 import { OrderHistoryService } from '../Services/order-history.service'
 import { MatIconModule } from '@angular/material/icon'
 import { MatTooltipModule } from '@angular/material/tooltip'
@@ -95,49 +95,49 @@ describe('AccountingComponent', () => {
   })
 
   it('should hold no products when product search API call fails', () => {
-    productService.search.and.returnValue(throwError('Error'))
+    productService.search.and.returnValue(throwError(() => 'Error'))
     component.loadProducts()
     fixture.detectChanges()
     expect(component.tableData).toEqual([])
   })
 
   it('should hold no orders when getAll orders API call fails', () => {
-    orderHistoryService.getAll.and.returnValue(throwError('Error'))
+    orderHistoryService.getAll.and.returnValue(throwError(() => 'Error'))
     component.loadOrders()
     fixture.detectChanges()
     expect(component.orderData).toEqual([])
   })
 
   it('should hold no quantities when getAll quanitity API call fails', () => {
-    quantityService.getAll.and.returnValue(throwError('Error'))
+    quantityService.getAll.and.returnValue(throwError(() => 'Error'))
     component.loadQuantity()
     fixture.detectChanges()
     expect(component.quantityMap).toEqual({})
   })
 
   it('should log error from product search API call directly to browser console', fakeAsync(() => {
-    productService.search.and.returnValue(throwError('Error'))
+    productService.search.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.loadProducts()
     expect(console.log).toHaveBeenCalledWith('Error')
   }))
 
   it('should log error from getAll orders API call directly to browser console', fakeAsync(() => {
-    orderHistoryService.getAll.and.returnValue(throwError('Error'))
+    orderHistoryService.getAll.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.loadOrders()
     expect(console.log).toHaveBeenCalledWith('Error')
   }))
 
   it('should load orders when toggleDeliveryStatus gets called', () => {
-    orderHistoryService.getAll.and.returnValue(throwError('Error'))
+    orderHistoryService.getAll.and.returnValue(throwError(() => 'Error'))
     orderHistoryService.toggleDeliveryStatus.and.returnValue(of({}))
     component.changeDeliveryStatus(true, 1)
     expect(orderHistoryService.getAll).toHaveBeenCalled()
   })
 
   it('should log error from toggleDeliveryStatus API call directly to browser console', fakeAsync(() => {
-    orderHistoryService.toggleDeliveryStatus.and.returnValue(throwError('Error'))
+    orderHistoryService.toggleDeliveryStatus.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.changeDeliveryStatus(true, 1)
     expect(snackBar.open).toHaveBeenCalled()
@@ -145,14 +145,14 @@ describe('AccountingComponent', () => {
   }))
 
   it('should log error from getAll quantity API call directly to browser console', fakeAsync(() => {
-    quantityService.getAll.and.returnValue(throwError('Error'))
+    quantityService.getAll.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.loadQuantity()
     expect(console.log).toHaveBeenCalledWith('Error')
   }))
 
   it('should log and display errors while modifying price', fakeAsync(() => {
-    productService.put.and.returnValue(throwError({ error: 'Error' }))
+    productService.put.and.returnValue(throwError(() => ({ error: 'Error' })))
     console.log = jasmine.createSpy('log')
     component.modifyPrice(1, 100)
     fixture.detectChanges()
@@ -161,7 +161,7 @@ describe('AccountingComponent', () => {
   }))
 
   it('should log and display errors while modifying quantity', fakeAsync(() => {
-    quantityService.put.and.returnValue(throwError({ error: 'Error' }))
+    quantityService.put.and.returnValue(throwError(() => ({ error: 'Error' })))
     console.log = jasmine.createSpy('log')
     component.modifyQuantity(1, 100)
     fixture.detectChanges()
