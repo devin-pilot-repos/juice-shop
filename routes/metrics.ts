@@ -141,6 +141,36 @@ export function observeMetrics () {
     labelNames: ['type']
   })
 
+  async function updateCodingChallengeMetrics (challenges: any[], metricsGauge: Prometheus.Gauge) {
+    try {
+      const findItCount = await ChallengeModel.count({ where: { codingChallengeStatus: { [Op.eq]: 1 } } })
+      metricsGauge.set({ phase: 'find it' }, findItCount)
+      const fixItCount = await ChallengeModel.count({ where: { codingChallengeStatus: { [Op.eq]: 2 } } })
+      metricsGauge.set({ phase: 'fix it' }, fixItCount)
+
+      const nonZeroCount = await ChallengeModel.count({ where: { codingChallengeStatus: { [Op.ne]: 0 } } })
+      metricsGauge.set({ phase: 'unsolved' }, challenges.length - nonZeroCount)
+    } catch (error) {
+      logger.warn('Error updating coding challenge metrics: ' + utils.getErrorMessage(error))
+    }
+  }
+
+  function updateOrderMetrics(orderCount: number, metrics: Prometheus.Gauge) {
+    if (orderCount) metrics.set(orderCount)
+  }
+
+  function updateInteractionMetrics(count: number, type: string, metrics: Prometheus.Gauge) {
+    if (count) metrics.set({ type }, count)
+  }
+
+  function updateUserMetrics(count: number, type: string, metrics: Prometheus.Gauge) {
+    if (count) metrics.set({ type }, count)
+  }
+
+  function updateTotalMetrics(count: number, metrics: Prometheus.Gauge) {
+    if (count) metrics.set(count)
+  }
+
   const updateLoop = () => setInterval(() => {
     try {
       const version = utils.version()
@@ -165,57 +195,45 @@ export function observeMetrics () {
         challengeTotalMetrics.set({ difficulty, category }, challengeCount.get(key))
       }
 
-      async function updateCodingChallengeMetrics (challenges: any[]) {
-        try {
-          const findItCount = await ChallengeModel.count({ where: { codingChallengeStatus: { [Op.eq]: 1 } } })
-          codingChallengesProgressMetrics.set({ phase: 'find it' }, findItCount)
-          const fixItCount = await ChallengeModel.count({ where: { codingChallengeStatus: { [Op.eq]: 2 } } })
-          codingChallengesProgressMetrics.set({ phase: 'fix it' }, fixItCount)
-
-          const nonZeroCount = await ChallengeModel.count({ where: { codingChallengeStatus: { [Op.ne]: 0 } } })
-          codingChallengesProgressMetrics.set({ phase: 'unsolved' }, challenges.length - nonZeroCount)
-        } catch (error) {
-          logger.warn('Error updating coding challenge metrics: ' + utils.getErrorMessage(error))
-        }
-      }
-
-      void retrieveChallengesWithCodeSnippet().then(updateCodingChallengeMetrics)
+      void retrieveChallengesWithCodeSnippet().then(
+        challenges => void updateCodingChallengeMetrics(challenges, codingChallengesProgressMetrics)
+      )
 
       cheatScoreMetrics.set(totalCheatScore())
       accuracyMetrics.set({ phase: 'find it' }, accuracy.totalFindItAccuracy())
       accuracyMetrics.set({ phase: 'fix it' }, accuracy.totalFixItAccuracy())
 
-      ordersCollection.count({}).then((orderCount: number) => {
-        if (orderCount) orderMetrics.set(orderCount)
-      })
+      ordersCollection.count({}).then(
+        (orderCount: number) => updateOrderMetrics(orderCount, orderMetrics)
+      )
 
-      reviewsCollection.count({}).then((reviewCount: number) => {
-        if (reviewCount) interactionsMetrics.set({ type: 'review' }, reviewCount)
-      })
+      reviewsCollection.count({}).then(
+        (reviewCount: number) => updateInteractionMetrics(reviewCount, 'review', interactionsMetrics)
+      )
 
-      void UserModel.count({ where: { role: { [Op.eq]: 'customer' } } }).then((count: number) => {
-        if (count) userMetrics.set({ type: 'standard' }, count)
-      })
+      void UserModel.count({ where: { role: { [Op.eq]: 'customer' } } }).then(
+        count => updateUserMetrics(count, 'standard', userMetrics)
+      )
 
-      void UserModel.count({ where: { role: { [Op.eq]: 'deluxe' } } }).then((count: number) => {
-        if (count) userMetrics.set({ type: 'deluxe' }, count)
-      })
+      void UserModel.count({ where: { role: { [Op.eq]: 'deluxe' } } }).then(
+        count => updateUserMetrics(count, 'deluxe', userMetrics)
+      )
 
-      void UserModel.count().then((count: number) => {
-        if (count) userTotalMetrics.set(count)
-      })
+      void UserModel.count().then(
+        count => updateTotalMetrics(count, userTotalMetrics)
+      )
 
-      void WalletModel.sum('balance').then((totalBalance: number) => {
-        if (totalBalance) walletMetrics.set(totalBalance)
-      })
+      void WalletModel.sum('balance').then(
+        totalBalance => updateTotalMetrics(totalBalance, walletMetrics)
+      )
 
-      void FeedbackModel.count().then((count: number) => {
-        if (count) interactionsMetrics.set({ type: 'feedback' }, count)
-      })
+      void FeedbackModel.count().then(
+        count => updateInteractionMetrics(count, 'feedback', interactionsMetrics)
+      )
 
-      void ComplaintModel.count().then((count: number) => {
-        if (count) interactionsMetrics.set({ type: 'complaint' }, count)
-      })
+      void ComplaintModel.count().then(
+        count => updateInteractionMetrics(count, 'complaint', interactionsMetrics)
+      )
     } catch (e: unknown) {
       logger.warn('Error during metrics update loop: + ' + utils.getErrorMessage(e))
     }
