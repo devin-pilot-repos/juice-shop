@@ -18,19 +18,19 @@ export class ProductService {
   constructor (private readonly http: HttpClient) { }
 
   search (criteria: string) {
-    return this.http.get(`${this.hostServer}/rest/products/search?q=${criteria}`).pipe(map((response: any) => response.data), catchError((err) => { throw err }))
+    return this.http.get<any>(`${this.hostServer}/rest/products/search?q=${criteria}`).pipe(map(response => response.data), catchError((err) => { throw err }))
   }
 
   find (params: any) {
-    return this.http.get(this.host + '/', { params }).pipe(map((response: any) => response.data), catchError((err) => { throw err }))
+    return this.http.get<any>(this.host + '/', { params }).pipe(map(response => response.data), catchError((err) => { throw err }))
   }
 
   get (id: number) {
-    return this.http.get(`${this.host}/${id}?d=${encodeURIComponent(new Date().toDateString())}`).pipe(map((response: any) =>
+    return this.http.get<any>(`${this.host}/${id}?d=${encodeURIComponent(new Date().toDateString())}`).pipe(map(response =>
       response.data), catchError((err) => { throw err }))
   }
 
   put (id: number, params) {
-    return this.http.put(`${this.host}/${id}`, params).pipe(map((response: any) => response.data), catchError((err) => { throw err }))
+    return this.http.put<any>(`${this.host}/${id}`, params).pipe(map(response => response.data), catchError((err) => { throw err }))
   }
 }
