@@ -68,14 +68,21 @@ export function placeOrder () {
           basket.Products?.forEach(({ BasketItem, price, deluxePrice, name, id }) => {
             if (BasketItem != null) {
               challengeUtils.solveIf(challenges.christmasSpecialChallenge, () => { return BasketItem.ProductId === products.christmasSpecial.id })
-              QuantityModel.findOne({ where: { ProductId: BasketItem.ProductId } }).then((product: any) => {
-                const newQuantity = product.quantity - BasketItem.quantity
-                QuantityModel.update({ quantity: newQuantity }, { where: { ProductId: BasketItem?.ProductId } }).catch((error: unknown) => {
+              QuantityModel.findOne({ where: { ProductId: BasketItem.ProductId } })
+                .then((product: any) => {
+                  if (product) {
+                    const newQuantity = product.quantity - BasketItem.quantity
+                    QuantityModel.update(
+                      { quantity: newQuantity },
+                      { where: { ProductId: BasketItem?.ProductId } }
+                    ).catch((error: unknown) => {
+                      next(error)
+                    })
+                  }
+                })
+                .catch((error: unknown) => {
                   next(error)
                 })
-              }).catch((error: unknown) => {
-                next(error)
-              })
               let itemPrice: number
               if (security.isDeluxe(req)) {
                 itemPrice = deluxePrice

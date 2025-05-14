@@ -165,25 +165,21 @@ export function observeMetrics () {
         challengeTotalMetrics.set({ difficulty, category }, challengeCount.get(key))
       }
 
-      void retrieveChallengesWithCodeSnippet().then(challenges => {
-        ChallengeModel.count({ where: { codingChallengeStatus: { [Op.eq]: 1 } } }).then((count: number) => {
-          codingChallengesProgressMetrics.set({ phase: 'find it' }, count)
-        }).catch(() => {
-          throw new Error('Unable to retrieve and count such challenges. Please try again')
-        })
+      async function updateCodingChallengeMetrics (challenges: any[]) {
+        try {
+          const findItCount = await ChallengeModel.count({ where: { codingChallengeStatus: { [Op.eq]: 1 } } })
+          codingChallengesProgressMetrics.set({ phase: 'find it' }, findItCount)
+          const fixItCount = await ChallengeModel.count({ where: { codingChallengeStatus: { [Op.eq]: 2 } } })
+          codingChallengesProgressMetrics.set({ phase: 'fix it' }, fixItCount)
 
-        ChallengeModel.count({ where: { codingChallengeStatus: { [Op.eq]: 2 } } }).then((count: number) => {
-          codingChallengesProgressMetrics.set({ phase: 'fix it' }, count)
-        }).catch((_: unknown) => {
-          throw new Error('Unable to retrieve and count such challenges. Please try again')
-        })
+          const nonZeroCount = await ChallengeModel.count({ where: { codingChallengeStatus: { [Op.ne]: 0 } } })
+          codingChallengesProgressMetrics.set({ phase: 'unsolved' }, challenges.length - nonZeroCount)
+        } catch (error) {
+          logger.warn('Error updating coding challenge metrics: ' + utils.getErrorMessage(error))
+        }
+      }
 
-        ChallengeModel.count({ where: { codingChallengeStatus: { [Op.ne]: 0 } } }).then((count: number) => {
-          codingChallengesProgressMetrics.set({ phase: 'unsolved' }, challenges.length - count)
-        }).catch((_: unknown) => {
-          throw new Error('Unable to retrieve and count such challenges. Please try again')
-        })
-      })
+      void retrieveChallengesWithCodeSnippet().then(updateCodingChallengeMetrics)
 
       cheatScoreMetrics.set(totalCheatScore())
       accuracyMetrics.set({ phase: 'find it' }, accuracy.totalFindItAccuracy())
