@@ -23,7 +23,7 @@ export function likeProductReviews () {
 
     try {
       const sanitizedId = String(id).replace(/[\r\n]/g, '')
-      
+
       const review = await db.reviewsCollection.findOne({ _id: sanitizedId })
       if (!review) {
         return res.status(404).json({ error: 'Not found' })

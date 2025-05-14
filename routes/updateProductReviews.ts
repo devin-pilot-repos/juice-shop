@@ -14,10 +14,10 @@ import * as db from '../data/mongodb'
 export function updateProductReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
     const user = security.authenticatedUsers.from(req) // vuln-code-snippet vuln-line forgedReviewChallenge
-    
+
     const sanitizedId = String(req.body.id).replace(/[\r\n]/g, '')
     const sanitizedMessage = String(req.body.message || '').replace(/[\r\n]/g, '')
-    
+
     db.reviewsCollection.update( // vuln-code-snippet neutral-line forgedReviewChallenge
       { _id: sanitizedId }, // vuln-code-snippet vuln-line noSqlReviewsChallenge forgedReviewChallenge
       { $set: { message: sanitizedMessage } },

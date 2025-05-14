@@ -162,7 +162,7 @@ export function placeOrder () {
           const sanitizedAddressId = req.body.orderDetails?.addressId ? String(req.body.orderDetails.addressId).replace(/[\r\n]/g, '') : null
           const sanitizedEmail = email ? String(email).replace(/[aeiou]/gi, '*').replace(/[\r\n]/g, '') : undefined
           const sanitizedEta = String(deliveryMethod.eta).replace(/[\r\n]/g, '')
-          
+
           db.ordersCollection.insert({
             promotionalAmount: discountAmount,
             paymentId: sanitizedPaymentId,
