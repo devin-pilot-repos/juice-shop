@@ -292,7 +292,7 @@ test.describe('Login and Logout', () => {
       try {
         if (page && !page.isClosed()) {
           await page.screenshot({ path: `logout-test-error-${Date.now()}.png` })
-            .catch(screenshotError => console.log('Error taking screenshot:', screenshotError));
+            .catch((screenshotError: Error) => console.log('Error taking screenshot:', screenshotError));
         } else {
           console.log('Cannot take screenshot - page is closed or invalid');
         }
@@ -383,7 +383,7 @@ test.describe('Login and Logout', () => {
       try {
         if (page && !page.isClosed()) {
           await page.screenshot({ path: `remember-test-error-${Date.now()}.png` })
-            .catch(screenshotError => console.log('Error taking screenshot:', screenshotError));
+            .catch((screenshotError: Error) => console.log('Error taking screenshot:', screenshotError));
         } else {
           console.log('Cannot take screenshot - page is closed or invalid');
         }

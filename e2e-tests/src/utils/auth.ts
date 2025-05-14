@@ -671,6 +671,12 @@ export class Auth {
         return false;
       }
       
+      const isDemoSite = currentUrl.includes('demo.owasp-juice.shop');
+      if (isDemoSite && process.env.CI === 'true') {
+        console.log('Demo site detected in isLoggedIn check - applying special handling');
+        await page.waitForTimeout(2000); // Give extra time for the page to stabilize
+      }
+      
       const userElements = [
         '#navbarLogoutButton',
         'button:has-text("Logout")',
