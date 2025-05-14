@@ -1,6 +1,7 @@
 import { test, expect, request, APIRequestContext } from '@playwright/test';
 import { Auth } from '../src/utils/auth';
 import { EnvironmentManager } from '../src/utils/environmentManager';
+import { StorageService } from '../src/utils/storageService';
 
 test.describe('API Integration', () => {
   let apiContext: APIRequestContext;
@@ -16,9 +17,9 @@ test.describe('API Integration', () => {
     
     await Auth.loginAsCustomer(page);
     
-    authToken = await page.evaluate(() => {
-      return localStorage.getItem('token');
-    });
+    const storageService = StorageService.getInstance();
+    storageService.initialize(page);
+    authToken = await storageService.getItem('token');
     
     apiContext = await request.newContext({
       baseURL: baseUrl,

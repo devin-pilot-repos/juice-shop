@@ -1,4 +1,5 @@
 import { Page, Locator } from '@playwright/test';
+import { StorageService } from './storageService';
 
 /**
  * Helper utilities for tests
@@ -77,7 +78,9 @@ export class Helpers {
    * @returns Promise that resolves with the value
    */
   static async getLocalStorageItem(page: Page, key: string): Promise<string | null> {
-    return await page.evaluate((k) => localStorage.getItem(k), key);
+    const storageService = StorageService.getInstance();
+    storageService.initialize(page);
+    return await storageService.getItem(key);
   }
 
   /**
@@ -88,7 +91,9 @@ export class Helpers {
    * @returns Promise that resolves when the item is set
    */
   static async setLocalStorageItem(page: Page, key: string, value: string): Promise<void> {
-    await page.evaluate(({ k, v }) => localStorage.setItem(k, v), { k: key, v: value });
+    const storageService = StorageService.getInstance();
+    storageService.initialize(page);
+    await storageService.setItem(key, value);
   }
 
   /**
@@ -97,6 +102,8 @@ export class Helpers {
    * @returns Promise that resolves when local storage is cleared
    */
   static async clearLocalStorage(page: Page): Promise<void> {
-    await page.evaluate(() => localStorage.clear());
+    const storageService = StorageService.getInstance();
+    storageService.initialize(page);
+    await storageService.clear();
   }
 }

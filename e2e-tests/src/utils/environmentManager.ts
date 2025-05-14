@@ -1,5 +1,6 @@
 import { Environment, getCurrentEnvironment } from '../../config/environments';
 import { Page } from '@playwright/test';
+import { StorageService } from './storageService';
 
 /**
  * Environment Manager utility for handling environment-specific operations
@@ -108,6 +109,9 @@ export class EnvironmentManager {
     const urls = this.getAllUrls();
     let connected = false;
     
+    const storageService = StorageService.getInstance();
+    storageService.initialize(page);
+    
     for (let i = 0; i < urls.length; i++) {
       const url = urls[i];
       try {
@@ -117,11 +121,11 @@ export class EnvironmentManager {
         if (isLocalhost) {
           console.log('Localhost environment detected - using special handling');
           
-          await page.evaluate(() => {
-            localStorage.setItem('continueCode', 'yesplease');
-            localStorage.setItem('welcomebanner_status', 'dismiss');
-            localStorage.setItem('cookieconsent_status', 'dismiss');
-          }).catch(error => console.log('Error setting up localStorage before navigation:', error));
+          await storageService.setItems({
+            'continueCode': 'yesplease',
+            'welcomebanner_status': 'dismiss',
+            'cookieconsent_status': 'dismiss'
+          });
         }
         
         await page.goto(url, { 
@@ -165,34 +169,36 @@ export class EnvironmentManager {
     try {
       console.log('Setting up localhost environment');
       
-      await page.evaluate(() => {
-        localStorage.setItem('continueCode', 'yesplease');
-        localStorage.setItem('welcomebanner_status', 'dismiss');
-        localStorage.setItem('cookieconsent_status', 'dismiss');
-        
-        localStorage.setItem('testMode', 'true');
-        localStorage.setItem('bypassSecurityPrompts', 'true');
-        localStorage.setItem('allowIllegalActivities', 'true');
-        localStorage.setItem('bypassSecurityChecks', 'true');
-        localStorage.setItem('skipSecurityValidation', 'true');
-        
-        const enhancedDummyToken = {
-          token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IlRlc3QgVXNlciIsImlhdCI6MTUxNjIzOTAyMn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
-          bid: 123,
-          umail: 'admin@juice-sh.op',
-          data: {
-            id: 1,
-            email: 'admin@juice-sh.op',
-            role: 'admin',
-            deluxeToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZWx1eGUiOnRydWV9.Md8qYmeHC1ykJzX_x0B4h-gdZGUF2VZRIGbYiLjuXxg'
-          }
-        };
-        
-        if (!localStorage.getItem('token')) {
-          localStorage.setItem('token', JSON.stringify(enhancedDummyToken));
-          console.log('Set enhanced dummy auth token in localStorage with admin role');
-        }
+      const storageService = StorageService.getInstance();
+      
+      await storageService.setItems({
+        'continueCode': 'yesplease',
+        'welcomebanner_status': 'dismiss',
+        'cookieconsent_status': 'dismiss',
+        'testMode': 'true',
+        'bypassSecurityPrompts': 'true',
+        'allowIllegalActivities': 'true',
+        'bypassSecurityChecks': 'true',
+        'skipSecurityValidation': 'true'
       });
+      
+      const enhancedDummyToken = {
+        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IlRlc3QgVXNlciIsImlhdCI6MTUxNjIzOTAyMn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+        bid: 123,
+        umail: 'admin@juice-sh.op',
+        data: {
+          id: 1,
+          email: 'admin@juice-sh.op',
+          role: 'admin',
+          deluxeToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZWx1eGUiOnRydWV9.Md8qYmeHC1ykJzX_x0B4h-gdZGUF2VZRIGbYiLjuXxg'
+        }
+      };
+      
+      const existingToken = await storageService.getItem('token');
+      if (!existingToken) {
+        await storageService.setItem('token', JSON.stringify(enhancedDummyToken));
+        console.log('Set enhanced dummy auth token in storage with admin role');
+      }
       
       await this.handleSecurityBlocks(page);
       
@@ -243,27 +249,29 @@ export class EnvironmentManager {
         if (this.isLocalEnvironment()) {
           console.log('Localhost environment detected, applying special security bypass...');
           
-          await page.evaluate(() => {
-            localStorage.setItem('bypassSecurityPrompts', 'true');
-            localStorage.setItem('allowIllegalActivities', 'true');
-            localStorage.setItem('bypassSecurityChecks', 'true');
-            localStorage.setItem('skipSecurityValidation', 'true');
-            
-            const adminToken = {
-              token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkFkbWluIFVzZXIiLCJpYXQiOjE1MTYyMzkwMjIsInJvbGUiOiJhZG1pbiJ9.KPGPmxj9NrAIrPgX_OJCEcVr2Q4SNsQ6Dj6-a6oy6-s',
-              bid: 1,
-              umail: 'admin@juice-sh.op',
-              data: {
-                id: 1,
-                email: 'admin@juice-sh.op',
-                role: 'admin',
-                deluxeToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZWx1eGUiOnRydWV9.Md8qYmeHC1ykJzX_x0B4h-gdZGUF2VZRIGbYiLjuXxg'
-              }
-            };
-            
-            localStorage.setItem('token', JSON.stringify(adminToken));
-            console.log('Set admin token to bypass security checks');
+          const storageService = StorageService.getInstance();
+          
+          await storageService.setItems({
+            'bypassSecurityPrompts': 'true',
+            'allowIllegalActivities': 'true',
+            'bypassSecurityChecks': 'true',
+            'skipSecurityValidation': 'true'
           });
+          
+          const adminToken = {
+            token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkFkbWluIFVzZXIiLCJpYXQiOjE1MTYyMzkwMjIsInJvbGUiOiJhZG1pbiJ9.KPGPmxj9NrAIrPgX_OJCEcVr2Q4SNsQ6Dj6-a6oy6-s',
+            bid: 1,
+            umail: 'admin@juice-sh.op',
+            data: {
+              id: 1,
+              email: 'admin@juice-sh.op',
+              role: 'admin',
+              deluxeToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZWx1eGUiOnRydWV9.Md8qYmeHC1ykJzX_x0B4h-gdZGUF2VZRIGbYiLjuXxg'
+            }
+          };
+          
+          await storageService.setItem('token', JSON.stringify(adminToken));
+          console.log('Set admin token to bypass security checks');
           
           // Try to navigate back to the base URL
           await page.goto(this.getBaseUrl(), { 
@@ -339,19 +347,17 @@ export class EnvironmentManager {
    */
   private static async setupEnvironmentStorage(page: Page): Promise<void> {
     try {
-      await page.evaluate(() => {
-        localStorage.setItem('language', 'en');
-      });
+      const storageService = StorageService.getInstance();
       
+      await storageService.setItem('language', 'en');
+      
+      // Set environment
       const env = this.getEnvironment().name.toLowerCase();
-      await page.evaluate((environment: string) => {
-        localStorage.setItem('environment', environment);
-      }, env);
+      await storageService.setItem('environment', env);
       
+      // Set test mode for localhost
       if (this.isLocalEnvironment()) {
-        await page.evaluate(() => {
-          localStorage.setItem('testMode', 'true');
-        });
+        await storageService.setItem('testMode', 'true');
       }
     } catch (error) {
       console.log('Error setting up environment storage:', error);

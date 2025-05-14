@@ -6,6 +6,7 @@ import { EnvironmentManager } from '../src/utils/environmentManager';
 import { BasePage } from '../src/pages/BasePage';
 import { SearchResultPage } from '../src/pages/SearchResultPage';
 import { TestData } from '../src/utils/testData';
+import { StorageService } from '../src/utils/storageService';
 
 test.describe('Product Search', () => {
   test.setTimeout(120000); // Increased timeout for flaky connections
@@ -95,12 +96,15 @@ test.describe('Product Search', () => {
       
       await page.evaluate((term) => {
         document.body.setAttribute('data-last-search', term);
-        try {
-          localStorage.setItem('lastSearchTerm', term);
-        } catch (e) {
-          console.log('Could not store in localStorage:', e);
-        }
       }, searchTerm);
+      
+      try {
+        const storageService = StorageService.getInstance();
+        storageService.initialize(page);
+        await storageService.setItem('lastSearchTerm', searchTerm);
+      } catch (e) {
+        console.log('Could not store in storage service:', e);
+      }
       
       let searchResultPage;
       let retryCount = 0;
@@ -167,12 +171,16 @@ test.describe('Product Search', () => {
       const urlQuery = await searchResultPage.getSearchQuery();
       console.log(`URL query: "${urlQuery}", Search term: "${searchTerm}"`);
       
-      const storedTerm = await page.evaluate(() => {
-        const dataAttr = document.body.getAttribute('data-last-search') || '';
-        const localStorageTerm = localStorage.getItem('lastSearchTerm') || '';
-        console.log(`Data attribute: ${dataAttr}, localStorage: ${localStorageTerm}`);
-        return dataAttr || localStorageTerm;
+      const dataAttr = await page.evaluate(() => {
+        return document.body.getAttribute('data-last-search') || '';
       });
+      
+      const storageService = StorageService.getInstance();
+      storageService.initialize(page);
+      const localStorageTerm = await storageService.getItem('lastSearchTerm') || '';
+      
+      console.log(`Data attribute: ${dataAttr}, storage: ${localStorageTerm}`);
+      const storedTerm = dataAttr || localStorageTerm;
       console.log(`Stored search term: ${storedTerm}`);
       
       if (isDemoSite) {

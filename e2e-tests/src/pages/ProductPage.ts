@@ -1,5 +1,6 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './BasePage';
+import { StorageService } from '../utils/storageService';
 
 /**
  * Page Object for the Product page
@@ -186,10 +187,24 @@ export class ProductPage extends BasePage {
               return true;
             }
             
-            let basket = JSON.parse(localStorage.getItem('basket') || '[]');
-            basket.push(basketItem);
-            localStorage.setItem('basket', JSON.stringify(basket));
-            console.log('Added item to basket via localStorage');
+            const storageService = (window as any)['storageService'];
+            if (storageService) {
+              const basketJson = storageService.getItem('basket') || '[]';
+              let basket = JSON.parse(basketJson);
+              basket.push(basketItem);
+              storageService.setItem('basket', JSON.stringify(basket));
+              console.log('Added item to basket via StorageService');
+            } else {
+              try {
+                let basket = JSON.parse(localStorage.getItem('basket') || '[]');
+                basket.push(basketItem);
+                localStorage.setItem('basket', JSON.stringify(basket));
+                console.log('Added item to basket via localStorage');
+              } catch (storageError) {
+                console.error('Error accessing localStorage:', storageError);
+                return false;
+              }
+            }
             
             const event = new CustomEvent('add-to-basket', { detail: basketItem });
             document.dispatchEvent(event);

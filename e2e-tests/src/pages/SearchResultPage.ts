@@ -1,5 +1,6 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './BasePage';
+import { StorageService } from '../utils/storageService';
 
 /**
  * Page Object for the Search Results page
@@ -148,11 +149,16 @@ export class SearchResultPage extends BasePage {
       }
       
       try {
-        const storedTerm = await this.page.evaluate(() => {
-          const dataAttr = document.body.getAttribute('data-last-search') || '';
-          const localStorageTerm = localStorage.getItem('lastSearchTerm') || '';
-          return dataAttr || localStorageTerm;
+        const storageService = StorageService.getInstance();
+        storageService.initialize(this.page);
+        
+        const dataAttr = await this.page.evaluate(() => {
+          return document.body.getAttribute('data-last-search') || '';
         }).catch(() => '');
+        
+        const localStorageTerm = await storageService.getItem('lastSearchTerm') || '';
+        
+        const storedTerm = dataAttr || localStorageTerm;
         
         if (storedTerm) {
           console.log(`Found search query in data attribute: ${storedTerm}`);
