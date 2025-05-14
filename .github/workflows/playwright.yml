@@ -1,4 +1,4 @@
-name: "Playwright E2E Tests"
+name: "Playwright E2E Tests (Localhost)"
 on:
   push:
     branches:
@@ -23,6 +23,7 @@ env:
   WORKERS: 4
   RETRIES: 2
   TIMEOUT: 120000
+  ENV: local
 
 jobs:
   playwright-tests:
@@ -44,7 +45,7 @@ jobs:
           cache-dependency-path: '**/package-lock.json'
 
       - name: "Install root dependencies"
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: "Install e2e-tests dependencies"
         run: |
@@ -56,6 +57,32 @@ jobs:
           cd e2e-tests
           npx playwright install --with-deps chromium firefox webkit
 
+      - name: "Start Juice Shop application"
+        run: |
+          echo "Starting Juice Shop application..."
+          npm start &
+          echo "Waiting for application to start..."
+          # Wait for the application to start (up to 60 seconds)
+          timeout=60
+          while [ $timeout -gt 0 ]; do
+            if curl -s http://localhost:3000 > /dev/null; then
+              echo "Juice Shop is running at http://localhost:3000"
+              break
+            fi
+            echo "Waiting for Juice Shop to start... ($timeout seconds left)"
+            sleep 5
+            timeout=$((timeout - 5))
+          done
+          
+          if [ $timeout -le 0 ]; then
+            echo "Timed out waiting for Juice Shop to start"
+            exit 1
+          fi
+          
+          # Additional wait to ensure the app is fully initialized
+          sleep 10
+          echo "Juice Shop is ready for testing"
+
       - name: "Run Playwright tests (Run ${{ matrix.run-number }})"
         run: |
           cd e2e-tests
@@ -63,6 +90,8 @@ jobs:
           npm run test:headless
         env:
           CI: true
+          ENV: local
+          BASE_URL: http://localhost:3000
 
       - name: "Upload test results"
         if: always()
