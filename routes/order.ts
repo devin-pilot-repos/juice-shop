@@ -158,18 +158,23 @@ export function placeOrder () {
             })
           }
 
+          const sanitizedPaymentId = req.body.orderDetails?.paymentId ? String(req.body.orderDetails.paymentId).replace(/[\r\n]/g, '') : null
+          const sanitizedAddressId = req.body.orderDetails?.addressId ? String(req.body.orderDetails.addressId).replace(/[\r\n]/g, '') : null
+          const sanitizedEmail = email ? String(email).replace(/[aeiou]/gi, '*').replace(/[\r\n]/g, '') : undefined
+          const sanitizedEta = String(deliveryMethod.eta).replace(/[\r\n]/g, '')
+          
           db.ordersCollection.insert({
             promotionalAmount: discountAmount,
-            paymentId: req.body.orderDetails ? req.body.orderDetails.paymentId : null,
-            addressId: req.body.orderDetails ? req.body.orderDetails.addressId : null,
+            paymentId: sanitizedPaymentId,
+            addressId: sanitizedAddressId,
             orderId,
             delivered: false,
-            email: (email ? email.replace(/[aeiou]/gi, '*') : undefined),
+            email: sanitizedEmail,
             totalPrice,
             products: basketProducts,
             bonus: totalPoints,
             deliveryPrice: deliveryAmount,
-            eta: deliveryMethod.eta.toString()
+            eta: sanitizedEta
           }).then(() => {
             doc.end()
           })

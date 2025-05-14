@@ -22,33 +22,36 @@ export function likeProductReviews () {
     }
 
     try {
-      const review = await db.reviewsCollection.findOne({ _id: id })
+      const sanitizedId = String(id).replace(/[\r\n]/g, '')
+      
+      const review = await db.reviewsCollection.findOne({ _id: sanitizedId })
       if (!review) {
         return res.status(404).json({ error: 'Not found' })
       }
 
       const likedBy = review.likedBy
-      if (likedBy.includes(user.data.email)) {
+      const sanitizedEmail = String(user.data.email).replace(/[\r\n]/g, '')
+      if (likedBy.includes(sanitizedEmail)) {
         return res.status(403).json({ error: 'Not allowed' })
       }
 
       await db.reviewsCollection.update(
-        { _id: id },
+        { _id: sanitizedId },
         { $inc: { likesCount: 1 } }
       )
 
       // Artificial wait for timing attack challenge
       await sleep(150)
       try {
-        const updatedReview: Review = await db.reviewsCollection.findOne({ _id: id })
+        const updatedReview: Review = await db.reviewsCollection.findOne({ _id: sanitizedId })
         const updatedLikedBy = updatedReview.likedBy
-        updatedLikedBy.push(user.data.email)
+        updatedLikedBy.push(sanitizedEmail)
 
-        const count = updatedLikedBy.filter(email => email === user.data.email).length
+        const count = updatedLikedBy.filter(email => email === sanitizedEmail).length
         challengeUtils.solveIf(challenges.timingAttackChallenge, () => count > 2)
 
         const result = await db.reviewsCollection.update(
-          { _id: id },
+          { _id: sanitizedId },
           { $set: { likedBy: updatedLikedBy } }
         )
         res.json(result)

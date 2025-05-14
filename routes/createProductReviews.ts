@@ -20,10 +20,14 @@ export function createProductReviews () {
     )
 
     try {
+      const sanitizedId = String(req.params.id).replace(/[\r\n]/g, '')
+      const sanitizedMessage = String(req.body.message || '').replace(/[\r\n]/g, '')
+      const sanitizedAuthor = String(req.body.author || '').replace(/[\r\n]/g, '')
+      
       await reviewsCollection.insert({
-        product: req.params.id,
-        message: req.body.message,
-        author: req.body.author,
+        product: sanitizedId,
+        message: sanitizedMessage,
+        author: sanitizedAuthor,
         likesCount: 0,
         likedBy: []
       })
