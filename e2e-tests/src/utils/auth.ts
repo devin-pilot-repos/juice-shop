@@ -751,9 +751,22 @@ export class Auth {
         console.log('Using JavaScript approach to check login status in CI');
         try {
           const jsCheck = await page.evaluate(() => {
-            const logoutElements = document.querySelectorAll('#navbarLogoutButton, button:has-text("Logout"), .logout, [id*="logout"]');
+            const logoutElements = document.querySelectorAll('#navbarLogoutButton, .logout, [id*="logout"]');
             if (logoutElements.length > 0) {
               console.log('Found logout elements in DOM via JavaScript');
+              return true;
+            }
+            
+            const buttons = document.querySelectorAll('button');
+            const hasLogoutButton = Array.from(buttons).some((button: Element) => {
+              if (button.textContent && button.textContent.includes('Logout')) {
+                console.log('Found logout button via text content check');
+                return true;
+              }
+              return false;
+            });
+            
+            if (hasLogoutButton) {
               return true;
             }
             
