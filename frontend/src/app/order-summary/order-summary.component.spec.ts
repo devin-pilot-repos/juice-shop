@@ -15,7 +15,7 @@ import { ReactiveFormsModule } from '@angular/forms'
 import { MatButtonToggleModule } from '@angular/material/button-toggle'
 import { OrderSummaryComponent } from './order-summary.component'
 import { PurchaseBasketComponent } from '../purchase-basket/purchase-basket.component'
-import { RouterTestingModule } from '@angular/router/testing'
+import { provideRouter } from '@angular/router'
 import { BasketService } from '../Services/basket.service'
 import { AddressService } from '../Services/address.service'
 import { of } from 'rxjs/internal/observable/of'
@@ -55,9 +55,10 @@ describe('OrderSummaryComponent', () => {
     snackBar = jasmine.createSpyObj('MatSnackBar', ['open'])
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([
-        { path: 'order-completion', component: OrderCompletionComponent }
-      ]),
+      imports: [
+        provideRouter([
+          { path: 'order-completion', component: OrderCompletionComponent }
+        ]),
       TranslateModule.forRoot(),
       BrowserAnimationsModule,
       ReactiveFormsModule,
@@ -95,7 +96,7 @@ describe('OrderSummaryComponent', () => {
   })
 
   it('should log errors from address service directly to browser console', fakeAsync(() => {
-    addressService.getById.and.returnValue(throwError('Error'))
+    addressService.getById.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     expect(console.log).toHaveBeenCalledWith('Error')
@@ -103,7 +104,7 @@ describe('OrderSummaryComponent', () => {
 
   it('should log errors from payment service directly to browser console', fakeAsync(() => {
     sessionStorage.setItem('paymentId', '1')
-    paymentService.getById.and.returnValue(throwError('Error'))
+    paymentService.getById.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     expect(console.log).toHaveBeenCalledWith('Error')
