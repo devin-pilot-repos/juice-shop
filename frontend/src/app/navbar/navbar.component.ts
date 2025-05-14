@@ -94,7 +94,10 @@ export class NavbarComponent implements OnInit {
 
   ngOnInit (): void {
     this.getLanguages()
-    this.basketService.getItemTotal().subscribe(x => (this.itemTotal = x))
+    this.basketService.getItemTotal().subscribe({
+      next: x => (this.itemTotal = x),
+      error: (err) => { console.log(err) }
+    })
     this.administrationService.getApplicationVersion().subscribe({
       next: (version: any) => {
         if (version) {
