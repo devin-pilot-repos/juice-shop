@@ -151,7 +151,7 @@ describe('ForgotPasswordComponent', () => {
   })
 
   it('should clear form and gracefully handle error on password change', fakeAsync(() => {
-    userService.resetPassword.and.returnValue(throwError({ error: 'Error' }))
+    userService.resetPassword.and.returnValue(throwError(() => ({ error: 'Error' })))
     spyOn(component, 'resetErrorForm')
     component.resetPassword()
     expect(component.error).toBe('Error')
@@ -175,7 +175,7 @@ describe('ForgotPasswordComponent', () => {
   })
 
   it('should not have a security question when lookup by email address failed', fakeAsync(() => {
-    securityQuestionService.findBy.and.returnValue(throwError('Error'))
+    securityQuestionService.findBy.and.returnValue(throwError(() => 'Error'))
     component.emailControl.setValue('some@user.test')
     tick(component.timeoutDuration)
     component.findSecurityQuestion()

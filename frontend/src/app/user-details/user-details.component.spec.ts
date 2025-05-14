@@ -50,7 +50,7 @@ describe('UserDetailsComponent', () => {
   })
 
   it('should log the error on retrieving user', () => {
-    userService.get.and.returnValue(throwError('Error'))
+    userService.get.and.returnValue(throwError(() => 'Error'))
     console.log = jasmine.createSpy('log')
     component.ngOnInit()
     expect(console.log).toHaveBeenCalledWith('Error')

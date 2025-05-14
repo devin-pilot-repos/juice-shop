@@ -103,7 +103,7 @@ describe('ComplaintComponent', () => {
   })
 
   it('should miss complaint object if retrieving currently logged in user fails', fakeAsync(() => {
-    userService.whoAmI.and.returnValue(throwError('Error'))
+    userService.whoAmI.and.returnValue(throwError(() => 'Error'))
     component.ngOnInit()
     expect(component.complaint).toBeUndefined()
   }))
