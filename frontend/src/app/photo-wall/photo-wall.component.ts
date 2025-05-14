@@ -48,18 +48,20 @@ export class PhotoWallComponent implements OnInit {
       console.log(err)
 
       return EMPTY
-    })).subscribe((memories) => {
-      if (memories.length === 0) {
-        this.emptyState = true
-      } else {
-        this.emptyState = false
-      }
-      for (const memory of memories) {
-        if (memory.User?.username) {
-          // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-          memory.caption = `${memory.caption} (© ${memory.User.username})`
+    })).subscribe({
+      next: (memories) => {
+        if (memories.length === 0) {
+          this.emptyState = true
+        } else {
+          this.emptyState = false
         }
-        this.slideshowDataSource.push({ url: memory.imagePath, caption: memory.caption })
+        for (const memory of memories) {
+          if (memory.User?.username) {
+            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+            memory.caption = `${memory.caption} (© ${memory.User.username})`
+          }
+          this.slideshowDataSource.push({ url: memory.imagePath, caption: memory.caption })
+        }
       }
     })
 
@@ -67,10 +69,12 @@ export class PhotoWallComponent implements OnInit {
       console.log(err)
 
       return EMPTY
-    })).subscribe((config) => {
-      if (config?.application?.social) {
-        if (config.application.social.twitterUrl) {
-          this.twitterHandle = config.application.social.twitterUrl.replace('https://twitter.com/', '@')
+    })).subscribe({
+      next: (config) => {
+        if (config?.application?.social) {
+          if (config.application.social.twitterUrl) {
+            this.twitterHandle = config.application.social.twitterUrl.replace('https://twitter.com/', '@')
+          }
         }
       }
     })
@@ -88,13 +92,16 @@ export class PhotoWallComponent implements OnInit {
   }
 
   save () {
-    this.photoWallService.addMemory(this.form.value.caption, this.form.value.image).subscribe(() => {
-      this.resetForm()
-      this.ngOnInit()
-      this.snackBarHelperService.open('IMAGE_UPLOAD_SUCCESS', 'confirmBar')
-    }, (err) => {
-      this.snackBarHelperService.open(err.error?.error, 'errorBar')
-      console.log(err)
+    this.photoWallService.addMemory(this.form.value.caption, this.form.value.image).subscribe({
+      next: () => {
+        this.resetForm()
+        this.ngOnInit()
+        this.snackBarHelperService.open('IMAGE_UPLOAD_SUCCESS', 'confirmBar')
+      },
+      error: (err) => {
+        this.snackBarHelperService.open(err.error?.error, 'errorBar')
+        console.log(err)
+      }
     })
   }
 
