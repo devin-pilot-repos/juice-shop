@@ -131,7 +131,8 @@ export class CodeSnippetComponent implements OnInit {
       next: (verdict) => {
         this.setVerdict(verdict.verdict)
         this.explanation = verdict.explanation
-      }
+      },
+      error: (err) => { console.log(err) }
     })
   }
 
@@ -140,7 +141,8 @@ export class CodeSnippetComponent implements OnInit {
       next: (verdict: result) => {
         this.setVerdict(verdict.verdict)
         this.hint = verdict.hint
-      }
+      },
+      error: (err) => { console.log(err) }
     })
   }
 
