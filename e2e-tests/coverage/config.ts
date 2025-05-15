@@ -205,5 +205,25 @@ export const TEST_WORKFLOW_MAPPING: TestMapping[] = [
     testFile: 'product-reviews.spec.ts',
     testName: 'should add a product review',
     workflowIds: ['product-reviews']
+  },
+  {
+    testFile: 'user-profile.spec.ts',
+    testName: 'should display user profile information',
+    workflowIds: ['user-profile']
+  },
+  {
+    testFile: 'user-profile.spec.ts',
+    testName: 'should update user profile information',
+    workflowIds: ['user-profile']
+  },
+  {
+    testFile: 'user-profile.spec.ts',
+    testName: 'should change user password',
+    workflowIds: ['user-profile']
+  },
+  {
+    testFile: 'user-profile.spec.ts',
+    testName: 'should view order history',
+    workflowIds: ['user-profile']
   }
 ];
