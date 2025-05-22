@@ -187,7 +187,7 @@ describe('Web3SandboxComponent', () => {
     spyOn(component, 'deploySelectedContract').and.callFake(() => {
       component.deployedContractAddress = '0x456';
       return Promise.resolve();
-    }))
+    })
     
     component.deploySelectedContract()
     
